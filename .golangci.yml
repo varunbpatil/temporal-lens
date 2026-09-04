@@ -463,3 +463,6 @@ linters:
           - gosec
           - noctx
           - wrapcheck
+      # Too noisy during development
+      - text: "unused-parameter"
+        linters: [revive]

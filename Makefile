@@ -19,8 +19,12 @@ go/run: ## Run the application
 	go run .
 
 .PHONY: go/test
-go/test: ## Run all tests
+go/test: ## Run unit tests
 	go test -race ./... -count=1
+
+.PHONY: go/test-integration
+go/test-integration: ## Run integration tests
+	go test -race -tags=integration ./... -count=1
 
 .PHONY: go/lint
 go/lint: ## Run linter
@@ -54,6 +58,10 @@ proto/generate: ## Generate protobuf code
 .PHONY: proto/lint
 proto/lint: ## Lint protobuf files
 	buf lint
+
+.PHONY: proto/fmt
+proto/fmt: ## Format protobuf files
+	buf format -w
 
 .PHONY: proto/breaking
 proto/breaking: ## Check for breaking changes

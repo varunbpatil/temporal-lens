@@ -27,5 +27,8 @@ jobs:
       - name: Vet
         run: make go/vet
 
-      - name: Test
+      - name: Unit Tests
         run: make go/test
+
+      - name: Integration Tests
+        run: make go/test-integration

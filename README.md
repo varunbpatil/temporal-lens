@@ -1,6 +1,6 @@
 # Temporal Lens
 
-Deep search and filter Temporal.io workflows powered by [OpenSearch](https://github.com/opensearch-project/opensearch).
+Deep search and filter [Temporal.io](https://temporal.io/) workflows powered by [OpenSearch](https://github.com/opensearch-project/opensearch).
 
 ## Project Structure
 

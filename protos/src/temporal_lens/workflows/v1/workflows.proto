@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package temporal_lens.workflows.v1;
+
+service WorkflowService {
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Signal(SignalRequest) returns (SignalResponse);
+  rpc Reset(ResetRequest) returns (ResetResponse);
+  rpc Terminate(TerminateRequest) returns (TerminateResponse);
+  rpc ListIndexes(ListIndexesRequest) returns (ListIndexesResponse);
+  rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse);
+}
+
+message SearchRequest {}
+message SearchResponse {}
+
+message SignalRequest {}
+message SignalResponse {}
+
+message ResetRequest {}
+message ResetResponse {}
+
+message TerminateRequest {}
+message TerminateResponse {}
+
+message ListIndexesRequest {}
+message ListIndexesResponse {}
+
+message DeleteIndexRequest {}
+message DeleteIndexResponse {}

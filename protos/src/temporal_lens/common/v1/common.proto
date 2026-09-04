@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package temporal_lens.common.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// FilterSpec is a recursive filter expression supporting complex AND/OR logic.
+message FilterSpec {
+  oneof filter {
+    LeafFilter leaf = 1;
+    LogicalFilter logical = 2;
+  }
+}
+
+// LogicalFilter combines multiple FilterSpecs with AND/OR logic.
+message LogicalFilter {
+  LogicalOperator operator = 1;
+  repeated FilterSpec operands = 2;
+}
+
+enum LogicalOperator {
+  LOGICAL_OPERATOR_UNSPECIFIED = 0;
+  LOGICAL_OPERATOR_AND = 1;
+  LOGICAL_OPERATOR_OR = 2;
+}
+
+// LeafFilter is a single field-level filter condition.
+message LeafFilter {
+  string field = 1;
+  FilterOperator operator = 2;
+  FilterValue value = 3;
+}
+
+// FilterOperator defines the comparison operator.
+enum FilterOperator {
+  FILTER_OPERATOR_UNSPECIFIED = 0;
+  FILTER_OPERATOR_EQ = 1;
+  FILTER_OPERATOR_NEQ = 2;
+  FILTER_OPERATOR_CONTAINS = 3;
+  FILTER_OPERATOR_NOT_CONTAINS = 4;
+  FILTER_OPERATOR_LT = 5;
+  FILTER_OPERATOR_GT = 6;
+  FILTER_OPERATOR_LTE = 7;
+  FILTER_OPERATOR_GTE = 8;
+  FILTER_OPERATOR_BETWEEN = 9;
+  FILTER_OPERATOR_IN = 10;
+  FILTER_OPERATOR_NOT_IN = 11;
+  FILTER_OPERATOR_STARTS_WITH = 12;
+  FILTER_OPERATOR_ENDS_WITH = 13;
+  FILTER_OPERATOR_EXISTS = 14;
+  FILTER_OPERATOR_NOT_EXISTS = 15;
+  FILTER_OPERATOR_IS_EMPTY = 16;
+  FILTER_OPERATOR_IS_NOT_EMPTY = 17;
+}
+
+// FilterValue is a typed value for filter comparisons.
+message FilterValue {
+  oneof value {
+    string string_value = 1;
+    int64 int_value = 2;
+    double double_value = 3;
+    bool bool_value = 4;
+    google.protobuf.Timestamp timestamp_value = 5;
+    NullValue null_value = 6;
+    BetweenValue between_value = 7;
+    RepeatedValue repeated_value = 8;
+  }
+}
+
+// BetweenValue represents an inclusive range [start, end].
+message BetweenValue {
+  FilterValue start = 1;
+  FilterValue end = 2;
+}
+
+// RepeatedValue holds multiple values for IN/NOT_IN operators.
+message RepeatedValue {
+  repeated FilterValue values = 1;
+}
+
+// NullValue represents a null/absent field value.
+enum NullValue {
+  NULL_VALUE_UNSPECIFIED = 0;
+  NULL_VALUE_NULL = 1;
+}
+
+// SortSpec defines a sort order for a single field.
+message SortSpec {
+  string field = 1;
+  SortOrder order = 2;
+}
+
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;
+  SORT_ORDER_ASC = 1;
+  SORT_ORDER_DESC = 2;
+}
+
+// PaginationSpec defines either offset-based or cursor-based pagination.
+message PaginationSpec {
+  oneof pagination {
+    OffsetPagination offset = 1;
+    CursorPagination cursor = 2;
+  }
+}
+
+// OffsetPagination uses page number and page size.
+message OffsetPagination {
+  int32 page_size = 1;
+  int32 page_number = 2;
+}
+
+// CursorPagination uses an opaque cursor for forward/backward traversal.
+message CursorPagination {
+  int32 page_size = 1;
+  string cursor = 2;
+}
