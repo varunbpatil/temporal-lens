@@ -1,6 +1,6 @@
 # Temporal Lens
 
-Deep search and filter [Temporal.io](https://temporal.io/) workflows powered by [OpenSearch](https://github.com/opensearch-project/opensearch).
+Deep search and filtering of [Temporal.io](https://temporal.io/) workflows powered by [OpenSearch](https://github.com/opensearch-project/opensearch).
 
 ## Project Structure
 
@@ -14,6 +14,8 @@ This project follows hexagonal architecture (ports-and-adapters pattern).
 │
 ├── config/                    # App configuration
 │   └── config.go
+│
+├── types/                     # Custom type definitions
 │
 ├── protos/                    # Protobuf definitions
 │   ├── src/                   # Proto source files
