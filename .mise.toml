@@ -2,6 +2,7 @@
 _.file = ".env"
 
 [tools]
+"node" = "24"
 "go" = "1.27.1"
 "golangci-lint" = "2.13.2"
 "buf" = "1.72.0"
@@ -9,3 +10,4 @@ _.file = ".env"
 "protoc-gen-go" = "1.36.12"
 "protoc-gen-connect-go" = "1.20.0"
 "npm:@bufbuild/protoc-gen-es" = "2.14.1"
+"npm:@connectrpc/protoc-gen-connect-query" = "2.3.1"

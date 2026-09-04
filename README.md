@@ -9,6 +9,8 @@ This project follows hexagonal architecture (ports-and-adapters pattern).
 ```
 .
 ├── Makefile                   # Task runner
+├── buf.yaml                   # Buf module config
+├── buf.gen.yaml               # Buf code generation config
 │
 ├── config/                    # App configuration
 │   └── config.go

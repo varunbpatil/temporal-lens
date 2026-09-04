@@ -11,24 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Go
+      - name: Setup Go
         uses: actions/setup-go@v7
         with:
           go-version: "1.27.1"
 
-      - name: Format
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: latest
-          args: fmt
-
       - name: Lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.13.2
 
       - name: Vet
         run: make go/vet

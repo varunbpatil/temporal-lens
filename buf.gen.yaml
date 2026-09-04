@@ -21,3 +21,8 @@ plugins:
     out: ui/src/gen
     opt:
       - target=ts
+
+  - local: protoc-gen-connect-query
+    out: ui/src/gen
+    opt:
+      - target=ts

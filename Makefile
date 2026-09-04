@@ -4,7 +4,7 @@ SHELL := /usr/bin/env bash
 
 .PHONY: help
 help: ## Show this help message
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z/_-]+:.*?## / { printf "\033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "; prev = "#"} /^[a-zA-Z/_-]+:.*?## / { split($$1, a, "/"); key = (a[2] != "") ? a[1] : "_"; if (key != prev) { if (prev != "#") printf "\n"; prev = key } printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 # ------------------------------------
 #  Go
@@ -24,7 +24,7 @@ go/test: ## Run all tests
 
 .PHONY: go/lint
 go/lint: ## Run linter
-	golangci-lint run
+	golangci-lint run --fix
 
 .PHONY: go/fmt
 go/fmt: ## Format code
@@ -62,4 +62,24 @@ proto/breaking: ## Check for breaking changes
 # ------------------------------------
 #  React
 # ------------------------------------
+
+.PHONY: ui/install
+ui/install: ## Install UI dependencies
+	cd ui && npm install
+
+.PHONY: ui/dev
+ui/dev: ## Start UI dev server
+	cd ui && npm run dev
+
+.PHONY: ui/build
+ui/build: ## Build UI for production
+	cd ui && npm run build
+
+.PHONY: ui/lint
+ui/lint: ## Lint UI code
+	cd ui && npm run lint
+
+.PHONY: ui/fmt
+ui/fmt: ## Format UI code
+	cd ui && npm run fmt
 
