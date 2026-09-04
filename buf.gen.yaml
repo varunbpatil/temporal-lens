@@ -1,0 +1,23 @@
+version: v2
+
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/varunbpatil/temporal-lens/protos/gen
+
+plugins:
+  - local: protoc-gen-go
+    out: protos/gen
+    opt:
+      - paths=source_relative
+
+  - local: protoc-gen-connect-go
+    out: protos/gen
+    opt:
+      - paths=source_relative
+
+  - local: protoc-gen-es
+    out: ui/src/gen
+    opt:
+      - target=ts

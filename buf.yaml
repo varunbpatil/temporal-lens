@@ -1,0 +1,13 @@
+version: v2
+
+modules:
+  - path: protos/src
+    name: github.com/varunbpatil/temporal-lens
+
+lint:
+  use:
+    - STANDARD
+
+breaking:
+  use:
+    - FILE
