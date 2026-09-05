@@ -74,15 +74,17 @@ docker run --env-file .env temporal-lens
 
 ### Environment Variables
 
-| Variable                            | Description                                           | Required | Default |
-| ----------------------------------- | ----------------------------------------------------- | -------- | ------- |
-| `LOG_LEVEL`                         | Log level (`debug`, `info`, `warn`, `error`)          | No       | `info`  |
-| `LOG_FORMAT`                        | Log format (`text`, `json`)                           | No       | `text`  |
-| `OPENSEARCH_ADDRESSES`              | Comma-separated OpenSearch addresses                  | Yes      |         |
-| `OPENSEARCH_USERNAME`               | OpenSearch username                                   | No       |         |
-| `OPENSEARCH_PASSWORD`               | OpenSearch password                                   | No       |         |
-| `OPENSEARCH_API_KEY`                | OpenSearch API key (alternative to username/password) | No       |         |
-| `OPENSEARCH_INSECURE_SKIP_VERIFY`   | Skip TLS certificate verification                     | No       | `false` |
+| Variable                            | Description                                           | Required | Default  |
+| ----------------------------------- | ----------------------------------------------------- | -------- | -------- |
+| `LOG_LEVEL`                         | Log level (`debug`, `info`, `warn`, `error`)          | No       | `info`   |
+| `LOG_FORMAT`                        | Log format (`text`, `json`)                           | No       | `text`   |
+| `GRPC_ADDRESS`                      | gRPC server listen address                            | No       | `:50051` |
+| `HTTP_ADDRESS`                      | HTTP server listen address                            | No       | `:8080`  |
+| `OPENSEARCH_ADDRESSES`              | Comma-separated OpenSearch addresses                  | Yes      |          |
+| `OPENSEARCH_USERNAME`               | OpenSearch username                                   | No       |          |
+| `OPENSEARCH_PASSWORD`               | OpenSearch password                                   | No       |          |
+| `OPENSEARCH_API_KEY`                | OpenSearch API key (alternative to username/password) | No       |          |
+| `OPENSEARCH_INSECURE_SKIP_VERIFY`   | Skip TLS certificate verification                     | No       | `false`  |
 
 ## License
 

@@ -1,21 +1,34 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/varunbpatil/temporal-lens/config"
+	grpcserver "github.com/varunbpatil/temporal-lens/inbound/grpc"
+	grpcworkflows "github.com/varunbpatil/temporal-lens/inbound/grpc/workflows"
+	httpserver "github.com/varunbpatil/temporal-lens/inbound/http"
+	"github.com/varunbpatil/temporal-lens/types"
 	"github.com/varunbpatil/temporal-lens/version"
 )
 
+const shutdownTimeout = 10 * time.Second
+
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	// Configuration
 	cfg, err := config.Parse()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return 1
 	}
 
 	// Logging
@@ -29,18 +42,40 @@ func main() {
 		"build_time", version.BuildTime,
 	)
 
-	// Repository adapters
-	// OpenSearch, Temporal, etc.
+	// Context with signal cancellation
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	onFatal := func(err error) {
+		logger.Error("fatal service error", "error", err)
+		cancel()
+	}
 
-	// Domain services
-	// Workflow service, etc.
+	// Lifecycle manager
+	lm := types.NewManager(logger)
 
 	// Inbound adapters
-	// gRPC, HTTP, MCP servers, etc.
+	grpcSrv := grpcserver.NewServer(cfg.GRPC.Address, logger, onFatal)
+	grpcworkflows.Register(grpcSrv.Mux(), grpcworkflows.NewHandler(nil))
+	lm.Add("grpc", grpcSrv)
 
-	// Start server
-	const sleepDuration = 3600 * time.Second
-	time.Sleep(sleepDuration)
+	httpSrv := httpserver.NewServer(grpcSrv.Mux(), cfg.HTTP.Address, logger, onFatal)
+	lm.Add("http", httpSrv)
+
+	// Start all services
+	if startErr := lm.StartAll(ctx); startErr != nil {
+		logger.Error("startup failed", "error", startErr)
+
+		// Stop earlier services
+		cancel()
+		lm.StopAll(shutdownTimeout)
+
+		return 1
+	}
+
+	// Shutdown gracefully
+	<-ctx.Done()
+	lm.StopAll(shutdownTimeout)
+	return 0
 }
 
 func newHandler(cfg config.LogConfig) slog.Handler {

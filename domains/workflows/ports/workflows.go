@@ -7,15 +7,12 @@ import (
 	"iter"
 
 	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
+	"github.com/varunbpatil/temporal-lens/types"
 )
 
 // WorkflowService is the public API of the workflows domain. All other domains should interact with the workflows domain only through this public API.
 type WorkflowService interface {
-	// Start the workflow service
-	Start(ctx context.Context) error
-
-	// Stop the workflow service gracefully
-	Stop(ctx context.Context) error
+	types.StartStopper
 
 	// Search for workflows
 	Search(ctx context.Context, req SearchRequest) (SearchResponse, error)
