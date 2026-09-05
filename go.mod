@@ -4,6 +4,8 @@ go 1.27.1
 
 require (
 	connectrpc.com/connect v1.20.0
+	github.com/caarlos0/env/v11 v11.4.1
+	github.com/opensearch-project/opensearch-go/v5 v5.0.0-rc6
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
 	google.golang.org/protobuf v1.36.12
@@ -43,7 +45,6 @@ require (
 	github.com/moby/term v0.5.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
-	github.com/opensearch-project/opensearch-go/v5 v5.0.0-rc6 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.6 // indirect

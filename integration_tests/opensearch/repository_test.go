@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/varunbpatil/temporal-lens/config"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
 	"github.com/varunbpatil/temporal-lens/outbound/opensearch/workflows"
@@ -18,8 +19,10 @@ import (
 func newTestRepository(t *testing.T, schema types.Schema) *workflows.Repository {
 	t.Helper()
 	repo, err := workflows.NewRepository(t.Context(), workflows.WorkflowRepositoryParams{
-		Address: sharedAddr,
-		Schema:  schema,
+		Config: config.OpenSearchConfig{
+			Addresses: []string{sharedAddr},
+		},
+		Schema: schema,
 	})
 	require.NoError(t, err)
 	return repo

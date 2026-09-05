@@ -7,11 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/opensearch-project/opensearch-go/v5"
 	"github.com/opensearch-project/opensearch-go/v5/opensearchapi"
 
+	"github.com/varunbpatil/temporal-lens/config"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
 	os "github.com/varunbpatil/temporal-lens/outbound/opensearch"
@@ -26,19 +28,25 @@ type Repository struct {
 }
 
 type WorkflowRepositoryParams struct {
-	Address  string
-	Username string
-	Password string
-	Schema   types.Schema
+	Config config.OpenSearchConfig
+	Schema types.Schema
 }
 
 func NewRepository(_ context.Context, params WorkflowRepositoryParams) (*Repository, error) {
+	osConfig := opensearch.Config{
+		Addresses:          params.Config.Addresses,
+		Username:           params.Config.Username,
+		Password:           params.Config.Password,
+		InsecureSkipVerify: params.Config.InsecureSkipVerify,
+	}
+
+	if params.Config.APIKey != "" {
+		osConfig.Header = http.Header{}
+		osConfig.Header.Set("Authorization", "ApiKey "+params.Config.APIKey)
+	}
+
 	client, err := opensearchapi.NewClient(opensearchapi.Config{
-		Client: opensearch.Config{
-			Addresses: []string{params.Address},
-			Username:  params.Username,
-			Password:  params.Password,
-		},
+		Client: osConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("opensearch: creating client: %w", err)
