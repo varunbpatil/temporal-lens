@@ -2,6 +2,19 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 .NOTPARALLEL:
 
+# ------------------------------------
+#  Vars
+# ------------------------------------
+
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LDFLAGS := -ldflags "-X github.com/varunbpatil/temporal-lens/version.Version=$(VERSION) -X github.com/varunbpatil/temporal-lens/version.GitCommit=$(COMMIT) -X github.com/varunbpatil/temporal-lens/version.BuildTime=$(BUILD_TIME)"
+
+# ------------------------------------
+#  Help
+# ------------------------------------
+
 .PHONY: help
 help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "; prev = "#"} /^[a-zA-Z/_-]+:.*?## / { split($$1, a, "/"); key = (a[2] != "") ? a[1] : "_"; if (key != prev) { if (prev != "#") printf "\n"; prev = key } printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -12,11 +25,15 @@ help: ## Show this help message
 
 .PHONY: go/build
 go/build: ## Build the application
-	go build -o bin/temporal-lens .
+	go build $(LDFLAGS) -o bin/temporal-lens ./cmd/workflows
+
+.PHONY: go/build-ui
+go/build-ui: ## Build the application with embedded UI assets
+	go build -tags=ui $(LDFLAGS) -o bin/temporal-lens ./cmd/workflows
 
 .PHONY: go/run
 go/run: ## Run the application
-	go run .
+	go run ./cmd/workflows
 
 .PHONY: go/test
 go/test: ## Run unit tests
@@ -32,7 +49,7 @@ go/lint: ## Run linter
 
 .PHONY: go/fmt
 go/fmt: ## Format code
-	golangci-lint fmt --build-tags=all
+	golangci-lint fmt
 
 .PHONY: go/vet
 go/vet: ## Run go vet
@@ -91,3 +108,14 @@ ui/lint: ## Lint UI code
 ui/fmt: ## Format UI code
 	cd ui && npm run fmt
 
+# ------------------------------------
+#  Docker
+# ------------------------------------
+
+.PHONY: docker/build
+docker/build: ## Build Docker image
+	docker build \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg COMMIT=$(COMMIT) \
+		--build-arg BUILD_TIME=$(BUILD_TIME) \
+		-t temporal-lens .

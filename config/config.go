@@ -8,7 +8,13 @@ import (
 )
 
 type Config struct {
+	Log        LogConfig        `envPrefix:"LOG_"`
 	OpenSearch OpenSearchConfig `envPrefix:"OPENSEARCH_"`
+}
+
+type LogConfig struct {
+	Level  string `env:"LEVEL"  envDefault:"info"`
+	Format string `env:"FORMAT" envDefault:"text"`
 }
 
 type OpenSearchConfig struct {
