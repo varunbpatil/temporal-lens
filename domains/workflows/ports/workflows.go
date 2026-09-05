@@ -1,3 +1,5 @@
+// Package ports defines the interfaces (ports) for the workflows domain.
+// Adapters implement these interfaces to connect to external systems.
 package ports
 
 import (

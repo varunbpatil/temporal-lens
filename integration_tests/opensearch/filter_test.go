@@ -1,111 +1,21 @@
-//go:build integration
+//go:build integration || all
 
 package opensearch_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/varunbpatil/temporal-lens/outbound/opensearch"
 	"github.com/varunbpatil/temporal-lens/types"
 )
-
-var (
-	sharedAddr   string
-	sharedCtx    context.Context
-	sharedCancel context.CancelFunc
-)
-
-func TestMain(m *testing.M) {
-	sharedCtx, sharedCancel = context.WithCancel(context.Background())
-
-	req := testcontainers.ContainerRequest{
-		Image:        "opensearchproject/opensearch:3.8.0",
-		ExposedPorts: []string{"9200/tcp"},
-		Env: map[string]string{
-			"discovery.type":              "single-node",
-			"DISABLE_SECURITY_PLUGIN":     "true",
-			"DISABLE_INSTALL_DEMO_CONFIG": "true",
-			"OPENSEARCH_JAVA_OPTS":        "-Xms256m -Xmx256m",
-		},
-		WaitingFor: wait.ForHTTP("/_cluster/health").
-			WithPort("9200").
-			WithStartupTimeout(120 * time.Second),
-	}
-
-	container, err := testcontainers.GenericContainer(sharedCtx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "start container: %v\n", err)
-		os.Exit(1)
-	}
-
-	host, err := container.Host(sharedCtx)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get host: %v\n", err)
-		os.Exit(1)
-	}
-	port, err := container.MappedPort(sharedCtx, "9200")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "get port: %v\n", err)
-		os.Exit(1)
-	}
-
-	sharedAddr = fmt.Sprintf("http://%s:%s", host, port.Port())
-	createIndex(sharedAddr)
-	code := m.Run()
-	_ = container.Terminate(sharedCtx)
-	sharedCancel()
-	os.Exit(code)
-}
-
-func createIndex(addr string) {
-	mapping := `{
-		"mappings": {
-			"properties": {
-				"id":        { "type": "keyword" },
-				"status":    { "type": "keyword" },
-				"name":      { "type": "text" },
-				"attempts":  { "type": "integer" },
-				"paused":    { "type": "boolean" },
-				"score":     { "type": "double" },
-				"startTime": { "type": "date" },
-				"endTime":   { "type": "date" },
-				"namespace": { "type": "keyword" }
-			}
-		}
-	}`
-	req, err := http.NewRequest(http.MethodPut, addr+"/workflows", bytes.NewBufferString(mapping))
-	if err != nil {
-		panic(err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode >= 300 {
-		panic(fmt.Sprintf("create index failed (%d): %s", resp.StatusCode, body))
-	}
-}
 
 func validateQuery(t *testing.T, query map[string]any) {
 	t.Helper()

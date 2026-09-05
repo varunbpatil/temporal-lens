@@ -1,3 +1,4 @@
+// Package workflows implements the Temporal adapter for the workflows domain.
 package workflows
 
 import (

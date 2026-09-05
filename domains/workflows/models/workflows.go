@@ -1,3 +1,4 @@
+// Package models defines the domain types for the workflows domain.
 package models
 
 import (

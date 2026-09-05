@@ -1,3 +1,4 @@
+// Package service implements the workflows domain logic.
 package service
 
 import (

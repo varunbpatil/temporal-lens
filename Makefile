@@ -24,23 +24,23 @@ go/test: ## Run unit tests
 
 .PHONY: go/test-integration
 go/test-integration: ## Run integration tests
-	go test -race -tags=integration ./... -count=1
+	go test -race -tags=integration ./integration_tests/... -count=1
 
 .PHONY: go/lint
 go/lint: ## Run linter
-	golangci-lint run --fix
+	golangci-lint run --build-tags=all --fix
 
 .PHONY: go/fmt
 go/fmt: ## Format code
-	golangci-lint fmt
+	golangci-lint fmt --build-tags=all
 
 .PHONY: go/vet
 go/vet: ## Run go vet
-	go vet ./...
+	go vet -tags=all ./...
 
 .PHONY: go/fix
 go/fix: ## Run go fix
-	go fix ./...
+	go fix -tags=all ./...
 
 .PHONY: go/tidy
 go/tidy: ## Tidy and verify go.mod

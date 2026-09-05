@@ -1,8 +1,23 @@
 package ports
 
-type SearchRequest struct{}
+import (
+	"time"
 
-type SearchResponse struct{}
+	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
+	"github.com/varunbpatil/temporal-lens/types"
+)
+
+type SearchRequest struct {
+	Filter     *types.Filter
+	Sort       *types.Sort
+	Pagination *types.Pagination
+}
+
+type SearchResponse struct {
+	Workflows []*models.Workflow
+	TotalHits int64
+	Took      time.Duration
+}
 
 type SignalRequest struct{}
 
