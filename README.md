@@ -22,8 +22,7 @@ This project follows hexagonal architecture (ports-and-adapters pattern).
 ├── buf.gen.yaml               # Buf code generation config
 │
 ├── config/                    # App configuration
-│   └── config.go
-│
+├── mocks/                     # Generated GoMock implementations
 ├── types/                     # Custom type definitions
 │
 ├── protos/                    # Protobuf definitions
@@ -33,11 +32,8 @@ This project follows hexagonal architecture (ports-and-adapters pattern).
 ├── domains/                   # App domains
 │   └── workflows/
 │       ├── models/            # Domain models
-│       │   └── workflows.go
 │       ├── ports/             # Domain ports
-│       │   └── workflows.go
 │       ├── service/           # Domain service
-│       │   └── workflows.go
 │       └── errors.go          # Domain errors
 │
 ├── inbound/                   # Inbound adapters
@@ -74,33 +70,39 @@ docker run --env-file .env temporal-lens
 
 ### Environment Variables
 
-| Variable                               | Description                                                           | Required    | Default  |
-| -------------------------------------- | --------------------------------------------------------------------- | ----------- | -------- |
-| `LOG_LEVEL`                            | Log level (`debug`, `info`, `warn`, `error`)                          | No          | `info`   |
-| `LOG_FORMAT`                           | Log format (`text`, `json`)                                           | No          | `text`   |
-| `GRPC_ADDRESS`                         | gRPC server listen address                                            | No          | `:50051` |
-| `HTTP_ADDRESS`                         | HTTP server listen address                                            | No          | `:8080`  |
-| `OPENSEARCH_ADDRESSES`                 | Comma-separated OpenSearch addresses                                  | Yes         |          |
-| `OPENSEARCH_USERNAME`                  | OpenSearch username                                                   | No          |          |
-| `OPENSEARCH_PASSWORD`                  | OpenSearch password                                                   | No          |          |
-| `OPENSEARCH_API_KEY`                   | OpenSearch API key (alternative to username/password)                 | No          |          |
-| `OPENSEARCH_INSECURE_SKIP_VERIFY`      | Skip TLS certificate verification                                     | No          | `false`  |
-| `TEMPORAL_NAMESPACES`                  | Comma-separated Temporal namespaces                                   | Yes         |          |
-| `TEMPORAL_CLOUD`                       | Use Temporal Cloud endpoints                                          | No          | `false`  |
-| `TEMPORAL_ACCOUNT`                     | Temporal Cloud account name                                           | Conditional |          |
-| `TEMPORAL_ENDPOINT`                    | Self-hosted Temporal gRPC endpoint                                    | Conditional |          |
-| `TEMPORAL_BASE_URL`                    | Temporal UI base URL                                                  | Yes         |          |
-| `TEMPORAL_API_KEY`                     | API key sent as a Bearer token                                        | No          |          |
-| `TEMPORAL_TLS`                         | Enable TLS for a self-hosted endpoint                                 | No          | `false`  |
-| `TEMPORAL_INSECURE_SKIP_VERIFY`        | Skip Temporal TLS certificate verification                            | No          | `false`  |
-| `TEMPORAL_SERVER_NAME`                 | TLS server name override                                              | No          |          |
-| `TEMPORAL_CA_FILE`                     | PEM file containing trusted Temporal certificate authorities          | No          |          |
-| `TEMPORAL_CLIENT_CERT_FILE`            | Client certificate file for mTLS                                      | No          |          |
-| `TEMPORAL_CLIENT_KEY_FILE`             | Client private-key file for mTLS                                      | No          |          |
-| `TEMPORAL_CONN_POOL_SIZE`              | gRPC connections per namespace                                        | No          | `1`      |
-| `TEMPORAL_BULK_ACTIONS_PER_SECOND`     | Maximum operations/sec for Signal, Terminate, and Reset per namespace | No          | `8`      |
-| `TEMPORAL_LIST_REQUESTS_PER_SECOND`    | Maximum workflow list RPCs per second per namespace                   | No          | `8`      |
-| `TEMPORAL_HISTORY_REQUESTS_PER_SECOND` | Maximum workflow history RPCs per second per namespace                | No          | `8`      |
+| Variable                               | Description                                                           | Required    | Default      |
+| -------------------------------------- | --------------------------------------------------------------------- | ----------- | --------     |
+| `LOG_LEVEL`                            | Log level (`debug`, `info`, `warn`, `error`)                          | No          | `info`       |
+| `LOG_FORMAT`                           | Log format (`text`, `json`)                                           | No          | `text`       |
+| `GRPC_ADDRESS`                         | gRPC server listen address                                            | No          | `:50051`     |
+| `HTTP_ADDRESS`                         | HTTP server listen address                                            | No          | `:8080`      |
+| `OPENSEARCH_ADDRESSES`                 | Comma-separated OpenSearch addresses                                  | Yes         |              |
+| `OPENSEARCH_USERNAME`                  | OpenSearch username                                                   | No          |              |
+| `OPENSEARCH_PASSWORD`                  | OpenSearch password                                                   | No          |              |
+| `OPENSEARCH_API_KEY`                   | OpenSearch API key (alternative to username/password)                 | No          |              |
+| `OPENSEARCH_INSECURE_SKIP_VERIFY`      | Skip TLS certificate verification                                     | No          | `false`      |
+| `TEMPORAL_NAMESPACES`                  | Comma-separated Temporal namespaces                                   | Yes         |              |
+| `TEMPORAL_CLOUD`                       | Use Temporal Cloud endpoints                                          | No          | `false`      |
+| `TEMPORAL_ACCOUNT`                     | Temporal Cloud account name                                           | Conditional |              |
+| `TEMPORAL_ENDPOINT`                    | Self-hosted Temporal gRPC endpoint                                    | Conditional |              |
+| `TEMPORAL_BASE_URL`                    | Temporal UI base URL                                                  | Yes         |              |
+| `TEMPORAL_API_KEY`                     | API key sent as a Bearer token                                        | No          |              |
+| `TEMPORAL_TLS`                         | Enable TLS for a self-hosted endpoint                                 | No          | `false`      |
+| `TEMPORAL_INSECURE_SKIP_VERIFY`        | Skip Temporal TLS certificate verification                            | No          | `false`      |
+| `TEMPORAL_SERVER_NAME`                 | TLS server name override                                              | No          |              |
+| `TEMPORAL_CA_FILE`                     | PEM file containing trusted Temporal certificate authorities          | No          |              |
+| `TEMPORAL_CLIENT_CERT_FILE`            | Client certificate file for mTLS                                      | No          |              |
+| `TEMPORAL_CLIENT_KEY_FILE`             | Client private-key file for mTLS                                      | No          |              |
+| `TEMPORAL_CONN_POOL_SIZE`              | gRPC connections per namespace                                        | No          | `1`          |
+| `TEMPORAL_BULK_ACTIONS_PER_SECOND`     | Maximum operations/sec for Signal, Terminate, and Reset per namespace | No          | `8`          |
+| `TEMPORAL_LIST_REQUESTS_PER_SECOND`    | Maximum workflow list RPCs per second per namespace                   | No          | `8`          |
+| `TEMPORAL_HISTORY_REQUESTS_PER_SECOND` | Maximum workflow history RPCs per second per namespace                | No          | `8`          |
+| `TEMPORAL_INDEX_PREFIX`                | Prefix for daily OpenSearch workflow shard indexes                    | No          | `workflows-` |
+| `TEMPORAL_RETENTION_PERIOD`            | Retain workflow shards for this duration                              | No          | `720h`       |
+| `TEMPORAL_RETENTION_CRON`              | UTC five-field cron schedule for deleting expired workflow shards     | No          | `0 0 * * *`  |
+| `TEMPORAL_DATA_WORKERS`                | Concurrent workers fetching workflow histories                        | No          | `8`          |
+| `TEMPORAL_INDEX_WORKERS`               | Concurrent workers adding workflow batches to OpenSearch              | No          | `4`          |
+| `TEMPORAL_INDEX_BATCH_SIZE`            | Workflows per OpenSearch bulk request                                 | No          | `100`        |
 
 ## License
 

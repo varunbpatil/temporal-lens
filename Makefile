@@ -64,6 +64,10 @@ go/tidy: ## Tidy and verify go.mod
 	go mod tidy
 	go mod verify
 
+.PHONY: go/mocks
+go/mocks: ## Generate Go interface mocks
+	mockgen -destination=mocks/workflows.go -package=mocks github.com/varunbpatil/temporal-lens/domains/workflows/ports Mapper,WorkflowService,WorkflowSource,WorkflowRepository
+
 # ------------------------------------
 #  Protobuf
 # ------------------------------------

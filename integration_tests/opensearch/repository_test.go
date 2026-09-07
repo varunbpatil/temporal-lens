@@ -100,7 +100,7 @@ func TestAddAndSearch(t *testing.T) {
 
 	refreshIndex(index)
 
-	resp, err := repo.Search(t.Context(), index, ports.SearchRequest{
+	resp, err := repo.Search(t.Context(), []string{index}, ports.SearchRequest{
 		Filter: &types.Filter{Cond: &types.Condition{
 			Field: "metadata.status", Operator: types.OpEQ,
 			Value: types.Value{String: new("RUNNING")},
@@ -124,9 +124,23 @@ func TestListIndexes(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = repo.DeleteIndex(t.Context(), index) })
 
+	err = repo.Add(t.Context(), index, []*models.Workflow{{ID: "wf-1"}})
+	require.NoError(t, err)
+	refreshIndex(index)
+
 	indexes, err := repo.ListIndexes(t.Context())
 	require.NoError(t, err)
-	assert.Contains(t, indexes, index)
+	var documentCount int64
+	var found bool
+	for _, listedIndex := range indexes {
+		if listedIndex.Name == index {
+			documentCount = listedIndex.DocumentCount
+			found = true
+			break
+		}
+	}
+	require.True(t, found)
+	assert.EqualValues(t, 1, documentCount)
 }
 
 func TestCreateIndex_AlreadyExists_IsDirectError(t *testing.T) {

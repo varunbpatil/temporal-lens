@@ -15,31 +15,42 @@ import (
 	historypb "go.temporal.io/api/history/v1"
 	workflowpb "go.temporal.io/api/workflow/v1"
 	workflowservice "go.temporal.io/api/workflowservice/v1"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/varunbpatil/temporal-lens/config"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
+	"github.com/varunbpatil/temporal-lens/mocks"
 	temporalworkflows "github.com/varunbpatil/temporal-lens/outbound/temporal/workflows"
-	"github.com/varunbpatil/temporal-lens/types"
 )
 
 func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	t.Parallel()
 
+	controller := gomock.NewController(t)
+	mapper := mocks.NewMockMapper(controller)
+	mapper.EXPECT().
+		Map(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(key string, value any) ports.Field {
+			return ports.Field{Name: strings.TrimPrefix(key, "$."), Value: value}
+		}).
+		AnyTimes()
+
 	start := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
 	events := []*historypb.HistoryEvent{
 		workflowStartedEvent(1, start, `{"customer":{"id":"customer-1"},"wrapped":"{\"nested\":\"value\"}"}`),
-		activityScheduledEvent(2, start.Add(time.Minute), "charge", "ChargeCard", `{"amount":42}`),
-		activityStartedEvent(3, start.Add(2*time.Minute), 2, 1, ""),
-		activityFailedEvent(4, start.Add(3*time.Minute), 2, "payment declined"),
-		activityStartedEvent(5, start.Add(4*time.Minute), 2, 2, "payment declined"),
-		activityCompletedEvent(6, start.Add(5*time.Minute), 2, `{"receipt":"receipt-1"}`),
-		childInitiatedEvent(7, start.Add(6*time.Minute), `{"order":"order-1"}`),
-		childStartedEvent(8, start.Add(7*time.Minute), 7),
-		childCompletedEvent(9, start.Add(8*time.Minute), 7, `{"status":"complete"}`),
-		workflowCompletedEvent(10, start.Add(9*time.Minute), `{"status":"complete"}`),
+		workflowTaskCompletedEvent(2, start.Add(30*time.Second)),
+		activityScheduledEvent(3, start.Add(time.Minute), "charge", "ChargeCard", `{"amount":42}`),
+		activityStartedEvent(4, start.Add(2*time.Minute), 3, 1, ""),
+		activityFailedEvent(5, start.Add(3*time.Minute), 3, "payment declined"),
+		activityStartedEvent(6, start.Add(4*time.Minute), 3, 2, "payment declined"),
+		activityCompletedEvent(7, start.Add(5*time.Minute), 3, `{"receipt":"receipt-1"}`),
+		childInitiatedEvent(8, start.Add(6*time.Minute), `{"order":"order-1"}`),
+		childStartedEvent(9, start.Add(7*time.Minute), 8),
+		childCompletedEvent(10, start.Add(8*time.Minute), 8, `{"status":"complete"}`),
+		workflowCompletedEvent(11, start.Add(9*time.Minute), `{"status":"complete"}`),
 	}
 	listener, err := net.Listen("unix", filepath.Join(t.TempDir(), "temporal.sock"))
 	if err != nil {
@@ -66,7 +77,7 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 			ConnPoolSize:             1,
 			BulkActionsPerSecond:     1,
 			ListRequestsPerSecond:    1,
-			HistoryRequestsPerSecond: 1,
+			HistoryRequestsPerSecond: 100,
 			BaseURL:                  baseURL,
 		},
 	})
@@ -81,12 +92,26 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 			WorkflowID: "parent-id",
 			RunID:      "parent-run",
 		}},
-		pathMapper{},
+		mapper,
 	) {
 		require.NoError(t, streamErr)
 		data = result
 	}
 	require.NotNil(t, data)
+	resetEventID, err := source.ResolveWorkflowTaskFinishEventID(
+		context.Background(),
+		models.WorkflowMetadata{Namespace: "parent-namespace", WorkflowID: "parent-id", RunID: "parent-run"},
+		ports.ResetSpecActivity{Name: "charge"},
+	)
+	require.NoError(t, err)
+	require.EqualValues(t, 2, resetEventID)
+	resetEventIDByName, err := source.ResolveWorkflowTaskFinishEventID(
+		context.Background(),
+		models.WorkflowMetadata{Namespace: "parent-namespace", WorkflowID: "parent-id", RunID: "parent-run"},
+		ports.ResetSpecActivity{Name: "ChargeCard"},
+	)
+	require.NoError(t, err)
+	require.EqualValues(t, 2, resetEventIDByName)
 
 	require.Equal(t, map[string][]any{
 		"customer.id":    {"customer-1"},
@@ -140,16 +165,6 @@ func (server *workflowDataServer) DescribeWorkflowExecution(
 	return server.description, nil
 }
 
-type pathMapper struct{}
-
-func (pathMapper) Schema() types.Schema {
-	return nil
-}
-
-func (pathMapper) Map(key string, value any) models.Field {
-	return models.Field{Name: strings.TrimPrefix(key, "$."), Value: value}
-}
-
 func payload(data string) *commonpb.Payloads {
 	return &commonpb.Payloads{Payloads: []*commonpb.Payload{{Data: []byte(data)}}}
 }
@@ -162,6 +177,16 @@ func workflowStartedEvent(eventID int64, eventTime time.Time, input string) *his
 			WorkflowExecutionStartedEventAttributes: &historypb.WorkflowExecutionStartedEventAttributes{
 				Input: payload(input),
 			},
+		},
+	}
+}
+
+func workflowTaskCompletedEvent(eventID int64, eventTime time.Time) *historypb.HistoryEvent {
+	return &historypb.HistoryEvent{
+		EventId:   eventID,
+		EventTime: timestamppb.New(eventTime),
+		Attributes: &historypb.HistoryEvent_WorkflowTaskCompletedEventAttributes{
+			WorkflowTaskCompletedEventAttributes: &historypb.WorkflowTaskCompletedEventAttributes{},
 		},
 	}
 }

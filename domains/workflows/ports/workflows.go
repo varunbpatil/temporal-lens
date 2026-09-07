@@ -26,8 +26,8 @@ type WorkflowService interface {
 	// Terminate workflows
 	Terminate(ctx context.Context, req TerminateRequest) error
 
-	// List indexes
-	ListIndexes(ctx context.Context) ([]string, error)
+	// List workflow shard indexes and their document counts.
+	ListIndexes(ctx context.Context) ([]IndexInfo, error)
 
 	// Delete an entire index of workflows
 	DeleteIndex(ctx context.Context, index string) error
@@ -45,8 +45,16 @@ type WorkflowSource interface {
 	StreamWorkflowData(
 		ctx context.Context,
 		req StreamWorkflowDataRequest,
-		mapper models.Mapper,
+		mapper Mapper,
 	) iter.Seq2[*models.WorkflowData, error]
+
+	// ResolveWorkflowTaskFinishEventID finds the resettable workflow-task event
+	// associated with an activity in one workflow execution.
+	ResolveWorkflowTaskFinishEventID(
+		ctx context.Context,
+		metadata models.WorkflowMetadata,
+		activity ResetSpecActivity,
+	) (int64, error)
 
 	// Signal workflows
 	Signal(ctx context.Context, req InternalSignalRequest) error
@@ -69,12 +77,26 @@ type WorkflowRepository interface {
 	// Delete an existing index
 	DeleteIndex(ctx context.Context, index string) error
 
-	// List indexes
-	ListIndexes(ctx context.Context) ([]string, error)
+	// List indexes and their document counts.
+	ListIndexes(ctx context.Context) ([]IndexInfo, error)
 
 	// Add workflows to an existing index
 	Add(ctx context.Context, index string, workflows []*models.Workflow) error
 
-	// Search workflows in the respository
-	Search(ctx context.Context, index string, req SearchRequest) (SearchResponse, error)
+	// Search workflows across the supplied indexes.
+	Search(ctx context.Context, indexes []string, req SearchRequest) (SearchResponse, error)
+}
+
+// Mapper transforms flattened Temporal JSON payload key-value pairs into
+// searchable fields. The adapter prefixes returned field names with context
+// (for example, "amount" becomes "inputs.amount" when indexing workflow inputs).
+type Mapper interface {
+	// Schema returns the set of fields this mapper produces, used for filter
+	// validation at query time.
+	Schema() types.Schema
+
+	// Map takes a flattened JSON path (for example, "$.foo.bar.0.baz") and its
+	// value, returning a field name and value to index. Multiple calls returning
+	// the same Name are aggregated into a list by the caller.
+	Map(key string, value any) Field
 }

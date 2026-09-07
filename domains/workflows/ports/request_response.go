@@ -7,10 +7,6 @@ import (
 	"github.com/varunbpatil/temporal-lens/types"
 )
 
-// ---------------------------------------------
-// Search
-// ---------------------------------------------.
-
 type SearchRequest struct {
 	// Search filter
 	Filter *types.Filter
@@ -31,11 +27,10 @@ type SearchResponse struct {
 
 	// Amount of time the search took
 	Took time.Duration
-}
 
-// ---------------------------------------------
-// Signal
-// ---------------------------------------------.
+	// Opaque cursor for the next page, empty when this is the final page.
+	NextCursor string
+}
 
 type SignalRequest struct {
 	// Workflow spec
@@ -63,10 +58,6 @@ type InternalSignalRequest struct {
 	Payload []byte
 }
 
-// ---------------------------------------------
-// Reset
-// ---------------------------------------------.
-
 type ResetRequest struct {
 	// Workflow spec
 	WorkflowSpec WorkflowSpec
@@ -93,10 +84,6 @@ type InternalResetRequest struct {
 	Reason string
 }
 
-// ---------------------------------------------
-// Terminate
-// ---------------------------------------------.
-
 type TerminateRequest struct {
 	// Workflow spec
 	WorkflowSpec WorkflowSpec
@@ -117,10 +104,6 @@ type InternalTerminateRequest struct {
 	Reason string
 }
 
-// ---------------------------------------------
-// Streaming
-// ---------------------------------------------.
-
 type StreamWorkflowMetadataRequest struct {
 	// Temporal namespace
 	Namespace string
@@ -135,10 +118,6 @@ type StreamWorkflowMetadataRequest struct {
 type StreamWorkflowDataRequest struct {
 	Metadata *models.WorkflowMetadata
 }
-
-// ---------------------------------------------
-// Helper types
-// ---------------------------------------------.
 
 type ListWorkflowsType string
 
@@ -174,7 +153,7 @@ type ExecutionInfo struct {
 
 // ResetSpec specifies the exact point within a workflow that the workflow should be reset to.
 //
-// It can be either an event ID or an activity name.
+// It can be either an event ID or an activity ID or type name.
 // Exactly one of EventID or ResetSpecActivity is non-nil.
 type ResetSpec struct {
 	// Event ID to reset to
@@ -187,9 +166,9 @@ type ResetSpec struct {
 // ResetSpecActivity specifies the activity details that the workflow should be reset to.
 //
 // Most commonly used in cases where the event ID is likely to be different for each workflow.
-// The domain service will resolve the activity name to the correct event ID per workflow.
+// The domain service will resolve the activity ID or type name to the correct event ID per workflow.
 type ResetSpecActivity struct {
-	// Activity name
+	// Activity ID or type name
 	Name string
 
 	// If the same activity is executed multiple times within a workflow,
@@ -203,3 +182,15 @@ const (
 	ResetSpecActivityPositionEarliest ResetSpecActivityPosition = "earliest"
 	ResetSpecActivityPositionLatest   ResetSpecActivityPosition = "latest"
 )
+
+// IndexInfo identifies an OpenSearch index and its current live document count.
+type IndexInfo struct {
+	Name          string
+	DocumentCount int64
+}
+
+// Field represents a single mapped output from the [Mapper].
+type Field struct {
+	Name  string
+	Value any
+}

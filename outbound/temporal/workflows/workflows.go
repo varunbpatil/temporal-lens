@@ -351,7 +351,7 @@ func listWorkflowMetadataPage(
 func (s *Source) StreamWorkflowData(
 	ctx context.Context,
 	req ports.StreamWorkflowDataRequest,
-	mapper models.Mapper,
+	mapper ports.Mapper,
 ) iter.Seq2[*models.WorkflowData, error] {
 	return func(yield func(*models.WorkflowData, error) bool) {
 		if req.Metadata == nil {
@@ -366,6 +366,112 @@ func (s *Source) StreamWorkflowData(
 		data, dataErr := streamWorkflowData(ctx, pool.client(), *req.Metadata, mapper, pool.dataLimiter)
 		yield(data, dataErr)
 	}
+}
+
+// ResolveWorkflowTaskFinishEventID finds the completed workflow task that scheduled
+// the requested activity, which is the event type required by Temporal's reset API.
+func (s *Source) ResolveWorkflowTaskFinishEventID(
+	ctx context.Context,
+	metadata models.WorkflowMetadata,
+	activity ports.ResetSpecActivity,
+) (int64, error) {
+	if metadata.Namespace == "" || metadata.WorkflowID == "" || metadata.RunID == "" {
+		return 0, errors.New("namespace, workflow ID, and run ID are required")
+	}
+	if activity.Name == "" {
+		return 0, errors.New("reset activity ID or name is required")
+	}
+	if activity.Position != "" &&
+		activity.Position != ports.ResetSpecActivityPositionEarliest &&
+		activity.Position != ports.ResetSpecActivityPositionLatest {
+		return 0, fmt.Errorf("unknown reset activity position %q", activity.Position)
+	}
+	pool, err := s.clientPool(metadata.Namespace)
+	if err != nil {
+		return 0, err
+	}
+	return workflowTaskFinishEventID(ctx, pool.client(), metadata, activity, pool.dataLimiter)
+}
+
+// workflowTaskFinishEventID scans every history page to find the workflow task
+// completed immediately before the selected activity was scheduled.
+func workflowTaskFinishEventID(
+	ctx context.Context,
+	client workflowservice.WorkflowServiceClient,
+	metadata models.WorkflowMetadata,
+	activity ports.ResetSpecActivity,
+	limiter *rate.Limiter,
+) (int64, error) {
+	var token []byte
+	var latestEventID int64
+	var lastWorkflowTaskID int64
+	for {
+		response, err := workflowHistoryPage(ctx, client, metadata, token, limiter)
+		if err != nil {
+			return 0, err
+		}
+		for _, event := range response.GetHistory().GetEvents() {
+			var matched bool
+			var eventErr error
+			lastWorkflowTaskID, matched, eventErr = resetTaskForEvent(event, activity, lastWorkflowTaskID)
+			if eventErr != nil {
+				return 0, eventErr
+			}
+			if !matched {
+				continue
+			}
+			if activity.Position == ports.ResetSpecActivityPositionEarliest {
+				return lastWorkflowTaskID, nil
+			}
+			latestEventID = lastWorkflowTaskID
+		}
+		token = response.GetNextPageToken()
+		if len(token) == 0 {
+			break
+		}
+	}
+	if latestEventID == 0 {
+		return 0, fmt.Errorf("activity ID or name %q was not found in workflow history", activity.Name)
+	}
+	return latestEventID, nil
+}
+
+// resetTaskForEvent updates the last task completion and reports matching activity schedules.
+func resetTaskForEvent(
+	event *historypb.HistoryEvent,
+	activity ports.ResetSpecActivity,
+	lastWorkflowTaskID int64,
+) (int64, bool, error) {
+	if event.GetWorkflowTaskCompletedEventAttributes() != nil {
+		return event.GetEventId(), false, nil
+	}
+	attributes := event.GetActivityTaskScheduledEventAttributes()
+	if attributes.GetActivityId() != activity.Name && attributes.GetActivityType().GetName() != activity.Name {
+		return lastWorkflowTaskID, false, nil
+	}
+	if lastWorkflowTaskID == 0 {
+		return 0, false, fmt.Errorf("workflow task completed before activity %q was not found", activity.Name)
+	}
+	return lastWorkflowTaskID, true, nil
+}
+
+// workflowHistoryPage obtains one complete decoded history page under the namespace data limit.
+func workflowHistoryPage(
+	ctx context.Context,
+	client workflowservice.WorkflowServiceClient,
+	metadata models.WorkflowMetadata,
+	token []byte,
+	limiter *rate.Limiter,
+) (*workflowservice.GetWorkflowExecutionHistoryResponse, error) {
+	if err := limiter.Wait(ctx); err != nil {
+		return nil, err
+	}
+	return client.GetWorkflowExecutionHistory(ctx, &workflowservice.GetWorkflowExecutionHistoryRequest{
+		Namespace:       metadata.Namespace,
+		Execution:       &commonpb.WorkflowExecution{WorkflowId: metadata.WorkflowID, RunId: metadata.RunID},
+		MaximumPageSize: workflowDataPageSize,
+		NextPageToken:   token,
+	})
 }
 
 type workflowDataBuilder struct {
@@ -398,7 +504,7 @@ func streamWorkflowData(
 	ctx context.Context,
 	client workflowservice.WorkflowServiceClient,
 	metadata models.WorkflowMetadata,
-	mapper models.Mapper,
+	mapper ports.Mapper,
 	limiter *rate.Limiter,
 ) (*models.WorkflowData, error) {
 	// History gives the complete lifecycle; Describe supplies a current snapshot of pending work.
@@ -428,24 +534,13 @@ func (b *workflowDataBuilder) loadHistory(
 	ctx context.Context,
 	client workflowservice.WorkflowServiceClient,
 	metadata models.WorkflowMetadata,
-	mapper models.Mapper,
+	mapper ports.Mapper,
 	limiter *rate.Limiter,
 ) error {
 	var token []byte
 	for {
 		// A workflow history can be much larger than one response, so consume every page.
-		if err := limiter.Wait(ctx); err != nil {
-			return err
-		}
-		response, err := client.GetWorkflowExecutionHistory(
-			ctx,
-			&workflowservice.GetWorkflowExecutionHistoryRequest{
-				Namespace:       metadata.Namespace,
-				Execution:       &commonpb.WorkflowExecution{WorkflowId: metadata.WorkflowID, RunId: metadata.RunID},
-				MaximumPageSize: workflowDataPageSize,
-				NextPageToken:   token,
-			},
-		)
+		response, err := workflowHistoryPage(ctx, client, metadata, token, limiter)
 		if err != nil {
 			return err
 		}
@@ -460,7 +555,7 @@ func (b *workflowDataBuilder) loadHistory(
 }
 
 // addEvents applies a history page in Temporal's chronological event order.
-func (b *workflowDataBuilder) addEvents(events []*historypb.HistoryEvent, mapper models.Mapper) error {
+func (b *workflowDataBuilder) addEvents(events []*historypb.HistoryEvent, mapper ports.Mapper) error {
 	for _, event := range events {
 		if err := b.addEvent(event, mapper); err != nil {
 			return fmt.Errorf("extract workflow history event %d: %w", event.GetEventId(), err)
@@ -470,7 +565,7 @@ func (b *workflowDataBuilder) addEvents(events []*historypb.HistoryEvent, mapper
 }
 
 // addEvent routes one history event to each relevant lifecycle extractor.
-func (b *workflowDataBuilder) addEvent(event *historypb.HistoryEvent, mapper models.Mapper) error {
+func (b *workflowDataBuilder) addEvent(event *historypb.HistoryEvent, mapper ports.Mapper) error {
 	if err := b.addWorkflowEvent(event, mapper); err != nil {
 		return err
 	}
@@ -484,7 +579,7 @@ func (b *workflowDataBuilder) addEvent(event *historypb.HistoryEvent, mapper mod
 }
 
 // addWorkflowEvent extracts parent workflow inputs, outputs and errors.
-func (b *workflowDataBuilder) addWorkflowEvent(event *historypb.HistoryEvent, mapper models.Mapper) error {
+func (b *workflowDataBuilder) addWorkflowEvent(event *historypb.HistoryEvent, mapper ports.Mapper) error {
 	if attributes := event.GetWorkflowExecutionStartedEventAttributes(); attributes != nil {
 		inputs, err := mappedPayloads(attributes.GetInput(), mapper)
 		if err != nil {
@@ -515,7 +610,7 @@ func (b *workflowDataBuilder) addWorkflowEvent(event *historypb.HistoryEvent, ma
 }
 
 // addActivityEvent reconciles activity lifecycle events with their scheduled activity.
-func (b *workflowDataBuilder) addActivityEvent(event *historypb.HistoryEvent, mapper models.Mapper) error {
+func (b *workflowDataBuilder) addActivityEvent(event *historypb.HistoryEvent, mapper ports.Mapper) error {
 	if attributes := event.GetActivityTaskScheduledEventAttributes(); attributes != nil {
 		return b.addScheduledActivity(event.GetEventId(), attributes, mapper)
 	}
@@ -557,7 +652,7 @@ func (b *workflowDataBuilder) addActivityEvent(event *historypb.HistoryEvent, ma
 func (b *workflowDataBuilder) addScheduledActivity(
 	eventID int64,
 	attributes *historypb.ActivityTaskScheduledEventAttributes,
-	mapper models.Mapper,
+	mapper ports.Mapper,
 ) error {
 	// The scheduled event is the stable join key for all subsequent activity events.
 	inputs, err := mappedPayloads(attributes.GetInput(), mapper)
@@ -580,7 +675,7 @@ func (b *workflowDataBuilder) completeActivity(
 	scheduledEventID int64,
 	eventTime *timestamppb.Timestamp,
 	payloads *commonpb.Payloads,
-	mapper models.Mapper,
+	mapper ports.Mapper,
 ) error {
 	activity := b.activity(scheduledEventID)
 	if activity == nil {
@@ -620,7 +715,7 @@ func (b *workflowDataBuilder) activity(scheduledEventID int64) *models.Activity 
 }
 
 // addChildWorkflowEvent reconciles child workflow lifecycle events with their initiation.
-func (b *workflowDataBuilder) addChildWorkflowEvent(event *historypb.HistoryEvent, mapper models.Mapper) error {
+func (b *workflowDataBuilder) addChildWorkflowEvent(event *historypb.HistoryEvent, mapper ports.Mapper) error {
 	// Child events use the initiating event ID in the same way activity events use their
 	// scheduling event ID, so each outcome can be reconciled with its original input.
 	if attributes := event.GetStartChildWorkflowExecutionInitiatedEventAttributes(); attributes != nil {
@@ -684,7 +779,7 @@ func (b *workflowDataBuilder) addChildWorkflowEvent(event *historypb.HistoryEven
 func (b *workflowDataBuilder) addInitiatedChildWorkflow(
 	eventID int64,
 	attributes *historypb.StartChildWorkflowExecutionInitiatedEventAttributes,
-	mapper models.Mapper,
+	mapper ports.Mapper,
 ) error {
 	inputs, err := mappedPayloads(attributes.GetInput(), mapper)
 	if err != nil {
@@ -710,7 +805,7 @@ func (b *workflowDataBuilder) completeChildWorkflow(
 	initiatedEventID int64,
 	eventTime *timestamppb.Timestamp,
 	payloads *commonpb.Payloads,
-	mapper models.Mapper,
+	mapper ports.Mapper,
 ) error {
 	child := b.child(initiatedEventID)
 	if child == nil {
@@ -795,7 +890,7 @@ func (b *workflowDataBuilder) hasChild(workflowID string) bool {
 }
 
 // mappedPayloads decodes Temporal payloads and groups values by the mapper's field names.
-func mappedPayloads(payloads *commonpb.Payloads, mapper models.Mapper) (map[string][]any, error) {
+func mappedPayloads(payloads *commonpb.Payloads, mapper ports.Mapper) (map[string][]any, error) {
 	fields := make(map[string][]any)
 	if mapper == nil {
 		return fields, nil

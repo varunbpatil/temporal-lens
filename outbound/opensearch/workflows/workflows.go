@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/opensearch-project/opensearch-go/v5"
@@ -101,18 +102,23 @@ func (r *Repository) DeleteIndex(ctx context.Context, index string) error {
 	return nil
 }
 
-// ListIndexes lists all workflow indexes.
-func (r *Repository) ListIndexes(ctx context.Context) ([]string, error) {
+// ListIndexes lists all workflow indexes with their current live document counts.
+func (r *Repository) ListIndexes(ctx context.Context) ([]ports.IndexInfo, error) {
 	resp, err := r.client.Cat.Indices(ctx, &opensearchapi.CatIndicesReq{})
 	if err != nil {
 		return nil, fmt.Errorf("opensearch: listing indexes: %w", err)
 	}
 
-	indexes := make([]string, 0, len(resp.Records))
+	indexes := make([]ports.IndexInfo, 0, len(resp.Records))
 	for _, rec := range resp.Records {
-		if rec.Index != nil {
-			indexes = append(indexes, *rec.Index)
+		if rec.Index == nil || rec.DocsCount == nil {
+			continue
 		}
+		documentCount, parseErr := strconv.ParseInt(*rec.DocsCount, 10, 64)
+		if parseErr != nil {
+			return nil, fmt.Errorf("opensearch: parse document count for index %q: %w", *rec.Index, parseErr)
+		}
+		indexes = append(indexes, ports.IndexInfo{Name: *rec.Index, DocumentCount: documentCount})
 	}
 
 	return indexes, nil
@@ -162,7 +168,11 @@ func (r *Repository) Add(ctx context.Context, index string, workflows []*models.
 }
 
 // Search searches for workflows matching the filter, with sort and pagination.
-func (r *Repository) Search(ctx context.Context, index string, req ports.SearchRequest) (ports.SearchResponse, error) {
+func (r *Repository) Search(
+	ctx context.Context,
+	indexes []string,
+	req ports.SearchRequest,
+) (ports.SearchResponse, error) {
 	query, err := buildSearchBody(req)
 	if err != nil {
 		return ports.SearchResponse{}, fmt.Errorf("opensearch: building query: %w", err)
@@ -174,7 +184,7 @@ func (r *Repository) Search(ctx context.Context, index string, req ports.SearchR
 	}
 
 	resp, err := r.client.Search(ctx, &opensearchapi.SearchReq{
-		Indices:    []string{index},
+		Indices:    indexes,
 		BodyReader: bytes.NewReader(body),
 	})
 	if err != nil {
@@ -196,10 +206,25 @@ func (r *Repository) Search(ctx context.Context, index string, req ports.SearchR
 	}
 
 	return ports.SearchResponse{
-		Workflows: workflows,
-		TotalHits: totalHits,
-		Took:      time.Duration(resp.Took) * time.Millisecond,
+		Workflows:  workflows,
+		TotalHits:  totalHits,
+		Took:       time.Duration(resp.Took) * time.Millisecond,
+		NextCursor: nextCursor(req, resp.Hits.Hits),
 	}, nil
+}
+
+// nextCursor serializes OpenSearch's final sort values for search_after pagination.
+func nextCursor(req ports.SearchRequest, hits []opensearchapi.SearchHit) string {
+	if req.Pagination == nil || req.Pagination.Cursor == nil ||
+		req.Pagination.Cursor.PageSize < 1 ||
+		len(hits) < int(req.Pagination.Cursor.PageSize) {
+		return ""
+	}
+	cursor, err := json.Marshal(hits[len(hits)-1].Sort)
+	if err != nil {
+		return ""
+	}
+	return string(cursor)
 }
 
 func buildSearchBody(req ports.SearchRequest) (map[string]any, error) {
@@ -212,15 +237,7 @@ func buildSearchBody(req ports.SearchRequest) (map[string]any, error) {
 	body["query"] = query
 	body["track_total_hits"] = true
 
-	if req.Sort != nil {
-		order := "asc"
-		if req.Sort.Order == types.SortOrderDesc {
-			order = "desc"
-		}
-		body["sort"] = []map[string]any{
-			{req.Sort.Field: map[string]any{"order": order}},
-		}
-	}
+	body["sort"] = searchSort(req.Sort)
 
 	if req.Pagination != nil {
 		if pagErr := applyPagination(body, req.Pagination); pagErr != nil {
@@ -229,6 +246,23 @@ func buildSearchBody(req ports.SearchRequest) (map[string]any, error) {
 	}
 
 	return body, nil
+}
+
+// searchSort always includes the stable document ID tie-breaker so results do
+// not move between pages when multiple workflows share the requested sort value.
+func searchSort(sortSpec *types.Sort) []map[string]any {
+	field, order := "id", "asc"
+	if sortSpec != nil {
+		field = sortSpec.Field
+		if sortSpec.Order == types.SortOrderDesc {
+			order = "desc"
+		}
+	}
+	sort := []map[string]any{{field: map[string]any{"order": order}}}
+	if field != "id" {
+		sort = append(sort, map[string]any{"id": map[string]any{"order": order}})
+	}
+	return sort
 }
 
 func applyPagination(body map[string]any, p *types.Pagination) error {
