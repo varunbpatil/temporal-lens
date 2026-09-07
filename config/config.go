@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -12,6 +13,26 @@ type Config struct {
 	GRPC       GRPCConfig       `envPrefix:"GRPC_"`
 	HTTP       HTTPConfig       `envPrefix:"HTTP_"`
 	OpenSearch OpenSearchConfig `envPrefix:"OPENSEARCH_"`
+	Temporal   TemporalConfig   `envPrefix:"TEMPORAL_"`
+}
+
+type TemporalConfig struct {
+	Namespaces               []string `env:"NAMESPACES,required"`
+	Cloud                    bool     `env:"CLOUD"`
+	Account                  string   `env:"ACCOUNT"`
+	Endpoint                 string   `env:"ENDPOINT"`
+	BaseURL                  url.URL  `env:"BASE_URL,required"`
+	APIKey                   string   `env:"API_KEY"`
+	TLS                      bool     `env:"TLS"`
+	InsecureSkipVerify       bool     `env:"INSECURE_SKIP_VERIFY"`
+	ServerName               string   `env:"SERVER_NAME"`
+	CAFile                   string   `env:"CA_FILE"`
+	ClientCertFile           string   `env:"CLIENT_CERT_FILE"`
+	ClientKeyFile            string   `env:"CLIENT_KEY_FILE"`
+	ConnPoolSize             int      `env:"CONN_POOL_SIZE"              envDefault:"1"`
+	BulkActionsPerSecond     int      `env:"BULK_ACTIONS_PER_SECOND"     envDefault:"8"`
+	ListRequestsPerSecond    int      `env:"LIST_REQUESTS_PER_SECOND"    envDefault:"8"`
+	HistoryRequestsPerSecond int      `env:"HISTORY_REQUESTS_PER_SECOND" envDefault:"8"`
 }
 
 type LogConfig struct {

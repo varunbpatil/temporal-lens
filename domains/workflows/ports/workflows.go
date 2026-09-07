@@ -49,13 +49,13 @@ type WorkflowSource interface {
 	) iter.Seq2[*models.WorkflowData, error]
 
 	// Signal workflows
-	Signal(ctx context.Context, req SourceSignalRequest) error
+	Signal(ctx context.Context, req InternalSignalRequest) error
 
 	// Reset workflows
-	Reset(ctx context.Context, req SourceResetRequest) error
+	Reset(ctx context.Context, req InternalResetRequest) error
 
 	// Terminate workflows
-	Terminate(ctx context.Context, req SourceTerminateRequest) error
+	Terminate(ctx context.Context, req InternalTerminateRequest) error
 
 	// Return the Temporal UI URL for a workflow
 	WorkflowURL(ctx context.Context, metadata models.WorkflowMetadata) (string, error)

@@ -7,30 +7,199 @@ import (
 	"github.com/varunbpatil/temporal-lens/types"
 )
 
+// ---------------------------------------------
+// Search
+// ---------------------------------------------.
+
 type SearchRequest struct {
-	Filter     *types.Filter
-	Sort       *types.Sort
+	// Search filter
+	Filter *types.Filter
+
+	// Sort spec
+	Sort *types.Sort
+
+	// Pagination spec
 	Pagination *types.Pagination
 }
 
 type SearchResponse struct {
+	// Search results
 	Workflows []*models.Workflow
+
+	// Total search hits
 	TotalHits int64
-	Took      time.Duration
+
+	// Amount of time the search took
+	Took time.Duration
 }
 
-type SignalRequest struct{}
+// ---------------------------------------------
+// Signal
+// ---------------------------------------------.
 
-type ResetRequest struct{}
+type SignalRequest struct {
+	// Workflow spec
+	WorkflowSpec WorkflowSpec
 
-type TerminateRequest struct{}
+	// Signal name
+	Signal string
 
-type StreamWorkflowMetadataRequest struct{}
+	// Signal payload
+	Payload []byte
+}
 
-type StreamWorkflowDataRequest struct{}
+// InternalSignalRequest is pretty much the same as [SignalRequest] except that it
+// contains concrete execution targets whereas [SignalRequest] can contain either
+// concrete execution targets or a filter query which the domain service resolves
+// to concrete execution targets.
+type InternalSignalRequest struct {
+	// Concrete workflow executions to signal
+	Executions []ExecutionInfo
 
-type SourceSignalRequest struct{}
+	// Signal name
+	Signal string
 
-type SourceResetRequest struct{}
+	// Signal payload
+	Payload []byte
+}
 
-type SourceTerminateRequest struct{}
+// ---------------------------------------------
+// Reset
+// ---------------------------------------------.
+
+type ResetRequest struct {
+	// Workflow spec
+	WorkflowSpec WorkflowSpec
+
+	// Reset spec
+	ResetSpec ResetSpec
+
+	// Reset reason
+	Reason string
+}
+
+// InternalResetRequest is pretty much the same as [ResetRequest] except that it
+// contains concrete execution targets whereas [ResetRequest] can contain either
+// concrete execution targets or a filter query which the domain service resolves
+// to concrete execution targets.
+type InternalResetRequest struct {
+	// Concrete workflow executions to reset
+	Executions []ExecutionInfo
+
+	// Reset spec
+	ResetSpec ResetSpec
+
+	// Reset reason
+	Reason string
+}
+
+// ---------------------------------------------
+// Terminate
+// ---------------------------------------------.
+
+type TerminateRequest struct {
+	// Workflow spec
+	WorkflowSpec WorkflowSpec
+
+	// Termination reason
+	Reason string
+}
+
+// InternalTerminateRequest is pretty much the same as [TerminateRequest] except that it
+// contains concrete execution targets whereas [TerminateRequest] can contain either
+// concrete execution targets or a filter query which the domain service resolves
+// to concrete execution targets.
+type InternalTerminateRequest struct {
+	// Concrete workflow executions to terminate
+	Executions []ExecutionInfo
+
+	// Termination reason
+	Reason string
+}
+
+// ---------------------------------------------
+// Streaming
+// ---------------------------------------------.
+
+type StreamWorkflowMetadataRequest struct {
+	// Temporal namespace
+	Namespace string
+
+	// The type of workflows to list
+	Type ListWorkflowsType
+
+	// How far back to list workflows from
+	Lookback time.Duration
+}
+
+type StreamWorkflowDataRequest struct {
+	Metadata *models.WorkflowMetadata
+}
+
+// ---------------------------------------------
+// Helper types
+// ---------------------------------------------.
+
+type ListWorkflowsType string
+
+const (
+	ListWorkflowsTypeOpen   ListWorkflowsType = "open"
+	ListWorkflowsTypeClosed ListWorkflowsType = "closed"
+)
+
+// WorkflowSpec specifies which workflows to select for an action.
+//
+// It can be either a filter specification or a list of concrete executions.
+// Exactly one of Filter or Executions is non-nil.
+type WorkflowSpec struct {
+	// Filter specification which the domain service will
+	// resolve internally to concrete workflow executions
+	Filter *types.Filter
+
+	// Concrete workflow executions
+	Executions []ExecutionInfo
+}
+
+// ExecutionInfo is a concrete workflow execution to target for an action.
+type ExecutionInfo struct {
+	// Temporal namespace
+	Namespace string
+
+	// Workflow ID
+	WorkflowID string
+
+	// Workflow run ID
+	RunID string
+}
+
+// ResetSpec specifies the exact point within a workflow that the workflow should be reset to.
+//
+// It can be either an event ID or an activity name.
+// Exactly one of EventID or ResetSpecActivity is non-nil.
+type ResetSpec struct {
+	// Event ID to reset to
+	EventID *int64
+
+	// Activity to reset to
+	ResetSpecActivity *ResetSpecActivity
+}
+
+// ResetSpecActivity specifies the activity details that the workflow should be reset to.
+//
+// Most commonly used in cases where the event ID is likely to be different for each workflow.
+// The domain service will resolve the activity name to the correct event ID per workflow.
+type ResetSpecActivity struct {
+	// Activity name
+	Name string
+
+	// If the same activity is executed multiple times within a workflow,
+	// the exact position of the activity to reset to (default: latest).
+	Position ResetSpecActivityPosition
+}
+
+type ResetSpecActivityPosition string
+
+const (
+	ResetSpecActivityPositionEarliest ResetSpecActivityPosition = "earliest"
+	ResetSpecActivityPositionLatest   ResetSpecActivityPosition = "latest"
+)
