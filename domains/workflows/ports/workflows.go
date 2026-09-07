@@ -53,7 +53,7 @@ type WorkflowSource interface {
 	ResolveWorkflowTaskFinishEventID(
 		ctx context.Context,
 		metadata models.WorkflowMetadata,
-		activity ResetSpecActivity,
+		activity ResetActivity,
 	) (int64, error)
 
 	// Signal workflows

@@ -1,4 +1,4 @@
-package workflows_test
+package grpc_test
 
 import (
 	"bytes"
@@ -10,26 +10,15 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	grpcutil "github.com/varunbpatil/temporal-lens/inbound/grpc"
-	"github.com/varunbpatil/temporal-lens/inbound/grpc/workflows"
-	v1 "github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1"
-	"github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1/workflowsv1connect"
 )
 
-type brotliTestService struct {
-	workflowsv1connect.UnimplementedWorkflowServiceHandler
-}
-
-func (s *brotliTestService) Search(
-	context.Context,
-	*connect.Request[v1.SearchRequest],
-) (*connect.Response[v1.SearchResponse], error) {
-	return connect.NewResponse(&v1.SearchResponse{}), nil
-}
+const compressionTestProcedure = "/temporal_lens.test.v1.CompressionService/Compress"
 
 type captureTransport struct {
 	handler     http.Handler
@@ -64,22 +53,35 @@ func (t *captureTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	return res, nil
 }
 
-func TestRegisterUsesBrotliCompression(t *testing.T) {
-	t.Parallel()
+func newCompressionTestHandler() http.Handler {
 	mux := http.NewServeMux()
-	workflows.Register(mux, &brotliTestService{})
+	handler := connect.NewUnaryHandler(
+		compressionTestProcedure,
+		func(
+			context.Context,
+			*connect.Request[emptypb.Empty],
+		) (*connect.Response[emptypb.Empty], error) {
+			return connect.NewResponse(&emptypb.Empty{}), nil
+		},
+		connect.WithHandlerOptions(grpcutil.HandlerOptions()...),
+	)
+	mux.Handle(compressionTestProcedure, handler)
+	return mux
+}
 
-	capTransport := &captureTransport{handler: mux}
+func TestHandlerOptionsUseBrotliCompressionForHTTP(t *testing.T) {
+	t.Parallel()
+	capTransport := &captureTransport{handler: newCompressionTestHandler()}
 	client := &http.Client{Transport: capTransport}
 
-	c := workflowsv1connect.NewWorkflowServiceClient(
+	c := connect.NewClient[emptypb.Empty, emptypb.Empty](
 		client,
-		"http://example.com",
+		"http://example.com"+compressionTestProcedure,
 		connect.WithSendCompression(grpcutil.Brotli),
 		connect.WithAcceptCompression(grpcutil.Brotli, grpcutil.NewBrotliDecompressor, grpcutil.NewBrotliCompressor),
 	)
 
-	_, err := c.Search(context.Background(), connect.NewRequest(&v1.SearchRequest{}))
+	_, err := c.CallUnary(context.Background(), connect.NewRequest(&emptypb.Empty{}))
 	require.NoError(t, err)
 
 	capTransport.mu.Lock()
@@ -89,23 +91,20 @@ func TestRegisterUsesBrotliCompression(t *testing.T) {
 	assert.Equal(t, grpcutil.Brotli, capTransport.responseHdr.Get("Content-Encoding"))
 }
 
-func TestRegisterUsesBrotliCompressionForGRPC(t *testing.T) {
+func TestHandlerOptionsUseBrotliCompressionForGRPC(t *testing.T) {
 	t.Parallel()
-	mux := http.NewServeMux()
-	workflows.Register(mux, &brotliTestService{})
-
-	capTransport := &captureTransport{handler: mux}
+	capTransport := &captureTransport{handler: newCompressionTestHandler()}
 	client := &http.Client{Transport: capTransport}
 
-	c := workflowsv1connect.NewWorkflowServiceClient(
+	c := connect.NewClient[emptypb.Empty, emptypb.Empty](
 		client,
-		"http://example.com",
+		"http://example.com"+compressionTestProcedure,
 		connect.WithGRPC(),
 		connect.WithSendCompression(grpcutil.Brotli),
 		connect.WithAcceptCompression(grpcutil.Brotli, grpcutil.NewBrotliDecompressor, grpcutil.NewBrotliCompressor),
 	)
 
-	_, err := c.Search(context.Background(), connect.NewRequest(&v1.SearchRequest{}))
+	_, err := c.CallUnary(context.Background(), connect.NewRequest(&emptypb.Empty{}))
 	require.NoError(t, err)
 
 	capTransport.mu.Lock()

@@ -4,11 +4,18 @@ package http
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
+	"path"
+	"strings"
 	"time"
+
+	web "github.com/varunbpatil/temporal-lens"
 )
+
+const apiPrefix = "/api"
 
 // Server is the HTTP server that serves all domains.
 type Server struct {
@@ -20,9 +27,52 @@ type Server struct {
 	onFatal  func(error)
 }
 
-// NewServer creates a new HTTP server that wraps an existing handler (typically a gRPC mux).
-func NewServer(handler http.Handler, address string, logger *slog.Logger, onFatal func(error)) *Server {
-	return &Server{handler: handler, address: address, logger: logger, onFatal: onFatal}
+// NewServer creates a new HTTP server that serves the API and embedded UI.
+func NewServer(api *http.ServeMux, address string, logger *slog.Logger, onFatal func(error)) *Server {
+	return &Server{handler: NewHandler(api), address: address, logger: logger, onFatal: onFatal}
+}
+
+// NewHandler serves API routes below /api and the embedded UI at the root.
+// Unknown GET and HEAD extensionless paths serve the UI entrypoint for client-side routing.
+func NewHandler(api *http.ServeMux) http.Handler {
+	ui := http.FileServer(http.FS(embeddedUI()))
+	apiHandler := http.StripPrefix(apiPrefix, api)
+
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if strings.HasPrefix(request.URL.Path, apiPrefix+"/") {
+			apiHandler.ServeHTTP(writer, request)
+			return
+		}
+		if request.URL.Path == apiPrefix {
+			http.NotFound(writer, request)
+			return
+		}
+		if request.Method != http.MethodGet && request.Method != http.MethodHead {
+			http.NotFound(writer, request)
+			return
+		}
+		if path.Ext(request.URL.Path) != "" {
+			ui.ServeHTTP(writer, request)
+			return
+		}
+
+		entrypoint := request.Clone(request.Context())
+		entrypoint.URL.Path = "/"
+		ui.ServeHTTP(writer, entrypoint)
+	})
+}
+
+func embeddedUI() fs.FS {
+	assets, err := fs.Sub(web.Dist, "ui/dist")
+	if err == nil {
+		_, err = fs.Stat(assets, "index.html")
+	}
+	if err == nil {
+		return assets
+	}
+
+	// Non-UI builds embed the placeholder index.html at the root of Dist.
+	return web.Dist
 }
 
 // Start begins listening for connections. It returns once the server is accepting connections.

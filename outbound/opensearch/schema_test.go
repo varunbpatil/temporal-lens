@@ -60,6 +60,15 @@ func TestFieldMapping(t *testing.T) {
 	}
 }
 
+func TestBuildIndexMapping_DisablesDynamicMapping(t *testing.T) {
+	t.Parallel()
+
+	result := opensearch.BuildIndexMapping(types.Schema{}, nil)
+	mappings, ok := result["mappings"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, false, mappings["dynamic"])
+}
+
 func TestBuildIndexMapping_FlatFields(t *testing.T) {
 	t.Parallel()
 

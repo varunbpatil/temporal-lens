@@ -62,8 +62,8 @@ type ResetRequest struct {
 	// Workflow spec
 	WorkflowSpec WorkflowSpec
 
-	// Reset spec
-	ResetSpec ResetSpec
+	// Reset point
+	ResetPoint ResetPoint
 
 	// Reset reason
 	Reason string
@@ -77,8 +77,8 @@ type InternalResetRequest struct {
 	// Concrete workflow executions to reset
 	Executions []ExecutionInfo
 
-	// Reset spec
-	ResetSpec ResetSpec
+	// Reset point
+	ResetPoint ResetPoint
 
 	// Reset reason
 	Reason string
@@ -151,36 +151,36 @@ type ExecutionInfo struct {
 	RunID string
 }
 
-// ResetSpec specifies the exact point within a workflow that the workflow should be reset to.
+// ResetPoint specifies the exact point within a workflow that the workflow should be reset to.
 //
 // It can be either an event ID or an activity ID or type name.
-// Exactly one of EventID or ResetSpecActivity is non-nil.
-type ResetSpec struct {
+// Exactly one of EventID or Activity is non-nil.
+type ResetPoint struct {
 	// Event ID to reset to
 	EventID *int64
 
 	// Activity to reset to
-	ResetSpecActivity *ResetSpecActivity
+	Activity *ResetActivity
 }
 
-// ResetSpecActivity specifies the activity details that the workflow should be reset to.
+// ResetActivity specifies the activity details that the workflow should be reset to.
 //
 // Most commonly used in cases where the event ID is likely to be different for each workflow.
 // The domain service will resolve the activity ID or type name to the correct event ID per workflow.
-type ResetSpecActivity struct {
+type ResetActivity struct {
 	// Activity ID or type name
 	Name string
 
 	// If the same activity is executed multiple times within a workflow,
 	// the exact position of the activity to reset to (default: latest).
-	Position ResetSpecActivityPosition
+	Position ResetActivityPosition
 }
 
-type ResetSpecActivityPosition string
+type ResetActivityPosition string
 
 const (
-	ResetSpecActivityPositionEarliest ResetSpecActivityPosition = "earliest"
-	ResetSpecActivityPositionLatest   ResetSpecActivityPosition = "latest"
+	ResetActivityPositionEarliest ResetActivityPosition = "earliest"
+	ResetActivityPositionLatest   ResetActivityPosition = "latest"
 )
 
 // IndexInfo identifies an OpenSearch index and its current live document count.

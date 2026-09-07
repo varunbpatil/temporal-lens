@@ -198,19 +198,19 @@ func (s *Service) Reset(ctx context.Context, req ports.ResetRequest) error {
 	if err != nil {
 		return err
 	}
-	if req.ResetSpec.EventID != nil {
-		if req.ResetSpec.ResetSpecActivity != nil {
+	if req.ResetPoint.EventID != nil {
+		if req.ResetPoint.Activity != nil {
 			return errors.New("reset event ID and activity cannot both be set")
 		}
 		return s.source.Reset(
 			ctx,
-			ports.InternalResetRequest{Executions: executions, ResetSpec: req.ResetSpec, Reason: req.Reason},
+			ports.InternalResetRequest{Executions: executions, ResetPoint: req.ResetPoint, Reason: req.Reason},
 		)
 	}
-	if req.ResetSpec.ResetSpecActivity == nil {
+	if req.ResetPoint.Activity == nil {
 		return errors.New("reset event ID or activity is required")
 	}
-	return s.resetByActivity(ctx, executions, *req.ResetSpec.ResetSpecActivity, req.Reason)
+	return s.resetByActivity(ctx, executions, *req.ResetPoint.Activity, req.Reason)
 }
 
 // resetByActivity resolves one reset point per execution, because matching activity
@@ -218,7 +218,7 @@ func (s *Service) Reset(ctx context.Context, req ports.ResetRequest) error {
 func (s *Service) resetByActivity(
 	ctx context.Context,
 	executions []ports.ExecutionInfo,
-	activity ports.ResetSpecActivity,
+	activity ports.ResetActivity,
 	reason string,
 ) error {
 	groups := make(map[string]map[int64][]ports.ExecutionInfo)
@@ -260,7 +260,7 @@ func (s *Service) resetGroups(ctx context.Context, groups []resolvedResetGroup, 
 			resolvedEventID := resetGroup.eventID
 			return s.source.Reset(groupContext, ports.InternalResetRequest{
 				Executions: resetGroup.executions,
-				ResetSpec:  ports.ResetSpec{EventID: &resolvedEventID},
+				ResetPoint: ports.ResetPoint{EventID: &resolvedEventID},
 				Reason:     reason,
 			})
 		})

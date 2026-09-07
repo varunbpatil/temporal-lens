@@ -106,7 +106,7 @@ func TestServiceGroupsActivityResetsByNamespaceAndEventID(t *testing.T) {
 	}
 	source.EXPECT().
 		ResolveWorkflowTaskFinishEventID(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, metadata models.WorkflowMetadata, _ ports.ResetSpecActivity) (int64, error) {
+		DoAndReturn(func(_ context.Context, metadata models.WorkflowMetadata, _ ports.ResetActivity) (int64, error) {
 			return resetEventIDs[metadata.Namespace+"/"+metadata.WorkflowID], nil
 		}).
 		Times(len(resetEventIDs))
@@ -123,7 +123,7 @@ func TestServiceGroupsActivityResetsByNamespaceAndEventID(t *testing.T) {
 			defer mutex.Unlock()
 			resetCalls = append(resetCalls, resetCall{
 				namespace:   req.Executions[0].Namespace,
-				eventID:     *req.ResetSpec.EventID,
+				eventID:     *req.ResetPoint.EventID,
 				workflowIDs: workflowIDs,
 			})
 			return nil
@@ -138,7 +138,7 @@ func TestServiceGroupsActivityResetsByNamespaceAndEventID(t *testing.T) {
 			{Namespace: "alpha", WorkflowID: "workflow-3", RunID: "run-3"},
 			{Namespace: "beta", WorkflowID: "workflow-4", RunID: "run-4"},
 		}},
-		ResetSpec: ports.ResetSpec{ResetSpecActivity: &ports.ResetSpecActivity{Name: "charge"}},
+		ResetPoint: ports.ResetPoint{Activity: &ports.ResetActivity{Name: "charge"}},
 	})
 	require.NoError(t, err)
 

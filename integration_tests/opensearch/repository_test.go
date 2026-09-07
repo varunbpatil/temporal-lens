@@ -71,45 +71,83 @@ func TestAddAndSearch(t *testing.T) {
 		"metadata.status": {Type: types.FieldTypeKeyword},
 	}
 	repo := newTestRepository(t, schema)
-	index := "test-add-search"
-
-	err := repo.CreateIndex(t.Context(), index)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = repo.DeleteIndex(t.Context(), index) })
-
-	now := time.Now()
-	wf := &models.Workflow{
-		ID: "wf-1",
-		Metadata: models.WorkflowMetadata{
-			RunID:        "run-1",
-			WorkflowID:   "wf-1",
-			Namespace:    "default",
-			WorkflowType: "OrderWorkflow",
-			StartTime:    now,
-			Status:       models.StatusRunning,
-		},
-		Data: models.WorkflowData{
-			Inputs:  map[string][]any{"orderId": {"123"}},
-			Outputs: map[string][]any{},
-			Errors:  []string{},
-		},
+	indexes := []string{"test-add-search-a", "test-add-search-b"}
+	for _, index := range indexes {
+		require.NoError(t, repo.CreateIndex(t.Context(), index))
+		t.Cleanup(func() { _ = repo.DeleteIndex(t.Context(), index) })
 	}
 
-	err = repo.Add(t.Context(), index, []*models.Workflow{wf})
-	require.NoError(t, err)
+	now := time.Now()
+	workflow := func(id string) *models.Workflow {
+		return &models.Workflow{
+			ID: id,
+			Metadata: models.WorkflowMetadata{
+				RunID:        "run-" + id,
+				WorkflowID:   id,
+				Namespace:    "default",
+				WorkflowType: "OrderWorkflow",
+				StartTime:    now,
+				Status:       models.StatusRunning,
+			},
+			Data: models.WorkflowData{
+				Inputs:  map[string][]any{"orderId": {"123"}},
+				Outputs: map[string][]any{},
+				Errors:  []string{},
+			},
+		}
+	}
 
-	refreshIndex(index)
+	require.NoError(t, repo.Add(t.Context(), indexes[0], []*models.Workflow{
+		workflow("wf-1"), workflow("wf-3"),
+	}))
+	require.NoError(t, repo.Add(t.Context(), indexes[1], []*models.Workflow{workflow("wf-2")}))
+	for _, index := range indexes {
+		refreshIndex(index)
+	}
 
-	resp, err := repo.Search(t.Context(), []string{index}, ports.SearchRequest{
+	request := ports.SearchRequest{
 		Filter: &types.Filter{Cond: &types.Condition{
 			Field: "metadata.status", Operator: types.OpEQ,
 			Value: types.Value{String: new("RUNNING")},
 		}},
-	})
+		Sort: &types.Sort{Field: "id", Order: types.SortOrderAsc},
+	}
+
+	request.Pagination = &types.Pagination{Offset: &types.OffsetPagination{
+		PageNumber: 1,
+		PageSize:   2,
+	}}
+	firstOffsetPage, err := repo.Search(t.Context(), indexes, request)
 	require.NoError(t, err)
-	assert.Len(t, resp.Workflows, 1)
-	assert.Equal(t, "wf-1", resp.Workflows[0].ID)
-	assert.Equal(t, models.StatusRunning, resp.Workflows[0].Metadata.Status)
+	assert.EqualValues(t, 3, firstOffsetPage.TotalHits)
+	require.Len(t, firstOffsetPage.Workflows, 2)
+	assert.Equal(t, "wf-1", firstOffsetPage.Workflows[0].ID)
+	assert.Equal(t, "wf-2", firstOffsetPage.Workflows[1].ID)
+	assert.Equal(t, models.StatusRunning, firstOffsetPage.Workflows[0].Metadata.Status)
+
+	request.Pagination = &types.Pagination{Offset: &types.OffsetPagination{
+		PageNumber: 2,
+		PageSize:   2,
+	}}
+	secondOffsetPage, err := repo.Search(t.Context(), indexes, request)
+	require.NoError(t, err)
+	require.Len(t, secondOffsetPage.Workflows, 1)
+	assert.Equal(t, "wf-3", secondOffsetPage.Workflows[0].ID)
+
+	request.Pagination = &types.Pagination{Cursor: &types.CursorPagination{PageSize: 2}}
+	firstCursorPage, err := repo.Search(t.Context(), indexes, request)
+	require.NoError(t, err)
+	require.Len(t, firstCursorPage.Workflows, 2)
+	assert.Equal(t, "wf-1", firstCursorPage.Workflows[0].ID)
+	assert.Equal(t, "wf-2", firstCursorPage.Workflows[1].ID)
+	require.NotEmpty(t, firstCursorPage.NextCursor)
+
+	request.Pagination.Cursor.Cursor = firstCursorPage.NextCursor
+	secondCursorPage, err := repo.Search(t.Context(), indexes, request)
+	require.NoError(t, err)
+	require.Len(t, secondCursorPage.Workflows, 1)
+	assert.Equal(t, "wf-3", secondCursorPage.Workflows[0].ID)
+	assert.Empty(t, secondCursorPage.NextCursor)
 }
 
 func TestListIndexes(t *testing.T) {

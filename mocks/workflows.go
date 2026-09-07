@@ -249,7 +249,7 @@ func (mr *MockWorkflowSourceMockRecorder) Reset(ctx, req any) *gomock.Call {
 }
 
 // ResolveWorkflowTaskFinishEventID mocks base method.
-func (m *MockWorkflowSource) ResolveWorkflowTaskFinishEventID(ctx context.Context, metadata models.WorkflowMetadata, activity ports.ResetSpecActivity) (int64, error) {
+func (m *MockWorkflowSource) ResolveWorkflowTaskFinishEventID(ctx context.Context, metadata models.WorkflowMetadata, activity ports.ResetActivity) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResolveWorkflowTaskFinishEventID", ctx, metadata, activity)
 	ret0, _ := ret[0].(int64)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +16,7 @@ import (
 	workflowservice "go.temporal.io/api/workflowservice/v1"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/varunbpatil/temporal-lens/config"
@@ -47,15 +47,13 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 		activityFailedEvent(5, start.Add(3*time.Minute), 3, "payment declined"),
 		activityStartedEvent(6, start.Add(4*time.Minute), 3, 2, "payment declined"),
 		activityCompletedEvent(7, start.Add(5*time.Minute), 3, `{"receipt":"receipt-1"}`),
-		childInitiatedEvent(8, start.Add(6*time.Minute), `{"order":"order-1"}`),
-		childStartedEvent(9, start.Add(7*time.Minute), 8),
-		childCompletedEvent(10, start.Add(8*time.Minute), 8, `{"status":"complete"}`),
-		workflowCompletedEvent(11, start.Add(9*time.Minute), `{"status":"complete"}`),
+		activityScheduledEvent(8, start.Add(6*time.Minute), "8", "GeneratedActivity", `{"ignored":true}`),
+		childInitiatedEvent(9, start.Add(7*time.Minute), `{"order":"order-1"}`),
+		childStartedEvent(10, start.Add(8*time.Minute), 9),
+		childCompletedEvent(11, start.Add(9*time.Minute), 9, `{"status":"complete"}`),
+		workflowCompletedEvent(12, start.Add(10*time.Minute), `{"status":"complete"}`),
 	}
-	listener, err := net.Listen("unix", filepath.Join(t.TempDir(), "temporal.sock"))
-	if err != nil {
-		t.Skipf("unable to start local gRPC server: %v", err)
-	}
+	listener := bufconn.Listen(1 << 20)
 	server := grpc.NewServer()
 	workflowservice.RegisterWorkflowServiceServer(server, &workflowDataServer{
 		events: events,
@@ -63,22 +61,33 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 			PendingActivities: []*workflowpb.PendingActivityInfo{{
 				ActivityId:  "charge",
 				LastFailure: &failurepb.Failure{Message: "retry is pending"},
+			}, {
+				ActivityId:   "9",
+				ActivityType: &commonpb.ActivityType{Name: "PendingGeneratedActivity"},
 			}},
 		},
 	})
 	go func() { _ = server.Serve(listener) }()
-	t.Cleanup(server.Stop)
+	t.Cleanup(func() {
+		server.Stop()
+		require.NoError(t, listener.Close())
+	})
 
 	baseURL := url.URL{Scheme: "http", Host: "temporal.example"}
 	source, err := temporalworkflows.NewSource(context.Background(), temporalworkflows.WorkflowSourceParams{
 		Config: config.TemporalConfig{
 			Namespaces:               []string{"parent-namespace"},
-			Endpoint:                 "unix://" + listener.Addr().String(),
+			Endpoint:                 "passthrough:///temporal",
 			ConnPoolSize:             1,
 			BulkActionsPerSecond:     1,
 			ListRequestsPerSecond:    1,
 			HistoryRequestsPerSecond: 100,
 			BaseURL:                  baseURL,
+		},
+		DialOptions: []grpc.DialOption{
+			grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
+				return listener.Dial()
+			}),
 		},
 	})
 	require.NoError(t, err)
@@ -101,14 +110,14 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	resetEventID, err := source.ResolveWorkflowTaskFinishEventID(
 		context.Background(),
 		models.WorkflowMetadata{Namespace: "parent-namespace", WorkflowID: "parent-id", RunID: "parent-run"},
-		ports.ResetSpecActivity{Name: "charge"},
+		ports.ResetActivity{Name: "charge"},
 	)
 	require.NoError(t, err)
 	require.EqualValues(t, 2, resetEventID)
 	resetEventIDByName, err := source.ResolveWorkflowTaskFinishEventID(
 		context.Background(),
 		models.WorkflowMetadata{Namespace: "parent-namespace", WorkflowID: "parent-id", RunID: "parent-run"},
-		ports.ResetSpecActivity{Name: "ChargeCard"},
+		ports.ResetActivity{Name: "ChargeCard"},
 	)
 	require.NoError(t, err)
 	require.EqualValues(t, 2, resetEventIDByName)
@@ -118,7 +127,7 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 		"wrapped.nested": {"value"},
 	}, data.Inputs)
 	require.Equal(t, map[string][]any{"status": {"complete"}}, data.Outputs)
-	require.Len(t, data.Activities, 1)
+	require.Len(t, data.Activities, 3)
 	activityEnd := start.Add(5 * time.Minute)
 	require.Equal(t, models.Activity{
 		ID:        "charge",
@@ -130,15 +139,19 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 		StartTime: start.Add(4 * time.Minute),
 		EndTime:   &activityEnd,
 	}, data.Activities[0])
+	require.Empty(t, data.Activities[1].ID)
+	require.Equal(t, "GeneratedActivity", data.Activities[1].Name)
+	require.Empty(t, data.Activities[2].ID)
+	require.Equal(t, "PendingGeneratedActivity", data.Activities[2].Name)
 	require.Len(t, data.ChildWorkflows, 1)
-	childEnd := start.Add(8 * time.Minute)
+	childEnd := start.Add(9 * time.Minute)
 	require.Equal(t, models.ChildWorkflow{
 		WorkflowID:   "child-id",
 		Namespace:    "child-namespace",
 		WorkflowType: "ChildWorkflow",
 		Inputs:       map[string][]any{"order": {"order-1"}},
 		Outputs:      map[string][]any{"status": {"complete"}},
-		StartTime:    start.Add(7 * time.Minute),
+		StartTime:    start.Add(8 * time.Minute),
 		EndTime:      &childEnd,
 	}, data.ChildWorkflows[0])
 }
@@ -146,8 +159,7 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 type workflowDataServer struct {
 	workflowservice.UnimplementedWorkflowServiceServer
 
-	events []*historypb.HistoryEvent
-
+	events      []*historypb.HistoryEvent
 	description *workflowservice.DescribeWorkflowExecutionResponse
 }
 

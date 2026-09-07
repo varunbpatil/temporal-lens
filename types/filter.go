@@ -229,7 +229,8 @@ func (o Operator) String() string {
 }
 
 // ParseFilterSpec converts a proto FilterSpec into a type-safe [Filter].
-// Returns [ErrNilSpec] if spec is nil.
+// A nil schema parses the expression without validating its field names,
+// operators, or value types. Returns [ErrNilSpec] if spec is nil.
 func ParseFilterSpec(schema Schema, spec *commonv1.FilterSpec) (*Filter, error) {
 	if spec == nil {
 		return nil, ErrNilSpec
@@ -274,18 +275,22 @@ func parseLeaf(schema Schema, lf *commonv1.LeafFilter) (*Filter, error) {
 	if lf == nil {
 		return nil, fmt.Errorf("filter: nil leaf filter")
 	}
-	fs, ok := schema[lf.GetField()]
-	if !ok {
-		return nil, fmt.Errorf("filter: unknown field %q", lf.GetField())
-	}
 	op, err := parseOperator(lf.GetOperator())
 	if err != nil {
 		return nil, err
 	}
-	if fs.Operators != nil && !containsOperator(fs.Operators, op) {
-		return nil, fmt.Errorf("filter: operator %s not allowed on field %q", op, lf.GetField())
+	var fieldType *FieldType
+	if schema != nil {
+		fieldSchema, ok := schema[lf.GetField()]
+		if !ok {
+			return nil, fmt.Errorf("filter: unknown field %q", lf.GetField())
+		}
+		if fieldSchema.Operators != nil && !containsOperator(fieldSchema.Operators, op) {
+			return nil, fmt.Errorf("filter: operator %s not allowed on field %q", op, lf.GetField())
+		}
+		fieldType = &fieldSchema.Type
 	}
-	val, err := parseValue(schema, lf.GetField(), fs.Type, op, lf.GetValue())
+	val, err := parseValue(lf.GetField(), fieldType, op, lf.GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +344,7 @@ func parseOperator(op commonv1.FilterOperator) (Operator, error) {
 	}
 }
 
-func parseValue(schema Schema, field string, ft FieldType, op Operator, pv *commonv1.FilterValue) (Value, error) {
+func parseValue(field string, fieldType *FieldType, op Operator, pv *commonv1.FilterValue) (Value, error) {
 	if pv == nil {
 		if op == OpExists || op == OpNotExists || op == OpIsEmpty || op == OpIsNotEmpty {
 			return Value{}, nil
@@ -348,58 +353,58 @@ func parseValue(schema Schema, field string, ft FieldType, op Operator, pv *comm
 	}
 	switch v := pv.GetValue().(type) {
 	case *commonv1.FilterValue_StringValue:
-		if ft != FieldTypeKeyword && ft != FieldTypeText {
-			return Value{}, fmt.Errorf("filter: field %q is %s, got string", field, ft)
+		if fieldType != nil && *fieldType != FieldTypeKeyword && *fieldType != FieldTypeText {
+			return Value{}, fmt.Errorf("filter: field %q is %s, got string", field, *fieldType)
 		}
 		return Value{String: &v.StringValue}, nil
 	case *commonv1.FilterValue_IntValue:
-		if ft != FieldTypeInt {
-			return Value{}, fmt.Errorf("filter: field %q is %s, got int", field, ft)
+		if fieldType != nil && *fieldType != FieldTypeInt {
+			return Value{}, fmt.Errorf("filter: field %q is %s, got int", field, *fieldType)
 		}
 		return Value{Int: &v.IntValue}, nil
 	case *commonv1.FilterValue_DoubleValue:
-		if ft != FieldTypeDouble {
-			return Value{}, fmt.Errorf("filter: field %q is %s, got double", field, ft)
+		if fieldType != nil && *fieldType != FieldTypeDouble {
+			return Value{}, fmt.Errorf("filter: field %q is %s, got double", field, *fieldType)
 		}
 		return Value{Double: &v.DoubleValue}, nil
 	case *commonv1.FilterValue_BoolValue:
-		if ft != FieldTypeBool {
-			return Value{}, fmt.Errorf("filter: field %q is %s, got bool", field, ft)
+		if fieldType != nil && *fieldType != FieldTypeBool {
+			return Value{}, fmt.Errorf("filter: field %q is %s, got bool", field, *fieldType)
 		}
 		return Value{Bool: &v.BoolValue}, nil
 	case *commonv1.FilterValue_TimestampValue:
-		if ft != FieldTypeTimestamp {
-			return Value{}, fmt.Errorf("filter: field %q is %s, got timestamp", field, ft)
+		if fieldType != nil && *fieldType != FieldTypeTimestamp {
+			return Value{}, fmt.Errorf("filter: field %q is %s, got timestamp", field, *fieldType)
 		}
 		t := v.TimestampValue.AsTime()
 		return Value{Timestamp: &t}, nil
 	case *commonv1.FilterValue_NullValue:
 		return Value{}, nil
 	case *commonv1.FilterValue_BetweenValue:
-		return parseBetween(schema, field, ft, v.BetweenValue)
+		return parseBetween(field, fieldType, v.BetweenValue)
 	case *commonv1.FilterValue_RepeatedValue:
-		return parseRepeated(schema, field, ft, op, v.RepeatedValue)
+		return parseRepeated(field, fieldType, op, v.RepeatedValue)
 	default:
 		return Value{}, fmt.Errorf("filter: field %q unsupported value type %T", field, pv.GetValue())
 	}
 }
 
-func parseBetween(schema Schema, field string, ft FieldType, bv *commonv1.BetweenValue) (Value, error) {
+func parseBetween(field string, fieldType *FieldType, bv *commonv1.BetweenValue) (Value, error) {
 	if bv == nil {
 		return Value{}, fmt.Errorf("filter: field %q has nil between value", field)
 	}
-	start, err := parseValue(schema, field, ft, OpBetween, bv.GetStart())
+	start, err := parseValue(field, fieldType, OpBetween, bv.GetStart())
 	if err != nil {
 		return Value{}, fmt.Errorf("filter: field %q between start: %w", field, err)
 	}
-	end, err := parseValue(schema, field, ft, OpBetween, bv.GetEnd())
+	end, err := parseValue(field, fieldType, OpBetween, bv.GetEnd())
 	if err != nil {
 		return Value{}, fmt.Errorf("filter: field %q between end: %w", field, err)
 	}
 	return Value{Between: &BetweenValue{Start: start, End: end}}, nil
 }
 
-func parseRepeated(schema Schema, field string, ft FieldType, op Operator, rv *commonv1.RepeatedValue) (Value, error) {
+func parseRepeated(field string, fieldType *FieldType, op Operator, rv *commonv1.RepeatedValue) (Value, error) {
 	if rv == nil {
 		return Value{}, fmt.Errorf("filter: field %q has nil repeated value", field)
 	}
@@ -408,7 +413,7 @@ func parseRepeated(schema Schema, field string, ft FieldType, op Operator, rv *c
 	}
 	vals := make([]Value, 0, len(rv.GetValues()))
 	for i, pv := range rv.GetValues() {
-		v, err := parseValue(schema, field, ft, op, pv)
+		v, err := parseValue(field, fieldType, op, pv)
 		if err != nil {
 			return Value{}, fmt.Errorf("filter: field %q repeated value %d: %w", field, i, err)
 		}
@@ -417,14 +422,16 @@ func parseRepeated(schema Schema, field string, ft FieldType, op Operator, rv *c
 	return Value{List: vals}, nil
 }
 
-// ParseSortSpec converts a proto SortSpec into a type-safe Sort.
-// Returns ErrNilSpec if spec is nil.
+// ParseSortSpec converts a proto SortSpec into a type-safe Sort. A nil schema
+// skips field-name validation. Returns ErrNilSpec if spec is nil.
 func ParseSortSpec(schema Schema, spec *commonv1.SortSpec) (*Sort, error) {
 	if spec == nil {
 		return nil, ErrNilSpec
 	}
-	if _, ok := schema[spec.GetField()]; !ok {
-		return nil, fmt.Errorf("sort: unknown field %q", spec.GetField())
+	if schema != nil {
+		if _, ok := schema[spec.GetField()]; !ok {
+			return nil, fmt.Errorf("sort: unknown field %q", spec.GetField())
+		}
 	}
 	var order SortOrder
 	switch spec.GetOrder() {

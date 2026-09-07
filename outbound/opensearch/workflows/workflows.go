@@ -59,9 +59,14 @@ func NewRepository(_ context.Context, params WorkflowRepositoryParams) (*Reposit
 	}, nil
 }
 
+// Close releases the OpenSearch client's background resources and idle connections.
+func (r *Repository) Close() error {
+	return r.client.Close()
+}
+
 // CreateIndex creates an index with the full explicit mapping.
 func (r *Repository) CreateIndex(ctx context.Context, index string) error {
-	mapping := os.BuildIndexMapping(r.schema, []string{"activities", "childWorkflows"})
+	mapping := os.BuildIndexMapping(r.schema, []string{"data.activities", "data.childWorkflows"})
 
 	body, err := json.Marshal(mapping)
 	if err != nil {
@@ -202,7 +207,27 @@ func (r *Repository) Search(
 
 	var totalHits int64
 	if resp.Hits.Total != nil {
-		totalHits, _ = resp.Hits.Total.Int64()
+		switch resp.Hits.Total.Type() {
+		case opensearchapi.SearchHitsMetadataTotalTotalHitsType:
+			total, totalErr := resp.Hits.Total.TotalHits()
+			if totalErr != nil {
+				return ports.SearchResponse{}, fmt.Errorf("opensearch: reading total hits: %w", totalErr)
+			}
+			totalHits = total.Value
+		case opensearchapi.SearchHitsMetadataTotalInt64Type:
+			var totalErr error
+			totalHits, totalErr = resp.Hits.Total.Int64()
+			if totalErr != nil {
+				return ports.SearchResponse{}, fmt.Errorf("opensearch: reading total hits: %w", totalErr)
+			}
+		case opensearchapi.SearchHitsMetadataTotalUnknownType:
+			return ports.SearchResponse{}, fmt.Errorf("opensearch: unknown total hits response type")
+		default:
+			return ports.SearchResponse{}, fmt.Errorf(
+				"opensearch: unknown total hits response type: %s",
+				resp.Hits.Total.Type(),
+			)
+		}
 	}
 
 	return ports.SearchResponse{

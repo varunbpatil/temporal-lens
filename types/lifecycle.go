@@ -17,6 +17,20 @@ type StartStopper interface {
 	Stop(ctx context.Context) error
 }
 
+// CloseOnly adapts a resource that is opened during application construction to
+// a lifecycle-managed resource. It has no startup work and closes when stopped.
+type CloseOnly func() error
+
+// Start implements StartStopper.
+func (CloseOnly) Start(context.Context) error {
+	return nil
+}
+
+// Stop implements StartStopper.
+func (closer CloseOnly) Stop(context.Context) error {
+	return closer()
+}
+
 // Manager manages the lifecycle of multiple services.
 // Services are started in registration order and stopped in reverse order.
 type Manager struct {

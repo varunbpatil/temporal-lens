@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package temporal_lens.workflows.v1;
 
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "temporal_lens/common/v1/common.proto";
+
 service WorkflowService {
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc Signal(SignalRequest) returns (SignalResponse);
@@ -11,20 +16,156 @@ service WorkflowService {
   rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse);
 }
 
-message SearchRequest {}
-message SearchResponse {}
+message SearchRequest {
+  temporal_lens.common.v1.FilterSpec filter = 1;
+  temporal_lens.common.v1.SortSpec sort = 2;
+  temporal_lens.common.v1.PaginationSpec pagination = 3;
+}
 
-message SignalRequest {}
+message SearchResponse {
+  repeated Workflow workflows = 1;
+  int64 total_hits = 2;
+  google.protobuf.Duration took = 3;
+  string next_cursor = 4;
+}
+
+message Workflow {
+  string id = 1;
+  WorkflowMetadata metadata = 2;
+  WorkflowData data = 3;
+}
+
+message WorkflowMetadata {
+  string run_id = 1;
+  string workflow_id = 2;
+  string namespace = 3;
+  string workflow_type = 4;
+  google.protobuf.Timestamp start_time = 5;
+  google.protobuf.Timestamp end_time = 6;
+  WorkflowStatus status = 7;
+  repeated SearchAttribute search_attributes = 8;
+}
+
+enum WorkflowStatus {
+  WORKFLOW_STATUS_UNSPECIFIED = 0;
+  WORKFLOW_STATUS_RUNNING = 1;
+  WORKFLOW_STATUS_COMPLETED = 2;
+  WORKFLOW_STATUS_FAILED = 3;
+  WORKFLOW_STATUS_TIMED_OUT = 4;
+  WORKFLOW_STATUS_PAUSED = 5;
+  WORKFLOW_STATUS_CONTINUED_AS_NEW = 6;
+  WORKFLOW_STATUS_CANCELED = 7;
+  WORKFLOW_STATUS_TERMINATED = 8;
+}
+
+message SearchAttribute {
+  string key = 1;
+  string value = 2;
+}
+
+message WorkflowData {
+  map<string, google.protobuf.ListValue> inputs = 1;
+  map<string, google.protobuf.ListValue> outputs = 2;
+  repeated string errors = 3;
+  repeated Activity activities = 4;
+  repeated ChildWorkflow child_workflows = 5;
+}
+
+message Activity {
+  string id = 1;
+  string name = 2;
+  map<string, google.protobuf.ListValue> inputs = 3;
+  map<string, google.protobuf.ListValue> outputs = 4;
+  repeated string errors = 5;
+  int32 attempts = 6;
+  google.protobuf.Timestamp start_time = 7;
+  google.protobuf.Timestamp end_time = 8;
+  bool paused = 9;
+}
+
+message ChildWorkflow {
+  string workflow_id = 1;
+  string namespace = 2;
+  string workflow_type = 3;
+  map<string, google.protobuf.ListValue> inputs = 4;
+  map<string, google.protobuf.ListValue> outputs = 5;
+  repeated string errors = 6;
+  int32 attempts = 7;
+  google.protobuf.Timestamp start_time = 8;
+  google.protobuf.Timestamp end_time = 9;
+}
+
+message WorkflowSelection {
+  oneof selection {
+    temporal_lens.common.v1.FilterSpec filter = 1;
+    ExecutionList executions = 2;
+  }
+}
+
+message ExecutionList {
+  repeated WorkflowExecution executions = 1;
+}
+
+message WorkflowExecution {
+  string namespace = 1;
+  string workflow_id = 2;
+  string run_id = 3;
+}
+
+message SignalRequest {
+  WorkflowSelection workflows = 1;
+  string signal = 2;
+  bytes payload = 3;
+}
+
 message SignalResponse {}
 
-message ResetRequest {}
+message ResetRequest {
+  WorkflowSelection workflows = 1;
+  ResetPoint reset_point = 2;
+  string reason = 3;
+}
+
+message ResetPoint {
+  oneof point {
+    int64 event_id = 1;
+    ResetActivity activity = 2;
+  }
+}
+
+message ResetActivity {
+  string name = 1;
+  ResetActivityPosition position = 2;
+}
+
+enum ResetActivityPosition {
+  RESET_ACTIVITY_POSITION_UNSPECIFIED = 0;
+  RESET_ACTIVITY_POSITION_EARLIEST = 1;
+  RESET_ACTIVITY_POSITION_LATEST = 2;
+}
+
 message ResetResponse {}
 
-message TerminateRequest {}
+message TerminateRequest {
+  WorkflowSelection workflows = 1;
+  string reason = 2;
+}
+
 message TerminateResponse {}
 
 message ListIndexesRequest {}
-message ListIndexesResponse {}
 
-message DeleteIndexRequest {}
+message ListIndexesResponse {
+  repeated IndexInfo indexes = 1;
+}
+
+message IndexInfo {
+  string name = 1;
+  int64 document_count = 2;
+}
+
+message DeleteIndexRequest {
+  string index = 1;
+}
+
 message DeleteIndexResponse {}

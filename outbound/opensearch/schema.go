@@ -9,6 +9,7 @@ import (
 const (
 	osType       = "type"
 	osProperties = "properties"
+	osDynamic    = "dynamic"
 )
 
 // BuildIndexMapping creates an explicit OpenSearch mapping from a schema.
@@ -48,6 +49,10 @@ func BuildIndexMapping(schema types.Schema, nested []string) map[string]any {
 
 	return map[string]any{
 		"mappings": map[string]any{
+			// Index complete workflow documents while keeping fields omitted from the
+			// schema in _source only. This prevents them from becoming searchable or
+			// sortable through OpenSearch's default dynamic mapping.
+			osDynamic:    false,
 			osProperties: properties,
 		},
 	}

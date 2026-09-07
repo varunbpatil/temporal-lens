@@ -2,171 +2,797 @@
 // @generated from file temporal_lens/workflows/v1/workflows.proto (package temporal_lens.workflows.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Duration, ListValue, Timestamp } from "@bufbuild/protobuf/wkt";
+import {
+  file_google_protobuf_duration,
+  file_google_protobuf_struct,
+  file_google_protobuf_timestamp,
+} from "@bufbuild/protobuf/wkt";
+import type { FilterSpec, PaginationSpec, SortSpec } from "../../common/v1/common_pb";
+import { file_temporal_lens_common_v1_common } from "../../common/v1/common_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file temporal_lens/workflows/v1/workflows.proto.
  */
-export const file_temporal_lens_workflows_v1_workflows: GenFile = /*@__PURE__*/
-  fileDesc("Cip0ZW1wb3JhbF9sZW5zL3dvcmtmbG93cy92MS93b3JrZmxvd3MucHJvdG8SGnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxIg8KDVNlYXJjaFJlcXVlc3QiEAoOU2VhcmNoUmVzcG9uc2UiDwoNU2lnbmFsUmVxdWVzdCIQCg5TaWduYWxSZXNwb25zZSIOCgxSZXNldFJlcXVlc3QiDwoNUmVzZXRSZXNwb25zZSISChBUZXJtaW5hdGVSZXF1ZXN0IhMKEVRlcm1pbmF0ZVJlc3BvbnNlIhQKEkxpc3RJbmRleGVzUmVxdWVzdCIVChNMaXN0SW5kZXhlc1Jlc3BvbnNlIhQKEkRlbGV0ZUluZGV4UmVxdWVzdCIVChNEZWxldGVJbmRleFJlc3BvbnNlMvsECg9Xb3JrZmxvd1NlcnZpY2USXwoGU2VhcmNoEikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuU2VhcmNoUmVxdWVzdBoqLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNlYXJjaFJlc3BvbnNlEl8KBlNpZ25hbBIpLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNpZ25hbFJlcXVlc3QaKi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5TaWduYWxSZXNwb25zZRJcCgVSZXNldBIoLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0UmVxdWVzdBopLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0UmVzcG9uc2USaAoJVGVybWluYXRlEiwudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuVGVybWluYXRlUmVxdWVzdBotLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlRlcm1pbmF0ZVJlc3BvbnNlEm4KC0xpc3RJbmRleGVzEi4udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuTGlzdEluZGV4ZXNSZXF1ZXN0Gi8udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuTGlzdEluZGV4ZXNSZXNwb25zZRJuCgtEZWxldGVJbmRleBIuLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkRlbGV0ZUluZGV4UmVxdWVzdBovLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkRlbGV0ZUluZGV4UmVzcG9uc2VCjgIKHmNvbS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MUIOV29ya2Zsb3dzUHJvdG9QAVpWZ2l0aHViLmNvbS92YXJ1bmJwYXRpbC90ZW1wb3JhbC1sZW5zL3Byb3Rvcy9nZW4vdGVtcG9yYWxfbGVucy93b3JrZmxvd3MvdjE7d29ya2Zsb3dzdjGiAgNUV1iqAhlUZW1wb3JhbExlbnMuV29ya2Zsb3dzLlYxygIZVGVtcG9yYWxMZW5zXFdvcmtmbG93c1xWMeICJVRlbXBvcmFsTGVuc1xXb3JrZmxvd3NcVjFcR1BCTWV0YWRhdGHqAhtUZW1wb3JhbExlbnM6OldvcmtmbG93czo6VjFiBnByb3RvMw");
+export const file_temporal_lens_workflows_v1_workflows: GenFile /*@__PURE__*/ = fileDesc(
+  "Cip0ZW1wb3JhbF9sZW5zL3dvcmtmbG93cy92MS93b3JrZmxvd3MucHJvdG8SGnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxIrIBCg1TZWFyY2hSZXF1ZXN0EjMKBmZpbHRlchgBIAEoCzIjLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclNwZWMSLwoEc29ydBgCIAEoCzIhLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLlNvcnRTcGVjEjsKCnBhZ2luYXRpb24YAyABKAsyJy50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5QYWdpbmF0aW9uU3BlYyKbAQoOU2VhcmNoUmVzcG9uc2USNwoJd29ya2Zsb3dzGAEgAygLMiQudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3cSEgoKdG90YWxfaGl0cxgCIAEoAxInCgR0b29rGAMgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhMKC25leHRfY3Vyc29yGAQgASgJIo4BCghXb3JrZmxvdxIKCgJpZBgBIAEoCRI+CghtZXRhZGF0YRgCIAEoCzIsLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93TWV0YWRhdGESNgoEZGF0YRgDIAEoCzIoLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93RGF0YSLDAgoQV29ya2Zsb3dNZXRhZGF0YRIOCgZydW5faWQYASABKAkSEwoLd29ya2Zsb3dfaWQYAiABKAkSEQoJbmFtZXNwYWNlGAMgASgJEhUKDXdvcmtmbG93X3R5cGUYBCABKAkSLgoKc3RhcnRfdGltZRgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLAoIZW5kX3RpbWUYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjoKBnN0YXR1cxgHIAEoDjIqLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93U3RhdHVzEkYKEXNlYXJjaF9hdHRyaWJ1dGVzGAggAygLMisudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuU2VhcmNoQXR0cmlidXRlIi0KD1NlYXJjaEF0dHJpYnV0ZRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAkiwQMKDFdvcmtmbG93RGF0YRJECgZpbnB1dHMYASADKAsyNC50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd0RhdGEuSW5wdXRzRW50cnkSRgoHb3V0cHV0cxgCIAMoCzI1LnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93RGF0YS5PdXRwdXRzRW50cnkSDgoGZXJyb3JzGAMgAygJEjgKCmFjdGl2aXRpZXMYBCADKAsyJC50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5BY3Rpdml0eRJCCg9jaGlsZF93b3JrZmxvd3MYBSADKAsyKS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5DaGlsZFdvcmtmbG93GkkKC0lucHV0c0VudHJ5EgsKA2tleRgBIAEoCRIpCgV2YWx1ZRgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5MaXN0VmFsdWU6AjgBGkoKDE91dHB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ASLRAwoIQWN0aXZpdHkSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRJACgZpbnB1dHMYAyADKAsyMC50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5BY3Rpdml0eS5JbnB1dHNFbnRyeRJCCgdvdXRwdXRzGAQgAygLMjEudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQWN0aXZpdHkuT3V0cHV0c0VudHJ5Eg4KBmVycm9ycxgFIAMoCRIQCghhdHRlbXB0cxgGIAEoBRIuCgpzdGFydF90aW1lGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCghlbmRfdGltZRgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGcGF1c2VkGAkgASgIGkkKC0lucHV0c0VudHJ5EgsKA2tleRgBIAEoCRIpCgV2YWx1ZRgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5MaXN0VmFsdWU6AjgBGkoKDE91dHB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ASL1AwoNQ2hpbGRXb3JrZmxvdxITCgt3b3JrZmxvd19pZBgBIAEoCRIRCgluYW1lc3BhY2UYAiABKAkSFQoNd29ya2Zsb3dfdHlwZRgDIAEoCRJFCgZpbnB1dHMYBCADKAsyNS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5DaGlsZFdvcmtmbG93LklucHV0c0VudHJ5EkcKB291dHB1dHMYBSADKAsyNi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5DaGlsZFdvcmtmbG93Lk91dHB1dHNFbnRyeRIOCgZlcnJvcnMYBiADKAkSEAoIYXR0ZW1wdHMYByABKAUSLgoKc3RhcnRfdGltZRgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLAoIZW5kX3RpbWUYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wGkkKC0lucHV0c0VudHJ5EgsKA2tleRgBIAEoCRIpCgV2YWx1ZRgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5MaXN0VmFsdWU6AjgBGkoKDE91dHB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ASKYAQoRV29ya2Zsb3dTZWxlY3Rpb24SNQoGZmlsdGVyGAEgASgLMiMudGVtcG9yYWxfbGVucy5jb21tb24udjEuRmlsdGVyU3BlY0gAEj8KCmV4ZWN1dGlvbnMYAiABKAsyKS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5FeGVjdXRpb25MaXN0SABCCwoJc2VsZWN0aW9uIlIKDUV4ZWN1dGlvbkxpc3QSQQoKZXhlY3V0aW9ucxgBIAMoCzItLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93RXhlY3V0aW9uIksKEVdvcmtmbG93RXhlY3V0aW9uEhEKCW5hbWVzcGFjZRgBIAEoCRITCgt3b3JrZmxvd19pZBgCIAEoCRIOCgZydW5faWQYAyABKAkicgoNU2lnbmFsUmVxdWVzdBJACgl3b3JrZmxvd3MYASABKAsyLS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd1NlbGVjdGlvbhIOCgZzaWduYWwYAiABKAkSDwoHcGF5bG9hZBgDIAEoDCIQCg5TaWduYWxSZXNwb25zZSKdAQoMUmVzZXRSZXF1ZXN0EkAKCXdvcmtmbG93cxgBIAEoCzItLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93U2VsZWN0aW9uEjsKC3Jlc2V0X3BvaW50GAIgASgLMiYudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuUmVzZXRQb2ludBIOCgZyZWFzb24YAyABKAkiaAoKUmVzZXRQb2ludBISCghldmVudF9pZBgBIAEoA0gAEj0KCGFjdGl2aXR5GAIgASgLMikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuUmVzZXRBY3Rpdml0eUgAQgcKBXBvaW50ImIKDVJlc2V0QWN0aXZpdHkSDAoEbmFtZRgBIAEoCRJDCghwb3NpdGlvbhgCIAEoDjIxLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0QWN0aXZpdHlQb3NpdGlvbiIPCg1SZXNldFJlc3BvbnNlImQKEFRlcm1pbmF0ZVJlcXVlc3QSQAoJd29ya2Zsb3dzGAEgASgLMi0udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3dTZWxlY3Rpb24SDgoGcmVhc29uGAIgASgJIhMKEVRlcm1pbmF0ZVJlc3BvbnNlIhQKEkxpc3RJbmRleGVzUmVxdWVzdCJNChNMaXN0SW5kZXhlc1Jlc3BvbnNlEjYKB2luZGV4ZXMYASADKAsyJS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5JbmRleEluZm8iMQoJSW5kZXhJbmZvEgwKBG5hbWUYASABKAkSFgoOZG9jdW1lbnRfY291bnQYAiABKAMiIwoSRGVsZXRlSW5kZXhSZXF1ZXN0Eg0KBWluZGV4GAEgASgJIhUKE0RlbGV0ZUluZGV4UmVzcG9uc2UqqAIKDldvcmtmbG93U3RhdHVzEh8KG1dPUktGTE9XX1NUQVRVU19VTlNQRUNJRklFRBAAEhsKF1dPUktGTE9XX1NUQVRVU19SVU5OSU5HEAESHQoZV09SS0ZMT1dfU1RBVFVTX0NPTVBMRVRFRBACEhoKFldPUktGTE9XX1NUQVRVU19GQUlMRUQQAxIdChlXT1JLRkxPV19TVEFUVVNfVElNRURfT1VUEAQSGgoWV09SS0ZMT1dfU1RBVFVTX1BBVVNFRBAFEiQKIFdPUktGTE9XX1NUQVRVU19DT05USU5VRURfQVNfTkVXEAYSHAoYV09SS0ZMT1dfU1RBVFVTX0NBTkNFTEVEEAcSHgoaV09SS0ZMT1dfU1RBVFVTX1RFUk1JTkFURUQQCCqKAQoVUmVzZXRBY3Rpdml0eVBvc2l0aW9uEicKI1JFU0VUX0FDVElWSVRZX1BPU0lUSU9OX1VOU1BFQ0lGSUVEEAASJAogUkVTRVRfQUNUSVZJVFlfUE9TSVRJT05fRUFSTElFU1QQARIiCh5SRVNFVF9BQ1RJVklUWV9QT1NJVElPTl9MQVRFU1QQAjL7BAoPV29ya2Zsb3dTZXJ2aWNlEl8KBlNlYXJjaBIpLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNlYXJjaFJlcXVlc3QaKi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5TZWFyY2hSZXNwb25zZRJfCgZTaWduYWwSKS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5TaWduYWxSZXF1ZXN0GioudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuU2lnbmFsUmVzcG9uc2USXAoFUmVzZXQSKC50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5SZXNldFJlcXVlc3QaKS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5SZXNldFJlc3BvbnNlEmgKCVRlcm1pbmF0ZRIsLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlRlcm1pbmF0ZVJlcXVlc3QaLS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5UZXJtaW5hdGVSZXNwb25zZRJuCgtMaXN0SW5kZXhlcxIuLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkxpc3RJbmRleGVzUmVxdWVzdBovLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkxpc3RJbmRleGVzUmVzcG9uc2USbgoLRGVsZXRlSW5kZXgSLi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5EZWxldGVJbmRleFJlcXVlc3QaLy50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5EZWxldGVJbmRleFJlc3BvbnNlQo4CCh5jb20udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjFCDldvcmtmbG93c1Byb3RvUAFaVmdpdGh1Yi5jb20vdmFydW5icGF0aWwvdGVtcG9yYWwtbGVucy9wcm90b3MvZ2VuL3RlbXBvcmFsX2xlbnMvd29ya2Zsb3dzL3YxO3dvcmtmbG93c3YxogIDVFdYqgIZVGVtcG9yYWxMZW5zLldvcmtmbG93cy5WMcoCGVRlbXBvcmFsTGVuc1xXb3JrZmxvd3NcVjHiAiVUZW1wb3JhbExlbnNcV29ya2Zsb3dzXFYxXEdQQk1ldGFkYXRh6gIbVGVtcG9yYWxMZW5zOjpXb3JrZmxvd3M6OlYxYgZwcm90bzM",
+  [
+    file_google_protobuf_duration,
+    file_google_protobuf_struct,
+    file_google_protobuf_timestamp,
+    file_temporal_lens_common_v1_common,
+  ],
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.SearchRequest
  */
 export type SearchRequest = Message<"temporal_lens.workflows.v1.SearchRequest"> & {
+  /**
+   * @generated from field: temporal_lens.common.v1.FilterSpec filter = 1;
+   */
+  filter?: FilterSpec | undefined;
+
+  /**
+   * @generated from field: temporal_lens.common.v1.SortSpec sort = 2;
+   */
+  sort?: SortSpec | undefined;
+
+  /**
+   * @generated from field: temporal_lens.common.v1.PaginationSpec pagination = 3;
+   */
+  pagination?: PaginationSpec | undefined;
 };
 
 /**
  * Describes the message temporal_lens.workflows.v1.SearchRequest.
  * Use `create(SearchRequestSchema)` to create a new message.
  */
-export const SearchRequestSchema: GenMessage<SearchRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 0);
+export const SearchRequestSchema: GenMessage<SearchRequest> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  0,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.SearchResponse
  */
 export type SearchResponse = Message<"temporal_lens.workflows.v1.SearchResponse"> & {
+  /**
+   * @generated from field: repeated temporal_lens.workflows.v1.Workflow workflows = 1;
+   */
+  workflows: Workflow[];
+
+  /**
+   * @generated from field: int64 total_hits = 2;
+   */
+  totalHits: bigint;
+
+  /**
+   * @generated from field: google.protobuf.Duration took = 3;
+   */
+  took?: Duration | undefined;
+
+  /**
+   * @generated from field: string next_cursor = 4;
+   */
+  nextCursor: string;
 };
 
 /**
  * Describes the message temporal_lens.workflows.v1.SearchResponse.
  * Use `create(SearchResponseSchema)` to create a new message.
  */
-export const SearchResponseSchema: GenMessage<SearchResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 1);
+export const SearchResponseSchema: GenMessage<SearchResponse> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  1,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.Workflow
+ */
+export type Workflow = Message<"temporal_lens.workflows.v1.Workflow"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: temporal_lens.workflows.v1.WorkflowMetadata metadata = 2;
+   */
+  metadata?: WorkflowMetadata | undefined;
+
+  /**
+   * @generated from field: temporal_lens.workflows.v1.WorkflowData data = 3;
+   */
+  data?: WorkflowData | undefined;
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.Workflow.
+ * Use `create(WorkflowSchema)` to create a new message.
+ */
+export const WorkflowSchema: GenMessage<Workflow> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  2,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.WorkflowMetadata
+ */
+export type WorkflowMetadata = Message<"temporal_lens.workflows.v1.WorkflowMetadata"> & {
+  /**
+   * @generated from field: string run_id = 1;
+   */
+  runId: string;
+
+  /**
+   * @generated from field: string workflow_id = 2;
+   */
+  workflowId: string;
+
+  /**
+   * @generated from field: string namespace = 3;
+   */
+  namespace: string;
+
+  /**
+   * @generated from field: string workflow_type = 4;
+   */
+  workflowType: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp start_time = 5;
+   */
+  startTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp end_time = 6;
+   */
+  endTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: temporal_lens.workflows.v1.WorkflowStatus status = 7;
+   */
+  status: WorkflowStatus;
+
+  /**
+   * @generated from field: repeated temporal_lens.workflows.v1.SearchAttribute search_attributes = 8;
+   */
+  searchAttributes: SearchAttribute[];
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.WorkflowMetadata.
+ * Use `create(WorkflowMetadataSchema)` to create a new message.
+ */
+export const WorkflowMetadataSchema: GenMessage<WorkflowMetadata> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  3,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.SearchAttribute
+ */
+export type SearchAttribute = Message<"temporal_lens.workflows.v1.SearchAttribute"> & {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.SearchAttribute.
+ * Use `create(SearchAttributeSchema)` to create a new message.
+ */
+export const SearchAttributeSchema: GenMessage<SearchAttribute> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  4,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.WorkflowData
+ */
+export type WorkflowData = Message<"temporal_lens.workflows.v1.WorkflowData"> & {
+  /**
+   * @generated from field: map<string, google.protobuf.ListValue> inputs = 1;
+   */
+  inputs: { [key: string]: ListValue };
+
+  /**
+   * @generated from field: map<string, google.protobuf.ListValue> outputs = 2;
+   */
+  outputs: { [key: string]: ListValue };
+
+  /**
+   * @generated from field: repeated string errors = 3;
+   */
+  errors: string[];
+
+  /**
+   * @generated from field: repeated temporal_lens.workflows.v1.Activity activities = 4;
+   */
+  activities: Activity[];
+
+  /**
+   * @generated from field: repeated temporal_lens.workflows.v1.ChildWorkflow child_workflows = 5;
+   */
+  childWorkflows: ChildWorkflow[];
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.WorkflowData.
+ * Use `create(WorkflowDataSchema)` to create a new message.
+ */
+export const WorkflowDataSchema: GenMessage<WorkflowData> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  5,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.Activity
+ */
+export type Activity = Message<"temporal_lens.workflows.v1.Activity"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: map<string, google.protobuf.ListValue> inputs = 3;
+   */
+  inputs: { [key: string]: ListValue };
+
+  /**
+   * @generated from field: map<string, google.protobuf.ListValue> outputs = 4;
+   */
+  outputs: { [key: string]: ListValue };
+
+  /**
+   * @generated from field: repeated string errors = 5;
+   */
+  errors: string[];
+
+  /**
+   * @generated from field: int32 attempts = 6;
+   */
+  attempts: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp start_time = 7;
+   */
+  startTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp end_time = 8;
+   */
+  endTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: bool paused = 9;
+   */
+  paused: boolean;
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.Activity.
+ * Use `create(ActivitySchema)` to create a new message.
+ */
+export const ActivitySchema: GenMessage<Activity> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  6,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.ChildWorkflow
+ */
+export type ChildWorkflow = Message<"temporal_lens.workflows.v1.ChildWorkflow"> & {
+  /**
+   * @generated from field: string workflow_id = 1;
+   */
+  workflowId: string;
+
+  /**
+   * @generated from field: string namespace = 2;
+   */
+  namespace: string;
+
+  /**
+   * @generated from field: string workflow_type = 3;
+   */
+  workflowType: string;
+
+  /**
+   * @generated from field: map<string, google.protobuf.ListValue> inputs = 4;
+   */
+  inputs: { [key: string]: ListValue };
+
+  /**
+   * @generated from field: map<string, google.protobuf.ListValue> outputs = 5;
+   */
+  outputs: { [key: string]: ListValue };
+
+  /**
+   * @generated from field: repeated string errors = 6;
+   */
+  errors: string[];
+
+  /**
+   * @generated from field: int32 attempts = 7;
+   */
+  attempts: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp start_time = 8;
+   */
+  startTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp end_time = 9;
+   */
+  endTime?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.ChildWorkflow.
+ * Use `create(ChildWorkflowSchema)` to create a new message.
+ */
+export const ChildWorkflowSchema: GenMessage<ChildWorkflow> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  7,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.WorkflowSelection
+ */
+export type WorkflowSelection = Message<"temporal_lens.workflows.v1.WorkflowSelection"> & {
+  /**
+   * @generated from oneof temporal_lens.workflows.v1.WorkflowSelection.selection
+   */
+  selection:
+    | {
+        /**
+         * @generated from field: temporal_lens.common.v1.FilterSpec filter = 1;
+         */
+        value: FilterSpec;
+        case: "filter";
+      }
+    | {
+        /**
+         * @generated from field: temporal_lens.workflows.v1.ExecutionList executions = 2;
+         */
+        value: ExecutionList;
+        case: "executions";
+      }
+    | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.WorkflowSelection.
+ * Use `create(WorkflowSelectionSchema)` to create a new message.
+ */
+export const WorkflowSelectionSchema: GenMessage<WorkflowSelection> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  8,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.ExecutionList
+ */
+export type ExecutionList = Message<"temporal_lens.workflows.v1.ExecutionList"> & {
+  /**
+   * @generated from field: repeated temporal_lens.workflows.v1.WorkflowExecution executions = 1;
+   */
+  executions: WorkflowExecution[];
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.ExecutionList.
+ * Use `create(ExecutionListSchema)` to create a new message.
+ */
+export const ExecutionListSchema: GenMessage<ExecutionList> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  9,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.WorkflowExecution
+ */
+export type WorkflowExecution = Message<"temporal_lens.workflows.v1.WorkflowExecution"> & {
+  /**
+   * @generated from field: string namespace = 1;
+   */
+  namespace: string;
+
+  /**
+   * @generated from field: string workflow_id = 2;
+   */
+  workflowId: string;
+
+  /**
+   * @generated from field: string run_id = 3;
+   */
+  runId: string;
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.WorkflowExecution.
+ * Use `create(WorkflowExecutionSchema)` to create a new message.
+ */
+export const WorkflowExecutionSchema: GenMessage<WorkflowExecution> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  10,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.SignalRequest
  */
 export type SignalRequest = Message<"temporal_lens.workflows.v1.SignalRequest"> & {
+  /**
+   * @generated from field: temporal_lens.workflows.v1.WorkflowSelection workflows = 1;
+   */
+  workflows?: WorkflowSelection | undefined;
+
+  /**
+   * @generated from field: string signal = 2;
+   */
+  signal: string;
+
+  /**
+   * @generated from field: bytes payload = 3;
+   */
+  payload: Uint8Array;
 };
 
 /**
  * Describes the message temporal_lens.workflows.v1.SignalRequest.
  * Use `create(SignalRequestSchema)` to create a new message.
  */
-export const SignalRequestSchema: GenMessage<SignalRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 2);
+export const SignalRequestSchema: GenMessage<SignalRequest> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  11,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.SignalResponse
  */
-export type SignalResponse = Message<"temporal_lens.workflows.v1.SignalResponse"> & {
-};
+export type SignalResponse = Message<"temporal_lens.workflows.v1.SignalResponse"> & {};
 
 /**
  * Describes the message temporal_lens.workflows.v1.SignalResponse.
  * Use `create(SignalResponseSchema)` to create a new message.
  */
-export const SignalResponseSchema: GenMessage<SignalResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 3);
+export const SignalResponseSchema: GenMessage<SignalResponse> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  12,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.ResetRequest
  */
 export type ResetRequest = Message<"temporal_lens.workflows.v1.ResetRequest"> & {
+  /**
+   * @generated from field: temporal_lens.workflows.v1.WorkflowSelection workflows = 1;
+   */
+  workflows?: WorkflowSelection | undefined;
+
+  /**
+   * @generated from field: temporal_lens.workflows.v1.ResetPoint reset_point = 2;
+   */
+  resetPoint?: ResetPoint | undefined;
+
+  /**
+   * @generated from field: string reason = 3;
+   */
+  reason: string;
 };
 
 /**
  * Describes the message temporal_lens.workflows.v1.ResetRequest.
  * Use `create(ResetRequestSchema)` to create a new message.
  */
-export const ResetRequestSchema: GenMessage<ResetRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 4);
+export const ResetRequestSchema: GenMessage<ResetRequest> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  13,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.ResetPoint
+ */
+export type ResetPoint = Message<"temporal_lens.workflows.v1.ResetPoint"> & {
+  /**
+   * @generated from oneof temporal_lens.workflows.v1.ResetPoint.point
+   */
+  point:
+    | {
+        /**
+         * @generated from field: int64 event_id = 1;
+         */
+        value: bigint;
+        case: "eventId";
+      }
+    | {
+        /**
+         * @generated from field: temporal_lens.workflows.v1.ResetActivity activity = 2;
+         */
+        value: ResetActivity;
+        case: "activity";
+      }
+    | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.ResetPoint.
+ * Use `create(ResetPointSchema)` to create a new message.
+ */
+export const ResetPointSchema: GenMessage<ResetPoint> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  14,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.ResetActivity
+ */
+export type ResetActivity = Message<"temporal_lens.workflows.v1.ResetActivity"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: temporal_lens.workflows.v1.ResetActivityPosition position = 2;
+   */
+  position: ResetActivityPosition;
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.ResetActivity.
+ * Use `create(ResetActivitySchema)` to create a new message.
+ */
+export const ResetActivitySchema: GenMessage<ResetActivity> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  15,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.ResetResponse
  */
-export type ResetResponse = Message<"temporal_lens.workflows.v1.ResetResponse"> & {
-};
+export type ResetResponse = Message<"temporal_lens.workflows.v1.ResetResponse"> & {};
 
 /**
  * Describes the message temporal_lens.workflows.v1.ResetResponse.
  * Use `create(ResetResponseSchema)` to create a new message.
  */
-export const ResetResponseSchema: GenMessage<ResetResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 5);
+export const ResetResponseSchema: GenMessage<ResetResponse> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  16,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.TerminateRequest
  */
 export type TerminateRequest = Message<"temporal_lens.workflows.v1.TerminateRequest"> & {
+  /**
+   * @generated from field: temporal_lens.workflows.v1.WorkflowSelection workflows = 1;
+   */
+  workflows?: WorkflowSelection | undefined;
+
+  /**
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
 };
 
 /**
  * Describes the message temporal_lens.workflows.v1.TerminateRequest.
  * Use `create(TerminateRequestSchema)` to create a new message.
  */
-export const TerminateRequestSchema: GenMessage<TerminateRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 6);
+export const TerminateRequestSchema: GenMessage<TerminateRequest> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  17,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.TerminateResponse
  */
-export type TerminateResponse = Message<"temporal_lens.workflows.v1.TerminateResponse"> & {
-};
+export type TerminateResponse = Message<"temporal_lens.workflows.v1.TerminateResponse"> & {};
 
 /**
  * Describes the message temporal_lens.workflows.v1.TerminateResponse.
  * Use `create(TerminateResponseSchema)` to create a new message.
  */
-export const TerminateResponseSchema: GenMessage<TerminateResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 7);
+export const TerminateResponseSchema: GenMessage<TerminateResponse> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  18,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.ListIndexesRequest
  */
-export type ListIndexesRequest = Message<"temporal_lens.workflows.v1.ListIndexesRequest"> & {
-};
+export type ListIndexesRequest = Message<"temporal_lens.workflows.v1.ListIndexesRequest"> & {};
 
 /**
  * Describes the message temporal_lens.workflows.v1.ListIndexesRequest.
  * Use `create(ListIndexesRequestSchema)` to create a new message.
  */
-export const ListIndexesRequestSchema: GenMessage<ListIndexesRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 8);
+export const ListIndexesRequestSchema: GenMessage<ListIndexesRequest> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  19,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.ListIndexesResponse
  */
 export type ListIndexesResponse = Message<"temporal_lens.workflows.v1.ListIndexesResponse"> & {
+  /**
+   * @generated from field: repeated temporal_lens.workflows.v1.IndexInfo indexes = 1;
+   */
+  indexes: IndexInfo[];
 };
 
 /**
  * Describes the message temporal_lens.workflows.v1.ListIndexesResponse.
  * Use `create(ListIndexesResponseSchema)` to create a new message.
  */
-export const ListIndexesResponseSchema: GenMessage<ListIndexesResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 9);
+export const ListIndexesResponseSchema: GenMessage<ListIndexesResponse> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  20,
+);
+
+/**
+ * @generated from message temporal_lens.workflows.v1.IndexInfo
+ */
+export type IndexInfo = Message<"temporal_lens.workflows.v1.IndexInfo"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int64 document_count = 2;
+   */
+  documentCount: bigint;
+};
+
+/**
+ * Describes the message temporal_lens.workflows.v1.IndexInfo.
+ * Use `create(IndexInfoSchema)` to create a new message.
+ */
+export const IndexInfoSchema: GenMessage<IndexInfo> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  21,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.DeleteIndexRequest
  */
 export type DeleteIndexRequest = Message<"temporal_lens.workflows.v1.DeleteIndexRequest"> & {
+  /**
+   * @generated from field: string index = 1;
+   */
+  index: string;
 };
 
 /**
  * Describes the message temporal_lens.workflows.v1.DeleteIndexRequest.
  * Use `create(DeleteIndexRequestSchema)` to create a new message.
  */
-export const DeleteIndexRequestSchema: GenMessage<DeleteIndexRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 10);
+export const DeleteIndexRequestSchema: GenMessage<DeleteIndexRequest> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  22,
+);
 
 /**
  * @generated from message temporal_lens.workflows.v1.DeleteIndexResponse
  */
-export type DeleteIndexResponse = Message<"temporal_lens.workflows.v1.DeleteIndexResponse"> & {
-};
+export type DeleteIndexResponse = Message<"temporal_lens.workflows.v1.DeleteIndexResponse"> & {};
 
 /**
  * Describes the message temporal_lens.workflows.v1.DeleteIndexResponse.
  * Use `create(DeleteIndexResponseSchema)` to create a new message.
  */
-export const DeleteIndexResponseSchema: GenMessage<DeleteIndexResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 11);
+export const DeleteIndexResponseSchema: GenMessage<DeleteIndexResponse> /*@__PURE__*/ = messageDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  23,
+);
+
+/**
+ * @generated from enum temporal_lens.workflows.v1.WorkflowStatus
+ */
+export enum WorkflowStatus {
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_RUNNING = 1;
+   */
+  RUNNING = 1,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_COMPLETED = 2;
+   */
+  COMPLETED = 2,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_FAILED = 3;
+   */
+  FAILED = 3,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_TIMED_OUT = 4;
+   */
+  TIMED_OUT = 4,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_PAUSED = 5;
+   */
+  PAUSED = 5,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_CONTINUED_AS_NEW = 6;
+   */
+  CONTINUED_AS_NEW = 6,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_CANCELED = 7;
+   */
+  CANCELED = 7,
+
+  /**
+   * @generated from enum value: WORKFLOW_STATUS_TERMINATED = 8;
+   */
+  TERMINATED = 8,
+}
+
+/**
+ * Describes the enum temporal_lens.workflows.v1.WorkflowStatus.
+ */
+export const WorkflowStatusSchema: GenEnum<WorkflowStatus> /*@__PURE__*/ = enumDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  0,
+);
+
+/**
+ * @generated from enum temporal_lens.workflows.v1.ResetActivityPosition
+ */
+export enum ResetActivityPosition {
+  /**
+   * @generated from enum value: RESET_ACTIVITY_POSITION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: RESET_ACTIVITY_POSITION_EARLIEST = 1;
+   */
+  EARLIEST = 1,
+
+  /**
+   * @generated from enum value: RESET_ACTIVITY_POSITION_LATEST = 2;
+   */
+  LATEST = 2,
+}
+
+/**
+ * Describes the enum temporal_lens.workflows.v1.ResetActivityPosition.
+ */
+export const ResetActivityPositionSchema: GenEnum<ResetActivityPosition> /*@__PURE__*/ = enumDesc(
+  file_temporal_lens_workflows_v1_workflows,
+  1,
+);
 
 /**
  * @generated from service temporal_lens.workflows.v1.WorkflowService
@@ -179,7 +805,7 @@ export const WorkflowService: GenService<{
     methodKind: "unary";
     input: typeof SearchRequestSchema;
     output: typeof SearchResponseSchema;
-  },
+  };
   /**
    * @generated from rpc temporal_lens.workflows.v1.WorkflowService.Signal
    */
@@ -187,7 +813,7 @@ export const WorkflowService: GenService<{
     methodKind: "unary";
     input: typeof SignalRequestSchema;
     output: typeof SignalResponseSchema;
-  },
+  };
   /**
    * @generated from rpc temporal_lens.workflows.v1.WorkflowService.Reset
    */
@@ -195,7 +821,7 @@ export const WorkflowService: GenService<{
     methodKind: "unary";
     input: typeof ResetRequestSchema;
     output: typeof ResetResponseSchema;
-  },
+  };
   /**
    * @generated from rpc temporal_lens.workflows.v1.WorkflowService.Terminate
    */
@@ -203,7 +829,7 @@ export const WorkflowService: GenService<{
     methodKind: "unary";
     input: typeof TerminateRequestSchema;
     output: typeof TerminateResponseSchema;
-  },
+  };
   /**
    * @generated from rpc temporal_lens.workflows.v1.WorkflowService.ListIndexes
    */
@@ -211,7 +837,7 @@ export const WorkflowService: GenService<{
     methodKind: "unary";
     input: typeof ListIndexesRequestSchema;
     output: typeof ListIndexesResponseSchema;
-  },
+  };
   /**
    * @generated from rpc temporal_lens.workflows.v1.WorkflowService.DeleteIndex
    */
@@ -219,7 +845,5 @@ export const WorkflowService: GenService<{
     methodKind: "unary";
     input: typeof DeleteIndexRequestSchema;
     output: typeof DeleteIndexResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_temporal_lens_workflows_v1_workflows, 0);
-
+  };
+}> /*@__PURE__*/ = serviceDesc(file_temporal_lens_workflows_v1_workflows, 0);

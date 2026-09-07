@@ -3,6 +3,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/varunbpatil/temporal-lens/types"
 )
 
 // Workflow represents a Temporal workflow.
@@ -78,11 +80,11 @@ type SearchAttribute struct {
 
 // Activity is the details of a single Temporal activity.
 type Activity struct {
-	// Activity ID
+	// Activity ID, when supplied as a non-integer identifier by the workflow.
 	//
-	// Temporal usually auto-generates an integer activity ID, but that can be overriden
-	// by the client to be any string
-	ID string `json:"id"`
+	// Temporal usually auto-generates an integer activity ID. Those implementation
+	// details are omitted; client-provided string IDs are retained.
+	ID string `json:"id,omitempty"`
 
 	// Activity name
 	Name string `json:"name"`
@@ -169,3 +171,31 @@ const (
 	StatusCanceled       Status = "CANCELED"
 	StatusTerminated     Status = "TERMINATED"
 )
+
+// WorkflowSchema describes fields that Temporal Lens indexes without a custom
+// payload mapper. Custom mapper fields can be added when a mapper is wired in.
+func WorkflowSchema() types.Schema {
+	return types.Schema{
+		"metadata.workflowId":              {Type: types.FieldTypeText},
+		"metadata.Namespace":               {Type: types.FieldTypeText},
+		"metadata.workflowType":            {Type: types.FieldTypeText},
+		"metadata.startTime":               {Type: types.FieldTypeTimestamp},
+		"metadata.endTime":                 {Type: types.FieldTypeTimestamp},
+		"metadata.status":                  {Type: types.FieldTypeKeyword},
+		"data.errors":                      {Type: types.FieldTypeText},
+		"data.activities.id":               {Type: types.FieldTypeText},
+		"data.activities.name":             {Type: types.FieldTypeText},
+		"data.activities.errors":           {Type: types.FieldTypeText},
+		"data.activities.attempts":         {Type: types.FieldTypeInt},
+		"data.activities.startTime":        {Type: types.FieldTypeTimestamp},
+		"data.activities.endTime":          {Type: types.FieldTypeTimestamp},
+		"data.activities.paused":           {Type: types.FieldTypeBool},
+		"data.childWorkflows.workflowId":   {Type: types.FieldTypeText},
+		"data.childWorkflows.Namespace":    {Type: types.FieldTypeText},
+		"data.childWorkflows.workflowType": {Type: types.FieldTypeText},
+		"data.childWorkflows.errors":       {Type: types.FieldTypeText},
+		"data.childWorkflows.attempts":     {Type: types.FieldTypeInt},
+		"data.childWorkflows.startTime":    {Type: types.FieldTypeTimestamp},
+		"data.childWorkflows.endTime":      {Type: types.FieldTypeTimestamp},
+	}
+}

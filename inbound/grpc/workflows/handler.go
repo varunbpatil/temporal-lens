@@ -1,7 +1,15 @@
 package workflows
 
 import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"connectrpc.com/connect"
+
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
+	grpcutil "github.com/varunbpatil/temporal-lens/inbound/grpc"
+	v1 "github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1"
 	"github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1/workflowsv1connect"
 )
 
@@ -17,4 +25,132 @@ type Handler struct {
 // NewHandler creates a new Connect handler backed by the given domain service.
 func NewHandler(svc ports.WorkflowService) *Handler {
 	return &Handler{svc: svc}
+}
+
+// Register registers the WorkflowService handlers on the given mux.
+func Register(mux *http.ServeMux, handler workflowsv1connect.WorkflowServiceHandler) {
+	opts := grpcutil.HandlerOptions()
+
+	path, httpHandler := workflowsv1connect.NewWorkflowServiceHandler(handler, opts...)
+	mux.Handle(path, httpHandler)
+}
+
+// Search parses the common query specifications and searches indexed workflows.
+func (h *Handler) Search(
+	ctx context.Context,
+	req *connect.Request[v1.SearchRequest],
+) (*connect.Response[v1.SearchResponse], error) {
+	searchRequest, err := searchRequestFromProto(req.Msg)
+	if err != nil {
+		return nil, invalidArgument(err)
+	}
+	searchResponse, err := h.svc.Search(ctx, searchRequest)
+	if err != nil {
+		return nil, serviceError(err)
+	}
+	response, err := searchResponseToProto(searchResponse)
+	if err != nil {
+		return nil, serviceError(err)
+	}
+	return connect.NewResponse(response), nil
+}
+
+// Signal sends a signal to workflows selected by a filter or explicit executions.
+func (h *Handler) Signal(
+	ctx context.Context,
+	req *connect.Request[v1.SignalRequest],
+) (*connect.Response[v1.SignalResponse], error) {
+	workflowSpec, err := workflowSpecFromProto(req.Msg.GetWorkflows())
+	if err != nil {
+		return nil, invalidArgument(err)
+	}
+	if serviceErr := h.svc.Signal(ctx, ports.SignalRequest{
+		WorkflowSpec: workflowSpec,
+		Signal:       req.Msg.GetSignal(),
+		Payload:      req.Msg.GetPayload(),
+	}); serviceErr != nil {
+		return nil, serviceError(serviceErr)
+	}
+	return connect.NewResponse(&v1.SignalResponse{}), nil
+}
+
+// Reset resets workflows selected by a filter or explicit executions.
+func (h *Handler) Reset(
+	ctx context.Context,
+	req *connect.Request[v1.ResetRequest],
+) (*connect.Response[v1.ResetResponse], error) {
+	workflowSpec, err := workflowSpecFromProto(req.Msg.GetWorkflows())
+	if err != nil {
+		return nil, invalidArgument(err)
+	}
+	resetPoint, err := resetPointFromProto(req.Msg.GetResetPoint())
+	if err != nil {
+		return nil, invalidArgument(err)
+	}
+	if serviceErr := h.svc.Reset(ctx, ports.ResetRequest{
+		WorkflowSpec: workflowSpec,
+		ResetPoint:   resetPoint,
+		Reason:       req.Msg.GetReason(),
+	}); serviceErr != nil {
+		return nil, serviceError(serviceErr)
+	}
+	return connect.NewResponse(&v1.ResetResponse{}), nil
+}
+
+// Terminate terminates workflows selected by a filter or explicit executions.
+func (h *Handler) Terminate(
+	ctx context.Context,
+	req *connect.Request[v1.TerminateRequest],
+) (*connect.Response[v1.TerminateResponse], error) {
+	workflowSpec, err := workflowSpecFromProto(req.Msg.GetWorkflows())
+	if err != nil {
+		return nil, invalidArgument(err)
+	}
+	if serviceErr := h.svc.Terminate(ctx, ports.TerminateRequest{
+		WorkflowSpec: workflowSpec,
+		Reason:       req.Msg.GetReason(),
+	}); serviceErr != nil {
+		return nil, serviceError(serviceErr)
+	}
+	return connect.NewResponse(&v1.TerminateResponse{}), nil
+}
+
+// ListIndexes returns the workflow shards owned by the domain and their document counts.
+func (h *Handler) ListIndexes(
+	ctx context.Context,
+	_ *connect.Request[v1.ListIndexesRequest],
+) (*connect.Response[v1.ListIndexesResponse], error) {
+	indexes, err := h.svc.ListIndexes(ctx)
+	if err != nil {
+		return nil, serviceError(err)
+	}
+	response := &v1.ListIndexesResponse{Indexes: make([]*v1.IndexInfo, 0, len(indexes))}
+	for _, index := range indexes {
+		response.Indexes = append(response.Indexes, &v1.IndexInfo{
+			Name:          index.Name,
+			DocumentCount: index.DocumentCount,
+		})
+	}
+	return connect.NewResponse(response), nil
+}
+
+// DeleteIndex deletes one workflow shard.
+func (h *Handler) DeleteIndex(
+	ctx context.Context,
+	req *connect.Request[v1.DeleteIndexRequest],
+) (*connect.Response[v1.DeleteIndexResponse], error) {
+	if err := h.svc.DeleteIndex(ctx, req.Msg.GetIndex()); err != nil {
+		return nil, serviceError(err)
+	}
+	return connect.NewResponse(&v1.DeleteIndexResponse{}), nil
+}
+
+// invalidArgument reports an input that cannot be parsed into the domain request.
+func invalidArgument(err error) error {
+	return connect.NewError(connect.CodeInvalidArgument, err)
+}
+
+// serviceError reports a domain or adapter failure without conflating it with a malformed request.
+func serviceError(err error) error {
+	return connect.NewError(connect.CodeInternal, fmt.Errorf("workflow service: %w", err))
 }
