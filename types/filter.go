@@ -12,47 +12,6 @@ import (
 // ErrNilSpec indicates a nil proto spec was provided.
 var ErrNilSpec = errors.New("nil spec")
 
-// FieldType describes the expected type of a filterable field.
-type FieldType int
-
-const (
-	FieldTypeKeyword FieldType = iota
-	FieldTypeText
-	FieldTypeInt
-	FieldTypeDouble
-	FieldTypeBool
-	FieldTypeTimestamp
-)
-
-// String returns the human-readable name of the field type.
-func (ft FieldType) String() string {
-	switch ft {
-	case FieldTypeKeyword:
-		return "keyword"
-	case FieldTypeText:
-		return "text"
-	case FieldTypeInt:
-		return "int"
-	case FieldTypeDouble:
-		return "double"
-	case FieldTypeBool:
-		return "bool"
-	case FieldTypeTimestamp:
-		return "timestamp"
-	default:
-		return fmt.Sprintf("FieldType(%d)", int(ft))
-	}
-}
-
-// FieldSchema describes a single filterable field.
-type FieldSchema struct {
-	Type      FieldType
-	Operators []Operator // nil means all operators are allowed.
-}
-
-// Schema defines the set of valid fields for a domain.
-type Schema map[string]FieldSchema
-
 // Filter is a parsed, type-safe filter expression.
 // Exactly one of And, Or, or Cond is non-nil.
 type Filter struct {
@@ -130,6 +89,25 @@ var (
 		OpExists, OpNotExists,
 	}
 )
+
+// DefaultOperators returns the operators supported by a field type when its
+// [FieldSchema.Operators] is nil.
+func DefaultOperators(fieldType FieldType) []Operator {
+	switch fieldType {
+	case FieldTypeKeyword:
+		return KeywordOps
+	case FieldTypeText:
+		return TextOps
+	case FieldTypeInt, FieldTypeDouble:
+		return NumericOps
+	case FieldTypeBool:
+		return BoolOps
+	case FieldTypeTimestamp:
+		return TimeOps
+	default:
+		return nil
+	}
+}
 
 // Value is a strongly-typed filter value.
 // Exactly one field is non-nil. Null is represented by NonNull being nil
@@ -285,7 +263,11 @@ func parseLeaf(schema Schema, lf *commonv1.LeafFilter) (*Filter, error) {
 		if !ok {
 			return nil, fmt.Errorf("filter: unknown field %q", lf.GetField())
 		}
-		if fieldSchema.Operators != nil && !containsOperator(fieldSchema.Operators, op) {
+		operators := fieldSchema.Operators
+		if operators == nil {
+			operators = DefaultOperators(fieldSchema.Type)
+		}
+		if !containsOperator(operators, op) {
 			return nil, fmt.Errorf("filter: operator %s not allowed on field %q", op, lf.GetField())
 		}
 		fieldType = &fieldSchema.Type

@@ -5,6 +5,11 @@
 import { WorkflowService } from "./workflows_pb";
 
 /**
+ * @generated from rpc temporal_lens.workflows.v1.WorkflowService.GetSearchSchema
+ */
+export const getSearchSchema = WorkflowService.method.getSearchSchema;
+
+/**
  * @generated from rpc temporal_lens.workflows.v1.WorkflowService.Search
  */
 export const search = WorkflowService.method.search;

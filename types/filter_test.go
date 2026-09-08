@@ -269,10 +269,10 @@ func TestParseFilterSpec_ExistsNoValue(t *testing.T) {
 	assert.Equal(t, types.OpExists, f.Cond.Operator)
 }
 
-func TestParseFilterSpec_OperatorNotAllowed(t *testing.T) {
+func TestParseFilterSpec_DefaultOperatorsRejectUnsupported(t *testing.T) {
 	t.Parallel()
 	schema := types.Schema{
-		"attempts": {Type: types.FieldTypeInt, Operators: types.NumericOps},
+		"attempts": {Type: types.FieldTypeInt},
 	}
 	spec := &commonv1.FilterSpec{
 		Filter: &commonv1.FilterSpec_Leaf{
@@ -290,10 +290,10 @@ func TestParseFilterSpec_OperatorNotAllowed(t *testing.T) {
 	assert.Contains(t, err.Error(), "not allowed")
 }
 
-func TestParseFilterSpec_OperatorAllowed(t *testing.T) {
+func TestParseFilterSpec_DefaultOperatorsAllowSupported(t *testing.T) {
 	t.Parallel()
 	schema := types.Schema{
-		"attempts": {Type: types.FieldTypeInt, Operators: types.NumericOps},
+		"attempts": {Type: types.FieldTypeInt},
 	}
 	spec := &commonv1.FilterSpec{
 		Filter: &commonv1.FilterSpec_Leaf{

@@ -17,6 +17,7 @@ import (
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/service"
 	"github.com/varunbpatil/temporal-lens/mocks"
+	"github.com/varunbpatil/temporal-lens/types"
 )
 
 func TestServiceIndexesWorkflowInDailyShard(t *testing.T) {
@@ -50,7 +51,7 @@ func TestServiceIndexesWorkflowInDailyShard(t *testing.T) {
 	repository.EXPECT().CreateIndex(gomock.Any(), gomock.Any()).DoAndReturn(state.createIndex).AnyTimes()
 	repository.EXPECT().DeleteIndex(gomock.Any(), gomock.Any()).DoAndReturn(state.deleteIndex).AnyTimes()
 	repository.EXPECT().Add(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(state.add).AnyTimes()
-	svc := newService(t, source, repository, 1, "temporal-workflows-")
+	svc := newService(t, source, repository, "temporal-workflows-")
 
 	require.NoError(t, svc.Start(t.Context()))
 	t.Cleanup(func() { require.NoError(t, svc.Stop(context.Background())) })
@@ -85,12 +86,60 @@ func TestServiceSearchesAllWorkflowShards(t *testing.T) {
 			searchIndexes = slices.Clone(indexes)
 			return ports.SearchResponse{TotalHits: 2}, nil
 		})
-	svc := newService(t, source, repository, 1, "workflows-")
+	svc := newService(t, source, repository, "workflows-")
 
 	response, err := svc.Search(t.Context(), ports.SearchRequest{})
 	require.NoError(t, err)
 	require.EqualValues(t, 2, response.TotalHits)
 	require.Equal(t, []string{"workflows-2026-09-06", "workflows-2026-09-07"}, searchIndexes)
+}
+
+func TestServiceTerminatesAllFilterMatches(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	source := mocks.NewMockWorkflowSource(controller)
+	repository := mocks.NewMockWorkflowRepository(controller)
+	repository.EXPECT().
+		ListIndexes(gomock.Any()).
+		Return([]ports.IndexInfo{{Name: "workflows-2026-09-07"}}, nil).
+		AnyTimes()
+	searchCalls := 0
+	repository.EXPECT().
+		Search(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _ []string, request ports.SearchRequest) (ports.SearchResponse, error) {
+			searchCalls++
+			if searchCalls == 1 {
+				require.Empty(t, request.Pagination.Cursor.Cursor)
+				return ports.SearchResponse{Workflows: []*models.Workflow{
+					{Metadata: models.WorkflowMetadata{Namespace: "payments", WorkflowID: "keep", RunID: "one"}},
+					{Metadata: models.WorkflowMetadata{Namespace: "payments", WorkflowID: "skip", RunID: "two"}},
+				}, NextCursor: "next"}, nil
+			}
+			require.Equal(t, "next", request.Pagination.Cursor.Cursor)
+			return ports.SearchResponse{Workflows: []*models.Workflow{
+				{Metadata: models.WorkflowMetadata{Namespace: "payments", WorkflowID: "keep-too", RunID: "three"}},
+			}}, nil
+		}).
+		Times(2)
+	source.EXPECT().
+		Terminate(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, request ports.InternalTerminateRequest) error {
+			require.Equal(t, []ports.ExecutionInfo{
+				{Namespace: "payments", WorkflowID: "keep", RunID: "one"},
+				{Namespace: "payments", WorkflowID: "skip", RunID: "two"},
+				{Namespace: "payments", WorkflowID: "keep-too", RunID: "three"},
+			}, request.Executions)
+			return nil
+		})
+	svc := newService(t, source, repository, "workflows-")
+
+	err := svc.Terminate(t.Context(), ports.TerminateRequest{
+		WorkflowSpec: ports.WorkflowSpec{
+			Filter: &types.Filter{And: &types.AndFilter{}},
+		},
+	})
+
+	require.NoError(t, err)
 }
 
 func TestServiceGroupsActivityResetsByNamespaceAndEventID(t *testing.T) {
@@ -129,7 +178,7 @@ func TestServiceGroupsActivityResetsByNamespaceAndEventID(t *testing.T) {
 			return nil
 		}).
 		Times(3)
-	svc := newService(t, source, repository, 1, "workflows-")
+	svc := newService(t, source, repository, "workflows-")
 
 	err := svc.Reset(t.Context(), ports.ResetRequest{
 		WorkflowSpec: ports.WorkflowSpec{Executions: []ports.ExecutionInfo{
@@ -155,7 +204,6 @@ func newService(
 	t *testing.T,
 	source ports.WorkflowSource,
 	repository ports.WorkflowRepository,
-	batchSize int,
 	indexPrefix string,
 ) *service.Service {
 	t.Helper()
@@ -167,7 +215,7 @@ func newService(
 			RetentionCron:   "0 0 * * *",
 			DataWorkers:     1,
 			IndexWorkers:    1,
-			IndexBatchSize:  batchSize,
+			IndexBatchSize:  1,
 		},
 		Source:     source,
 		Repository: repository,

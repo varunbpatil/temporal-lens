@@ -66,7 +66,7 @@ func (r *Repository) Close() error {
 
 // CreateIndex creates an index with the full explicit mapping.
 func (r *Repository) CreateIndex(ctx context.Context, index string) error {
-	mapping := os.BuildIndexMapping(r.schema, []string{"data.activities", "data.childWorkflows"})
+	mapping := os.BuildIndexMapping(r.schema, workflowNestedPaths())
 
 	body, err := json.Marshal(mapping)
 	if err != nil {
@@ -178,7 +178,7 @@ func (r *Repository) Search(
 	indexes []string,
 	req ports.SearchRequest,
 ) (ports.SearchResponse, error) {
-	query, err := buildSearchBody(req)
+	query, err := buildSearchBody(req, workflowNestedPaths())
 	if err != nil {
 		return ports.SearchResponse{}, fmt.Errorf("opensearch: building query: %w", err)
 	}
@@ -252,10 +252,10 @@ func nextCursor(req ports.SearchRequest, hits []opensearchapi.SearchHit) string 
 	return string(cursor)
 }
 
-func buildSearchBody(req ports.SearchRequest) (map[string]any, error) {
+func buildSearchBody(req ports.SearchRequest, nestedPaths []string) (map[string]any, error) {
 	body := map[string]any{}
 
-	query, err := os.BuildQuery(req.Filter)
+	query, err := os.BuildQueryWithNestedPaths(req.Filter, nestedPaths)
 	if err != nil {
 		return nil, err
 	}
@@ -271,6 +271,14 @@ func buildSearchBody(req ports.SearchRequest) (map[string]any, error) {
 	}
 
 	return body, nil
+}
+
+func workflowNestedPaths() []string {
+	return []string{
+		"metadata.searchAttributes",
+		"data.activities",
+		"data.childWorkflows",
+	}
 }
 
 // searchSort always includes the stable document ID tie-breaker so results do

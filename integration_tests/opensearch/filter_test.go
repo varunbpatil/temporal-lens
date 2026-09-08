@@ -17,6 +17,10 @@ import (
 	"github.com/varunbpatil/temporal-lens/types"
 )
 
+func buildQuery(filter *types.Filter) (map[string]any, error) {
+	return opensearch.BuildQueryWithNestedPaths(filter, nil)
+}
+
 func validateQuery(t *testing.T, query map[string]any) {
 	t.Helper()
 	payload := map[string]any{"query": query}
@@ -38,14 +42,14 @@ func validateQuery(t *testing.T, query map[string]any) {
 
 func TestValidateQuery_Nil(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(nil)
+	q, err := buildQuery(nil)
 	require.NoError(t, err)
 	validateQuery(t, q)
 }
 
 func TestValidateQuery_EQ(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "status", Operator: types.OpEQ,
 		Value: types.Value{String: new("RUNNING")},
 	}})
@@ -55,7 +59,7 @@ func TestValidateQuery_EQ(t *testing.T) {
 
 func TestValidateQuery_NEQ(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "status", Operator: types.OpNEQ,
 		Value: types.Value{String: new("FAILED")},
 	}})
@@ -65,7 +69,7 @@ func TestValidateQuery_NEQ(t *testing.T) {
 
 func TestValidateQuery_Contains(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "name", Operator: types.OpContains,
 		Value: types.Value{String: new("order")},
 	}})
@@ -75,7 +79,7 @@ func TestValidateQuery_Contains(t *testing.T) {
 
 func TestValidateQuery_NotContains(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "name", Operator: types.OpNotContains,
 		Value: types.Value{String: new("error")},
 	}})
@@ -85,7 +89,7 @@ func TestValidateQuery_NotContains(t *testing.T) {
 
 func TestValidateQuery_LT(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "attempts", Operator: types.OpLT,
 		Value: types.Value{Int: new(int64(5))},
 	}})
@@ -95,7 +99,7 @@ func TestValidateQuery_LT(t *testing.T) {
 
 func TestValidateQuery_GT(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "attempts", Operator: types.OpGT,
 		Value: types.Value{Int: new(int64(3))},
 	}})
@@ -105,7 +109,7 @@ func TestValidateQuery_GT(t *testing.T) {
 
 func TestValidateQuery_LTE(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "attempts", Operator: types.OpLTE,
 		Value: types.Value{Int: new(int64(10))},
 	}})
@@ -115,7 +119,7 @@ func TestValidateQuery_LTE(t *testing.T) {
 
 func TestValidateQuery_GTE(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "attempts", Operator: types.OpGTE,
 		Value: types.Value{Int: new(int64(5))},
 	}})
@@ -127,7 +131,7 @@ func TestValidateQuery_Between(t *testing.T) {
 	t.Parallel()
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "startTime", Operator: types.OpBetween,
 		Value: types.Value{Between: &types.BetweenValue{
 			Start: types.Value{Timestamp: &start},
@@ -140,7 +144,7 @@ func TestValidateQuery_Between(t *testing.T) {
 
 func TestValidateQuery_In(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "status", Operator: types.OpIn,
 		Value: types.Value{List: []types.Value{
 			{String: new("RUNNING")},
@@ -153,7 +157,7 @@ func TestValidateQuery_In(t *testing.T) {
 
 func TestValidateQuery_NotIn(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "status", Operator: types.OpNotIn,
 		Value: types.Value{List: []types.Value{
 			{String: new("COMPLETED")},
@@ -166,7 +170,7 @@ func TestValidateQuery_NotIn(t *testing.T) {
 
 func TestValidateQuery_Exists(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "endTime", Operator: types.OpExists,
 	}})
 	require.NoError(t, err)
@@ -175,7 +179,7 @@ func TestValidateQuery_Exists(t *testing.T) {
 
 func TestValidateQuery_NotExists(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "endTime", Operator: types.OpNotExists,
 	}})
 	require.NoError(t, err)
@@ -184,7 +188,7 @@ func TestValidateQuery_NotExists(t *testing.T) {
 
 func TestValidateQuery_Wildcard(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Cond: &types.Condition{
+	q, err := buildQuery(&types.Filter{Cond: &types.Condition{
 		Field: "name", Operator: types.OpStartsWith,
 		Value: types.Value{String: new("temporal")},
 	}})
@@ -194,7 +198,7 @@ func TestValidateQuery_Wildcard(t *testing.T) {
 
 func TestValidateQuery_And(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{And: &types.AndFilter{Operands: []*types.Filter{
+	q, err := buildQuery(&types.Filter{And: &types.AndFilter{Operands: []*types.Filter{
 		{Cond: &types.Condition{Field: "status", Operator: types.OpEQ, Value: types.Value{String: new("RUNNING")}}},
 		{Cond: &types.Condition{Field: "attempts", Operator: types.OpGTE, Value: types.Value{Int: new(int64(5))}}},
 	}}})
@@ -204,7 +208,7 @@ func TestValidateQuery_And(t *testing.T) {
 
 func TestValidateQuery_Or(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{Or: &types.OrFilter{Operands: []*types.Filter{
+	q, err := buildQuery(&types.Filter{Or: &types.OrFilter{Operands: []*types.Filter{
 		{Cond: &types.Condition{Field: "status", Operator: types.OpEQ, Value: types.Value{String: new("RUNNING")}}},
 		{Cond: &types.Condition{Field: "paused", Operator: types.OpEQ, Value: types.Value{Bool: new(true)}}},
 	}}})
@@ -214,7 +218,7 @@ func TestValidateQuery_Or(t *testing.T) {
 
 func TestValidateQuery_NestedAndOr(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(&types.Filter{And: &types.AndFilter{Operands: []*types.Filter{
+	q, err := buildQuery(&types.Filter{And: &types.AndFilter{Operands: []*types.Filter{
 		{Cond: &types.Condition{Field: "status", Operator: types.OpEQ, Value: types.Value{String: new("RUNNING")}}},
 		{Or: &types.OrFilter{Operands: []*types.Filter{
 			{Cond: &types.Condition{Field: "attempts", Operator: types.OpGTE, Value: types.Value{Int: new(int64(5))}}},

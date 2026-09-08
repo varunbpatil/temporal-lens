@@ -17,6 +17,12 @@ type WorkflowService interface {
 	// Search for workflows
 	Search(ctx context.Context, req SearchRequest) (SearchResponse, error)
 
+	// SearchSchemas describes the built-in and mapper-provided fields available for search.
+	SearchSchemas(ctx context.Context) types.SearchSchemas
+
+	// WorkflowURL returns the Temporal UI URL for one workflow execution.
+	WorkflowURL(ctx context.Context, metadata models.WorkflowMetadata) (string, error)
+
 	// Signal workflows
 	Signal(ctx context.Context, req SignalRequest) error
 

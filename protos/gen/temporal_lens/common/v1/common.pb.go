@@ -22,6 +22,68 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// FieldType controls the filter value editor and server-side validation.
+type FieldType int32
+
+const (
+	FieldType_FIELD_TYPE_UNSPECIFIED FieldType = 0
+	FieldType_FIELD_TYPE_KEYWORD     FieldType = 1
+	FieldType_FIELD_TYPE_TEXT        FieldType = 2
+	FieldType_FIELD_TYPE_INT         FieldType = 3
+	FieldType_FIELD_TYPE_DOUBLE      FieldType = 4
+	FieldType_FIELD_TYPE_BOOL        FieldType = 5
+	FieldType_FIELD_TYPE_TIMESTAMP   FieldType = 6
+)
+
+// Enum value maps for FieldType.
+var (
+	FieldType_name = map[int32]string{
+		0: "FIELD_TYPE_UNSPECIFIED",
+		1: "FIELD_TYPE_KEYWORD",
+		2: "FIELD_TYPE_TEXT",
+		3: "FIELD_TYPE_INT",
+		4: "FIELD_TYPE_DOUBLE",
+		5: "FIELD_TYPE_BOOL",
+		6: "FIELD_TYPE_TIMESTAMP",
+	}
+	FieldType_value = map[string]int32{
+		"FIELD_TYPE_UNSPECIFIED": 0,
+		"FIELD_TYPE_KEYWORD":     1,
+		"FIELD_TYPE_TEXT":        2,
+		"FIELD_TYPE_INT":         3,
+		"FIELD_TYPE_DOUBLE":      4,
+		"FIELD_TYPE_BOOL":        5,
+		"FIELD_TYPE_TIMESTAMP":   6,
+	}
+)
+
+func (x FieldType) Enum() *FieldType {
+	p := new(FieldType)
+	*p = x
+	return p
+}
+
+func (x FieldType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FieldType) Descriptor() protoreflect.EnumDescriptor {
+	return file_temporal_lens_common_v1_common_proto_enumTypes[0].Descriptor()
+}
+
+func (FieldType) Type() protoreflect.EnumType {
+	return &file_temporal_lens_common_v1_common_proto_enumTypes[0]
+}
+
+func (x FieldType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FieldType.Descriptor instead.
+func (FieldType) EnumDescriptor() ([]byte, []int) {
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{0}
+}
+
 type LogicalOperator int32
 
 const (
@@ -55,11 +117,11 @@ func (x LogicalOperator) String() string {
 }
 
 func (LogicalOperator) Descriptor() protoreflect.EnumDescriptor {
-	return file_temporal_lens_common_v1_common_proto_enumTypes[0].Descriptor()
+	return file_temporal_lens_common_v1_common_proto_enumTypes[1].Descriptor()
 }
 
 func (LogicalOperator) Type() protoreflect.EnumType {
-	return &file_temporal_lens_common_v1_common_proto_enumTypes[0]
+	return &file_temporal_lens_common_v1_common_proto_enumTypes[1]
 }
 
 func (x LogicalOperator) Number() protoreflect.EnumNumber {
@@ -68,7 +130,7 @@ func (x LogicalOperator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use LogicalOperator.Descriptor instead.
 func (LogicalOperator) EnumDescriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{0}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
 // FilterOperator defines the comparison operator.
@@ -150,11 +212,11 @@ func (x FilterOperator) String() string {
 }
 
 func (FilterOperator) Descriptor() protoreflect.EnumDescriptor {
-	return file_temporal_lens_common_v1_common_proto_enumTypes[1].Descriptor()
+	return file_temporal_lens_common_v1_common_proto_enumTypes[2].Descriptor()
 }
 
 func (FilterOperator) Type() protoreflect.EnumType {
-	return &file_temporal_lens_common_v1_common_proto_enumTypes[1]
+	return &file_temporal_lens_common_v1_common_proto_enumTypes[2]
 }
 
 func (x FilterOperator) Number() protoreflect.EnumNumber {
@@ -163,7 +225,7 @@ func (x FilterOperator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use FilterOperator.Descriptor instead.
 func (FilterOperator) EnumDescriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{1}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
 // NullValue represents a null/absent field value.
@@ -197,11 +259,11 @@ func (x NullValue) String() string {
 }
 
 func (NullValue) Descriptor() protoreflect.EnumDescriptor {
-	return file_temporal_lens_common_v1_common_proto_enumTypes[2].Descriptor()
+	return file_temporal_lens_common_v1_common_proto_enumTypes[3].Descriptor()
 }
 
 func (NullValue) Type() protoreflect.EnumType {
-	return &file_temporal_lens_common_v1_common_proto_enumTypes[2]
+	return &file_temporal_lens_common_v1_common_proto_enumTypes[3]
 }
 
 func (x NullValue) Number() protoreflect.EnumNumber {
@@ -210,7 +272,7 @@ func (x NullValue) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NullValue.Descriptor instead.
 func (NullValue) EnumDescriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{2}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
 type SortOrder int32
@@ -246,11 +308,11 @@ func (x SortOrder) String() string {
 }
 
 func (SortOrder) Descriptor() protoreflect.EnumDescriptor {
-	return file_temporal_lens_common_v1_common_proto_enumTypes[3].Descriptor()
+	return file_temporal_lens_common_v1_common_proto_enumTypes[4].Descriptor()
 }
 
 func (SortOrder) Type() protoreflect.EnumType {
-	return &file_temporal_lens_common_v1_common_proto_enumTypes[3]
+	return &file_temporal_lens_common_v1_common_proto_enumTypes[4]
 }
 
 func (x SortOrder) Number() protoreflect.EnumNumber {
@@ -259,7 +321,216 @@ func (x SortOrder) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SortOrder.Descriptor instead.
 func (SortOrder) EnumDescriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{3}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{4}
+}
+
+// SearchSchema describes the fields that a domain makes available for search.
+// Fixed fields are built into the domain; variable fields are supplied by a
+// configured payload mapper and can vary by deployment.
+type SearchSchema struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	FixedFields    []*SearchField         `protobuf:"bytes,1,rep,name=fixed_fields,json=fixedFields,proto3" json:"fixed_fields,omitempty"`
+	VariableFields []*SearchField         `protobuf:"bytes,2,rep,name=variable_fields,json=variableFields,proto3" json:"variable_fields,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SearchSchema) Reset() {
+	*x = SearchSchema{}
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchSchema) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchSchema) ProtoMessage() {}
+
+func (x *SearchSchema) ProtoReflect() protoreflect.Message {
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchSchema.ProtoReflect.Descriptor instead.
+func (*SearchSchema) Descriptor() ([]byte, []int) {
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SearchSchema) GetFixedFields() []*SearchField {
+	if x != nil {
+		return x.FixedFields
+	}
+	return nil
+}
+
+func (x *SearchSchema) GetVariableFields() []*SearchField {
+	if x != nil {
+		return x.VariableFields
+	}
+	return nil
+}
+
+// SearchField describes how one indexed field can be filtered and displayed.
+type SearchField struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Type          FieldType              `protobuf:"varint,2,opt,name=type,proto3,enum=temporal_lens.common.v1.FieldType" json:"type,omitempty"`
+	Operators     []FilterOperator       `protobuf:"varint,3,rep,packed,name=operators,proto3,enum=temporal_lens.common.v1.FilterOperator" json:"operators,omitempty"`
+	Label         string                 `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
+	Group         string                 `protobuf:"bytes,5,opt,name=group,proto3" json:"group,omitempty"`
+	Description   string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	Options       []*SearchFieldOption   `protobuf:"bytes,7,rep,name=options,proto3" json:"options,omitempty"`
+	Sortable      bool                   `protobuf:"varint,8,opt,name=sortable,proto3" json:"sortable,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchField) Reset() {
+	*x = SearchField{}
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchField) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchField) ProtoMessage() {}
+
+func (x *SearchField) ProtoReflect() protoreflect.Message {
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchField.ProtoReflect.Descriptor instead.
+func (*SearchField) Descriptor() ([]byte, []int) {
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SearchField) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *SearchField) GetType() FieldType {
+	if x != nil {
+		return x.Type
+	}
+	return FieldType_FIELD_TYPE_UNSPECIFIED
+}
+
+func (x *SearchField) GetOperators() []FilterOperator {
+	if x != nil {
+		return x.Operators
+	}
+	return nil
+}
+
+func (x *SearchField) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *SearchField) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+func (x *SearchField) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *SearchField) GetOptions() []*SearchFieldOption {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+func (x *SearchField) GetSortable() bool {
+	if x != nil {
+		return x.Sortable
+	}
+	return false
+}
+
+// SearchFieldOption is a known value (enum) offered as a choice in a filter editor.
+type SearchFieldOption struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchFieldOption) Reset() {
+	*x = SearchFieldOption{}
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchFieldOption) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchFieldOption) ProtoMessage() {}
+
+func (x *SearchFieldOption) ProtoReflect() protoreflect.Message {
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchFieldOption.ProtoReflect.Descriptor instead.
+func (*SearchFieldOption) Descriptor() ([]byte, []int) {
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SearchFieldOption) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *SearchFieldOption) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
 }
 
 // FilterSpec is a recursive filter expression supporting complex AND/OR logic.
@@ -276,7 +547,7 @@ type FilterSpec struct {
 
 func (x *FilterSpec) Reset() {
 	*x = FilterSpec{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[0]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -288,7 +559,7 @@ func (x *FilterSpec) String() string {
 func (*FilterSpec) ProtoMessage() {}
 
 func (x *FilterSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[0]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -301,7 +572,7 @@ func (x *FilterSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterSpec.ProtoReflect.Descriptor instead.
 func (*FilterSpec) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{0}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *FilterSpec) GetFilter() isFilterSpec_Filter {
@@ -356,7 +627,7 @@ type LogicalFilter struct {
 
 func (x *LogicalFilter) Reset() {
 	*x = LogicalFilter{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[1]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -368,7 +639,7 @@ func (x *LogicalFilter) String() string {
 func (*LogicalFilter) ProtoMessage() {}
 
 func (x *LogicalFilter) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[1]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -381,7 +652,7 @@ func (x *LogicalFilter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogicalFilter.ProtoReflect.Descriptor instead.
 func (*LogicalFilter) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{1}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *LogicalFilter) GetOperator() LogicalOperator {
@@ -410,7 +681,7 @@ type LeafFilter struct {
 
 func (x *LeafFilter) Reset() {
 	*x = LeafFilter{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[2]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -422,7 +693,7 @@ func (x *LeafFilter) String() string {
 func (*LeafFilter) ProtoMessage() {}
 
 func (x *LeafFilter) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[2]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -435,7 +706,7 @@ func (x *LeafFilter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeafFilter.ProtoReflect.Descriptor instead.
 func (*LeafFilter) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{2}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LeafFilter) GetField() string {
@@ -479,7 +750,7 @@ type FilterValue struct {
 
 func (x *FilterValue) Reset() {
 	*x = FilterValue{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[3]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -491,7 +762,7 @@ func (x *FilterValue) String() string {
 func (*FilterValue) ProtoMessage() {}
 
 func (x *FilterValue) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[3]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +775,7 @@ func (x *FilterValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterValue.ProtoReflect.Descriptor instead.
 func (*FilterValue) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{3}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *FilterValue) GetValue() isFilterValue_Value {
@@ -649,7 +920,7 @@ type BetweenValue struct {
 
 func (x *BetweenValue) Reset() {
 	*x = BetweenValue{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[4]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -661,7 +932,7 @@ func (x *BetweenValue) String() string {
 func (*BetweenValue) ProtoMessage() {}
 
 func (x *BetweenValue) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[4]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -674,7 +945,7 @@ func (x *BetweenValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BetweenValue.ProtoReflect.Descriptor instead.
 func (*BetweenValue) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{4}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BetweenValue) GetStart() *FilterValue {
@@ -701,7 +972,7 @@ type RepeatedValue struct {
 
 func (x *RepeatedValue) Reset() {
 	*x = RepeatedValue{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[5]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -713,7 +984,7 @@ func (x *RepeatedValue) String() string {
 func (*RepeatedValue) ProtoMessage() {}
 
 func (x *RepeatedValue) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[5]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -726,7 +997,7 @@ func (x *RepeatedValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepeatedValue.ProtoReflect.Descriptor instead.
 func (*RepeatedValue) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{5}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RepeatedValue) GetValues() []*FilterValue {
@@ -747,7 +1018,7 @@ type SortSpec struct {
 
 func (x *SortSpec) Reset() {
 	*x = SortSpec{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[6]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -759,7 +1030,7 @@ func (x *SortSpec) String() string {
 func (*SortSpec) ProtoMessage() {}
 
 func (x *SortSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[6]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -772,7 +1043,7 @@ func (x *SortSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SortSpec.ProtoReflect.Descriptor instead.
 func (*SortSpec) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{6}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SortSpec) GetField() string {
@@ -803,7 +1074,7 @@ type PaginationSpec struct {
 
 func (x *PaginationSpec) Reset() {
 	*x = PaginationSpec{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[7]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -815,7 +1086,7 @@ func (x *PaginationSpec) String() string {
 func (*PaginationSpec) ProtoMessage() {}
 
 func (x *PaginationSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[7]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -828,7 +1099,7 @@ func (x *PaginationSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PaginationSpec.ProtoReflect.Descriptor instead.
 func (*PaginationSpec) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{7}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PaginationSpec) GetPagination() isPaginationSpec_Pagination {
@@ -883,7 +1154,7 @@ type OffsetPagination struct {
 
 func (x *OffsetPagination) Reset() {
 	*x = OffsetPagination{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[8]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -895,7 +1166,7 @@ func (x *OffsetPagination) String() string {
 func (*OffsetPagination) ProtoMessage() {}
 
 func (x *OffsetPagination) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[8]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -908,7 +1179,7 @@ func (x *OffsetPagination) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OffsetPagination.ProtoReflect.Descriptor instead.
 func (*OffsetPagination) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{8}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *OffsetPagination) GetPageSize() int32 {
@@ -936,7 +1207,7 @@ type CursorPagination struct {
 
 func (x *CursorPagination) Reset() {
 	*x = CursorPagination{}
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[9]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -948,7 +1219,7 @@ func (x *CursorPagination) String() string {
 func (*CursorPagination) ProtoMessage() {}
 
 func (x *CursorPagination) ProtoReflect() protoreflect.Message {
-	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[9]
+	mi := &file_temporal_lens_common_v1_common_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -961,7 +1232,7 @@ func (x *CursorPagination) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CursorPagination.ProtoReflect.Descriptor instead.
 func (*CursorPagination) Descriptor() ([]byte, []int) {
-	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{9}
+	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CursorPagination) GetPageSize() int32 {
@@ -982,7 +1253,22 @@ var File_temporal_lens_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_temporal_lens_common_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"$temporal_lens/common/v1/common.proto\x12\x17temporal_lens.common.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x95\x01\n" +
+	"$temporal_lens/common/v1/common.proto\x12\x17temporal_lens.common.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
+	"\fSearchSchema\x12G\n" +
+	"\ffixed_fields\x18\x01 \x03(\v2$.temporal_lens.common.v1.SearchFieldR\vfixedFields\x12M\n" +
+	"\x0fvariable_fields\x18\x02 \x03(\v2$.temporal_lens.common.v1.SearchFieldR\x0evariableFields\"\xd0\x02\n" +
+	"\vSearchField\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\".temporal_lens.common.v1.FieldTypeR\x04type\x12E\n" +
+	"\toperators\x18\x03 \x03(\x0e2'.temporal_lens.common.v1.FilterOperatorR\toperators\x12\x14\n" +
+	"\x05label\x18\x04 \x01(\tR\x05label\x12\x14\n" +
+	"\x05group\x18\x05 \x01(\tR\x05group\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\x12D\n" +
+	"\aoptions\x18\a \x03(\v2*.temporal_lens.common.v1.SearchFieldOptionR\aoptions\x12\x1a\n" +
+	"\bsortable\x18\b \x01(\bR\bsortable\"?\n" +
+	"\x11SearchFieldOption\x12\x14\n" +
+	"\x05label\x18\x01 \x01(\tR\x05label\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\x95\x01\n" +
 	"\n" +
 	"FilterSpec\x129\n" +
 	"\x04leaf\x18\x01 \x01(\v2#.temporal_lens.common.v1.LeafFilterH\x00R\x04leaf\x12B\n" +
@@ -1027,7 +1313,15 @@ const file_temporal_lens_common_v1_common_proto_rawDesc = "" +
 	"pageNumber\"G\n" +
 	"\x10CursorPagination\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x16\n" +
-	"\x06cursor\x18\x02 \x01(\tR\x06cursor*f\n" +
+	"\x06cursor\x18\x02 \x01(\tR\x06cursor*\xae\x01\n" +
+	"\tFieldType\x12\x1a\n" +
+	"\x16FIELD_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12FIELD_TYPE_KEYWORD\x10\x01\x12\x13\n" +
+	"\x0fFIELD_TYPE_TEXT\x10\x02\x12\x12\n" +
+	"\x0eFIELD_TYPE_INT\x10\x03\x12\x15\n" +
+	"\x11FIELD_TYPE_DOUBLE\x10\x04\x12\x13\n" +
+	"\x0fFIELD_TYPE_BOOL\x10\x05\x12\x18\n" +
+	"\x14FIELD_TYPE_TIMESTAMP\x10\x06*f\n" +
 	"\x0fLogicalOperator\x12 \n" +
 	"\x1cLOGICAL_OPERATOR_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14LOGICAL_OPERATOR_AND\x10\x01\x12\x17\n" +
@@ -1073,47 +1367,56 @@ func file_temporal_lens_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_temporal_lens_common_v1_common_proto_rawDescData
 }
 
-var file_temporal_lens_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_temporal_lens_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_temporal_lens_common_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_temporal_lens_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_temporal_lens_common_v1_common_proto_goTypes = []any{
-	(LogicalOperator)(0),          // 0: temporal_lens.common.v1.LogicalOperator
-	(FilterOperator)(0),           // 1: temporal_lens.common.v1.FilterOperator
-	(NullValue)(0),                // 2: temporal_lens.common.v1.NullValue
-	(SortOrder)(0),                // 3: temporal_lens.common.v1.SortOrder
-	(*FilterSpec)(nil),            // 4: temporal_lens.common.v1.FilterSpec
-	(*LogicalFilter)(nil),         // 5: temporal_lens.common.v1.LogicalFilter
-	(*LeafFilter)(nil),            // 6: temporal_lens.common.v1.LeafFilter
-	(*FilterValue)(nil),           // 7: temporal_lens.common.v1.FilterValue
-	(*BetweenValue)(nil),          // 8: temporal_lens.common.v1.BetweenValue
-	(*RepeatedValue)(nil),         // 9: temporal_lens.common.v1.RepeatedValue
-	(*SortSpec)(nil),              // 10: temporal_lens.common.v1.SortSpec
-	(*PaginationSpec)(nil),        // 11: temporal_lens.common.v1.PaginationSpec
-	(*OffsetPagination)(nil),      // 12: temporal_lens.common.v1.OffsetPagination
-	(*CursorPagination)(nil),      // 13: temporal_lens.common.v1.CursorPagination
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
+	(FieldType)(0),                // 0: temporal_lens.common.v1.FieldType
+	(LogicalOperator)(0),          // 1: temporal_lens.common.v1.LogicalOperator
+	(FilterOperator)(0),           // 2: temporal_lens.common.v1.FilterOperator
+	(NullValue)(0),                // 3: temporal_lens.common.v1.NullValue
+	(SortOrder)(0),                // 4: temporal_lens.common.v1.SortOrder
+	(*SearchSchema)(nil),          // 5: temporal_lens.common.v1.SearchSchema
+	(*SearchField)(nil),           // 6: temporal_lens.common.v1.SearchField
+	(*SearchFieldOption)(nil),     // 7: temporal_lens.common.v1.SearchFieldOption
+	(*FilterSpec)(nil),            // 8: temporal_lens.common.v1.FilterSpec
+	(*LogicalFilter)(nil),         // 9: temporal_lens.common.v1.LogicalFilter
+	(*LeafFilter)(nil),            // 10: temporal_lens.common.v1.LeafFilter
+	(*FilterValue)(nil),           // 11: temporal_lens.common.v1.FilterValue
+	(*BetweenValue)(nil),          // 12: temporal_lens.common.v1.BetweenValue
+	(*RepeatedValue)(nil),         // 13: temporal_lens.common.v1.RepeatedValue
+	(*SortSpec)(nil),              // 14: temporal_lens.common.v1.SortSpec
+	(*PaginationSpec)(nil),        // 15: temporal_lens.common.v1.PaginationSpec
+	(*OffsetPagination)(nil),      // 16: temporal_lens.common.v1.OffsetPagination
+	(*CursorPagination)(nil),      // 17: temporal_lens.common.v1.CursorPagination
+	(*timestamppb.Timestamp)(nil), // 18: google.protobuf.Timestamp
 }
 var file_temporal_lens_common_v1_common_proto_depIdxs = []int32{
-	6,  // 0: temporal_lens.common.v1.FilterSpec.leaf:type_name -> temporal_lens.common.v1.LeafFilter
-	5,  // 1: temporal_lens.common.v1.FilterSpec.logical:type_name -> temporal_lens.common.v1.LogicalFilter
-	0,  // 2: temporal_lens.common.v1.LogicalFilter.operator:type_name -> temporal_lens.common.v1.LogicalOperator
-	4,  // 3: temporal_lens.common.v1.LogicalFilter.operands:type_name -> temporal_lens.common.v1.FilterSpec
-	1,  // 4: temporal_lens.common.v1.LeafFilter.operator:type_name -> temporal_lens.common.v1.FilterOperator
-	7,  // 5: temporal_lens.common.v1.LeafFilter.value:type_name -> temporal_lens.common.v1.FilterValue
-	14, // 6: temporal_lens.common.v1.FilterValue.timestamp_value:type_name -> google.protobuf.Timestamp
-	2,  // 7: temporal_lens.common.v1.FilterValue.null_value:type_name -> temporal_lens.common.v1.NullValue
-	8,  // 8: temporal_lens.common.v1.FilterValue.between_value:type_name -> temporal_lens.common.v1.BetweenValue
-	9,  // 9: temporal_lens.common.v1.FilterValue.repeated_value:type_name -> temporal_lens.common.v1.RepeatedValue
-	7,  // 10: temporal_lens.common.v1.BetweenValue.start:type_name -> temporal_lens.common.v1.FilterValue
-	7,  // 11: temporal_lens.common.v1.BetweenValue.end:type_name -> temporal_lens.common.v1.FilterValue
-	7,  // 12: temporal_lens.common.v1.RepeatedValue.values:type_name -> temporal_lens.common.v1.FilterValue
-	3,  // 13: temporal_lens.common.v1.SortSpec.order:type_name -> temporal_lens.common.v1.SortOrder
-	12, // 14: temporal_lens.common.v1.PaginationSpec.offset:type_name -> temporal_lens.common.v1.OffsetPagination
-	13, // 15: temporal_lens.common.v1.PaginationSpec.cursor:type_name -> temporal_lens.common.v1.CursorPagination
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	6,  // 0: temporal_lens.common.v1.SearchSchema.fixed_fields:type_name -> temporal_lens.common.v1.SearchField
+	6,  // 1: temporal_lens.common.v1.SearchSchema.variable_fields:type_name -> temporal_lens.common.v1.SearchField
+	0,  // 2: temporal_lens.common.v1.SearchField.type:type_name -> temporal_lens.common.v1.FieldType
+	2,  // 3: temporal_lens.common.v1.SearchField.operators:type_name -> temporal_lens.common.v1.FilterOperator
+	7,  // 4: temporal_lens.common.v1.SearchField.options:type_name -> temporal_lens.common.v1.SearchFieldOption
+	10, // 5: temporal_lens.common.v1.FilterSpec.leaf:type_name -> temporal_lens.common.v1.LeafFilter
+	9,  // 6: temporal_lens.common.v1.FilterSpec.logical:type_name -> temporal_lens.common.v1.LogicalFilter
+	1,  // 7: temporal_lens.common.v1.LogicalFilter.operator:type_name -> temporal_lens.common.v1.LogicalOperator
+	8,  // 8: temporal_lens.common.v1.LogicalFilter.operands:type_name -> temporal_lens.common.v1.FilterSpec
+	2,  // 9: temporal_lens.common.v1.LeafFilter.operator:type_name -> temporal_lens.common.v1.FilterOperator
+	11, // 10: temporal_lens.common.v1.LeafFilter.value:type_name -> temporal_lens.common.v1.FilterValue
+	18, // 11: temporal_lens.common.v1.FilterValue.timestamp_value:type_name -> google.protobuf.Timestamp
+	3,  // 12: temporal_lens.common.v1.FilterValue.null_value:type_name -> temporal_lens.common.v1.NullValue
+	12, // 13: temporal_lens.common.v1.FilterValue.between_value:type_name -> temporal_lens.common.v1.BetweenValue
+	13, // 14: temporal_lens.common.v1.FilterValue.repeated_value:type_name -> temporal_lens.common.v1.RepeatedValue
+	11, // 15: temporal_lens.common.v1.BetweenValue.start:type_name -> temporal_lens.common.v1.FilterValue
+	11, // 16: temporal_lens.common.v1.BetweenValue.end:type_name -> temporal_lens.common.v1.FilterValue
+	11, // 17: temporal_lens.common.v1.RepeatedValue.values:type_name -> temporal_lens.common.v1.FilterValue
+	4,  // 18: temporal_lens.common.v1.SortSpec.order:type_name -> temporal_lens.common.v1.SortOrder
+	16, // 19: temporal_lens.common.v1.PaginationSpec.offset:type_name -> temporal_lens.common.v1.OffsetPagination
+	17, // 20: temporal_lens.common.v1.PaginationSpec.cursor:type_name -> temporal_lens.common.v1.CursorPagination
+	21, // [21:21] is the sub-list for method output_type
+	21, // [21:21] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_temporal_lens_common_v1_common_proto_init() }
@@ -1121,11 +1424,11 @@ func file_temporal_lens_common_v1_common_proto_init() {
 	if File_temporal_lens_common_v1_common_proto != nil {
 		return
 	}
-	file_temporal_lens_common_v1_common_proto_msgTypes[0].OneofWrappers = []any{
+	file_temporal_lens_common_v1_common_proto_msgTypes[3].OneofWrappers = []any{
 		(*FilterSpec_Leaf)(nil),
 		(*FilterSpec_Logical)(nil),
 	}
-	file_temporal_lens_common_v1_common_proto_msgTypes[3].OneofWrappers = []any{
+	file_temporal_lens_common_v1_common_proto_msgTypes[6].OneofWrappers = []any{
 		(*FilterValue_StringValue)(nil),
 		(*FilterValue_IntValue)(nil),
 		(*FilterValue_DoubleValue)(nil),
@@ -1135,7 +1438,7 @@ func file_temporal_lens_common_v1_common_proto_init() {
 		(*FilterValue_BetweenValue)(nil),
 		(*FilterValue_RepeatedValue)(nil),
 	}
-	file_temporal_lens_common_v1_common_proto_msgTypes[7].OneofWrappers = []any{
+	file_temporal_lens_common_v1_common_proto_msgTypes[10].OneofWrappers = []any{
 		(*PaginationSpec_Offset)(nil),
 		(*PaginationSpec_Cursor)(nil),
 	}
@@ -1144,8 +1447,8 @@ func file_temporal_lens_common_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_temporal_lens_common_v1_common_proto_rawDesc), len(file_temporal_lens_common_v1_common_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   10,
+			NumEnums:      5,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

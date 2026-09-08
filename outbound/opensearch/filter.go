@@ -7,41 +7,185 @@ import (
 	"github.com/varunbpatil/temporal-lens/types"
 )
 
-// BuildQuery converts a type-safe [types.Filter] into an OpenSearch query DSL map.
-func BuildQuery(filter *types.Filter) (map[string]any, error) {
+// BuildQueryWithNestedPaths converts a filter into an OpenSearch query while
+// preserving same-object semantics for fields in nested arrays. For example,
+// an AND of metadata.searchAttributes.key and .value becomes one nested query,
+// so both conditions must match the same search-attribute object.
+func BuildQueryWithNestedPaths(filter *types.Filter, nestedPaths []string) (map[string]any, error) {
 	if filter == nil {
 		return map[string]any{"match_all": map[string]any{}}, nil
 	}
-	return buildFilter(filter)
+	return buildFilterWithNestedPaths(filter, nestedPaths, "")
 }
 
-func buildFilter(f *types.Filter) (map[string]any, error) {
+// buildFilterWithNestedPaths builds a query for filter. activeNestedPath is
+// set while building the body of an enclosing nested query, so the filter must
+// not add another nested wrapper for that same array.
+func buildFilterWithNestedPaths(
+	filter *types.Filter,
+	nestedPaths []string,
+	activeNestedPath string,
+) (map[string]any, error) {
+	if activeNestedPath == "" {
+		if path, homogeneous := homogeneousNestedPath(filter, nestedPaths); homogeneous && path != "" {
+			query, err := buildFilterWithNestedPaths(filter, nestedPaths, path)
+			if err != nil {
+				return nil, err
+			}
+			return nestedQuery(path, query), nil
+		}
+	}
+
 	switch {
-	case f.And != nil:
-		return buildLogical("must", f.And.Operands)
-	case f.Or != nil:
-		return buildLogical("should", f.Or.Operands)
-	case f.Cond != nil:
-		return buildCondition(f.Cond)
+	case filter.And != nil:
+		return buildLogicalWithNestedPaths("must", filter.And.Operands, nestedPaths, activeNestedPath)
+	case filter.Or != nil:
+		return buildLogicalWithNestedPaths("should", filter.Or.Operands, nestedPaths, activeNestedPath)
+	case filter.Cond != nil:
+		return buildCondition(filter.Cond)
 	default:
 		return nil, fmt.Errorf("opensearch: empty filter")
 	}
 }
 
-func buildLogical(kind string, operands []*types.Filter) (map[string]any, error) {
+// buildLogicalWithNestedPaths builds an AND or OR query and groups top-level
+// AND operands that address the same nested array. For example, activities.id
+// = "a" AND activities.type = "worker" must be one nested query so both
+// conditions match one activity, rather than two nested queries that could
+// each match a different activity.
+func buildLogicalWithNestedPaths(
+	kind string,
+	operands []*types.Filter,
+	nestedPaths []string,
+	activeNestedPath string,
+) (map[string]any, error) {
+	if activeNestedPath != "" || kind != "must" {
+		return buildLogicalWithContext(kind, operands, nestedPaths, activeNestedPath)
+	}
+
+	byPath := make(map[string][]*types.Filter)
+	for _, operand := range operands {
+		if path, homogeneous := homogeneousNestedPath(operand, nestedPaths); homogeneous && path != "" {
+			byPath[path] = append(byPath[path], operand)
+		}
+	}
+
 	clauses := make([]map[string]any, 0, len(operands))
-	for _, op := range operands {
-		q, err := buildFilter(op)
+	emittedPaths := make(map[string]struct{}, len(byPath))
+	for _, operand := range operands {
+		path, homogeneous := homogeneousNestedPath(operand, nestedPaths)
+		if homogeneous && path != "" {
+			if _, emitted := emittedPaths[path]; emitted {
+				continue
+			}
+			emittedPaths[path] = struct{}{}
+			query, err := buildLogicalWithContext("must", byPath[path], nestedPaths, path)
+			if err != nil {
+				return nil, err
+			}
+			clauses = append(clauses, nestedQuery(path, query))
+			continue
+		}
+
+		query, err := buildFilterWithNestedPaths(operand, nestedPaths, "")
 		if err != nil {
 			return nil, err
 		}
-		clauses = append(clauses, q)
+		clauses = append(clauses, query)
 	}
+	return logicalQuery(kind, clauses), nil
+}
+
+// buildLogicalWithContext builds every operand in activeNestedPath's
+// nested-query context, preserving the requirement that the conditions match
+// the same array item.
+func buildLogicalWithContext(
+	kind string,
+	operands []*types.Filter,
+	nestedPaths []string,
+	activeNestedPath string,
+) (map[string]any, error) {
+	clauses := make([]map[string]any, 0, len(operands))
+	for _, operand := range operands {
+		query, err := buildFilterWithNestedPaths(operand, nestedPaths, activeNestedPath)
+		if err != nil {
+			return nil, err
+		}
+		clauses = append(clauses, query)
+	}
+	return logicalQuery(kind, clauses), nil
+}
+
+// homogeneousNestedPath returns a path when every condition beneath filter
+// belongs to the same nested array (or none belongs to a nested array). The
+// empty path means the filter has no nested field.
+func homogeneousNestedPath(filter *types.Filter, nestedPaths []string) (string, bool) {
+	switch {
+	case filter.Cond != nil:
+		return nestedPathForField(filter.Cond.Field, nestedPaths), true
+	case filter.And != nil:
+		return sharedNestedPath(filter.And.Operands, nestedPaths)
+	case filter.Or != nil:
+		return sharedNestedPath(filter.Or.Operands, nestedPaths)
+	default:
+		return "", false
+	}
+}
+
+// sharedNestedPath returns a path only when all operands are homogeneous and
+// identify the same nested array. A mixed filter, such as one condition on
+// activities and one on childWorkflows, cannot safely share one nested-query
+// context.
+func sharedNestedPath(operands []*types.Filter, nestedPaths []string) (string, bool) {
+	if len(operands) == 0 {
+		return "", true
+	}
+	path, homogeneous := homogeneousNestedPath(operands[0], nestedPaths)
+	if !homogeneous {
+		return "", false
+	}
+	for _, operand := range operands[1:] {
+		operandPath, operandHomogeneous := homogeneousNestedPath(operand, nestedPaths)
+		if !operandHomogeneous || operandPath != path {
+			return "", false
+		}
+	}
+	return path, true
+}
+
+// nestedPathForField returns the most specific nested path that prefixes
+// field. A path must end at a field-name boundary, not mid-segment.
+func nestedPathForField(field string, nestedPaths []string) string {
+	longestMatch := ""
+	for _, path := range nestedPaths {
+		if len(path) > len(longestMatch) && len(field) > len(path) && field[:len(path)] == path &&
+			field[len(path)] == '.' {
+			longestMatch = path
+		}
+	}
+	return longestMatch
+}
+
+// nestedQuery wraps query so OpenSearch evaluates it against individual
+// objects in path's nested array instead of combining fields from different
+// objects.
+func nestedQuery(path string, query map[string]any) map[string]any {
+	return map[string]any{
+		"nested": map[string]any{
+			"path":  path,
+			"query": query,
+		},
+	}
+}
+
+// logicalQuery builds an OpenSearch bool query using kind ("must" for AND or
+// "should" for OR) to join the clauses.
+func logicalQuery(kind string, clauses []map[string]any) map[string]any {
 	return map[string]any{
 		"bool": map[string]any{
 			kind: clauses,
 		},
-	}, nil
+	}
 }
 
 func buildCondition(c *types.Condition) (map[string]any, error) {

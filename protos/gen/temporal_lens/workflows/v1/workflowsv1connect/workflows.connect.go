@@ -33,6 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// WorkflowServiceGetSearchSchemaProcedure is the fully-qualified name of the WorkflowService's
+	// GetSearchSchema RPC.
+	WorkflowServiceGetSearchSchemaProcedure = "/temporal_lens.workflows.v1.WorkflowService/GetSearchSchema"
 	// WorkflowServiceSearchProcedure is the fully-qualified name of the WorkflowService's Search RPC.
 	WorkflowServiceSearchProcedure = "/temporal_lens.workflows.v1.WorkflowService/Search"
 	// WorkflowServiceSignalProcedure is the fully-qualified name of the WorkflowService's Signal RPC.
@@ -52,6 +55,7 @@ const (
 
 // WorkflowServiceClient is a client for the temporal_lens.workflows.v1.WorkflowService service.
 type WorkflowServiceClient interface {
+	GetSearchSchema(context.Context, *connect.Request[v1.GetSearchSchemaRequest]) (*connect.Response[v1.GetSearchSchemaResponse], error)
 	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 	Signal(context.Context, *connect.Request[v1.SignalRequest]) (*connect.Response[v1.SignalResponse], error)
 	Reset(context.Context, *connect.Request[v1.ResetRequest]) (*connect.Response[v1.ResetResponse], error)
@@ -71,6 +75,12 @@ func NewWorkflowServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 	baseURL = strings.TrimRight(baseURL, "/")
 	workflowServiceMethods := v1.File_temporal_lens_workflows_v1_workflows_proto.Services().ByName("WorkflowService").Methods()
 	return &workflowServiceClient{
+		getSearchSchema: connect.NewClient[v1.GetSearchSchemaRequest, v1.GetSearchSchemaResponse](
+			httpClient,
+			baseURL+WorkflowServiceGetSearchSchemaProcedure,
+			connect.WithSchema(workflowServiceMethods.ByName("GetSearchSchema")),
+			connect.WithClientOptions(opts...),
+		),
 		search: connect.NewClient[v1.SearchRequest, v1.SearchResponse](
 			httpClient,
 			baseURL+WorkflowServiceSearchProcedure,
@@ -112,12 +122,18 @@ func NewWorkflowServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 
 // workflowServiceClient implements WorkflowServiceClient.
 type workflowServiceClient struct {
-	search      *connect.Client[v1.SearchRequest, v1.SearchResponse]
-	signal      *connect.Client[v1.SignalRequest, v1.SignalResponse]
-	reset       *connect.Client[v1.ResetRequest, v1.ResetResponse]
-	terminate   *connect.Client[v1.TerminateRequest, v1.TerminateResponse]
-	listIndexes *connect.Client[v1.ListIndexesRequest, v1.ListIndexesResponse]
-	deleteIndex *connect.Client[v1.DeleteIndexRequest, v1.DeleteIndexResponse]
+	getSearchSchema *connect.Client[v1.GetSearchSchemaRequest, v1.GetSearchSchemaResponse]
+	search          *connect.Client[v1.SearchRequest, v1.SearchResponse]
+	signal          *connect.Client[v1.SignalRequest, v1.SignalResponse]
+	reset           *connect.Client[v1.ResetRequest, v1.ResetResponse]
+	terminate       *connect.Client[v1.TerminateRequest, v1.TerminateResponse]
+	listIndexes     *connect.Client[v1.ListIndexesRequest, v1.ListIndexesResponse]
+	deleteIndex     *connect.Client[v1.DeleteIndexRequest, v1.DeleteIndexResponse]
+}
+
+// GetSearchSchema calls temporal_lens.workflows.v1.WorkflowService.GetSearchSchema.
+func (c *workflowServiceClient) GetSearchSchema(ctx context.Context, req *connect.Request[v1.GetSearchSchemaRequest]) (*connect.Response[v1.GetSearchSchemaResponse], error) {
+	return c.getSearchSchema.CallUnary(ctx, req)
 }
 
 // Search calls temporal_lens.workflows.v1.WorkflowService.Search.
@@ -153,6 +169,7 @@ func (c *workflowServiceClient) DeleteIndex(ctx context.Context, req *connect.Re
 // WorkflowServiceHandler is an implementation of the temporal_lens.workflows.v1.WorkflowService
 // service.
 type WorkflowServiceHandler interface {
+	GetSearchSchema(context.Context, *connect.Request[v1.GetSearchSchemaRequest]) (*connect.Response[v1.GetSearchSchemaResponse], error)
 	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 	Signal(context.Context, *connect.Request[v1.SignalRequest]) (*connect.Response[v1.SignalResponse], error)
 	Reset(context.Context, *connect.Request[v1.ResetRequest]) (*connect.Response[v1.ResetResponse], error)
@@ -168,6 +185,12 @@ type WorkflowServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewWorkflowServiceHandler(svc WorkflowServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	workflowServiceMethods := v1.File_temporal_lens_workflows_v1_workflows_proto.Services().ByName("WorkflowService").Methods()
+	workflowServiceGetSearchSchemaHandler := connect.NewUnaryHandler(
+		WorkflowServiceGetSearchSchemaProcedure,
+		svc.GetSearchSchema,
+		connect.WithSchema(workflowServiceMethods.ByName("GetSearchSchema")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workflowServiceSearchHandler := connect.NewUnaryHandler(
 		WorkflowServiceSearchProcedure,
 		svc.Search,
@@ -206,6 +229,8 @@ func NewWorkflowServiceHandler(svc WorkflowServiceHandler, opts ...connect.Handl
 	)
 	return "/temporal_lens.workflows.v1.WorkflowService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case WorkflowServiceGetSearchSchemaProcedure:
+			workflowServiceGetSearchSchemaHandler.ServeHTTP(w, r)
 		case WorkflowServiceSearchProcedure:
 			workflowServiceSearchHandler.ServeHTTP(w, r)
 		case WorkflowServiceSignalProcedure:
@@ -226,6 +251,10 @@ func NewWorkflowServiceHandler(svc WorkflowServiceHandler, opts ...connect.Handl
 
 // UnimplementedWorkflowServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedWorkflowServiceHandler struct{}
+
+func (UnimplementedWorkflowServiceHandler) GetSearchSchema(context.Context, *connect.Request[v1.GetSearchSchemaRequest]) (*connect.Response[v1.GetSearchSchemaResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("temporal_lens.workflows.v1.WorkflowService.GetSearchSchema is not implemented"))
+}
 
 func (UnimplementedWorkflowServiceHandler) Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("temporal_lens.workflows.v1.WorkflowService.Search is not implemented"))

@@ -180,6 +180,16 @@ func (s *Service) Search(ctx context.Context, req ports.SearchRequest) (ports.Se
 	return response, nil
 }
 
+// SearchSchemas separates stable workflow fields from optional mapper fields
+// so clients can build an accurate, deployment-specific filter editor.
+func (s *Service) SearchSchemas(_ context.Context) types.SearchSchemas {
+	variable := types.Schema{}
+	if s.mapper != nil {
+		variable = s.mapper.Schema()
+	}
+	return types.SearchSchemas{Fixed: models.WorkflowSchema(), Variable: variable}
+}
+
 // Signal resolves a workflow selection and sends it to Temporal.
 func (s *Service) Signal(ctx context.Context, req ports.SignalRequest) error {
 	executions, err := s.resolveExecutions(ctx, req.WorkflowSpec)

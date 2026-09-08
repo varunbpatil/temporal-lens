@@ -11,9 +11,13 @@ import (
 	"github.com/varunbpatil/temporal-lens/types"
 )
 
+func buildQuery(filter *types.Filter) (map[string]any, error) {
+	return opensearch.BuildQueryWithNestedPaths(filter, nil)
+}
+
 func TestBuildQuery_Nil(t *testing.T) {
 	t.Parallel()
-	q, err := opensearch.BuildQuery(nil)
+	q, err := buildQuery(nil)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"match_all": map[string]any{}}, q)
 }
@@ -25,7 +29,7 @@ func TestBuildQuery_EQ(t *testing.T) {
 		Operator: types.OpEQ,
 		Value:    types.Value{String: new("RUNNING")},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"term": map[string]any{"status": "RUNNING"},
@@ -39,7 +43,7 @@ func TestBuildQuery_NEQ(t *testing.T) {
 		Operator: types.OpNEQ,
 		Value:    types.Value{String: new("FAILED")},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"bool": map[string]any{
@@ -57,7 +61,7 @@ func TestBuildQuery_Contains(t *testing.T) {
 		Operator: types.OpContains,
 		Value:    types.Value{String: new("order")},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"match_phrase": map[string]any{"name": "order"},
@@ -71,7 +75,7 @@ func TestBuildQuery_Range(t *testing.T) {
 		Operator: types.OpGTE,
 		Value:    types.Value{Int: new(int64(5))},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"range": map[string]any{"attempts": map[string]any{"gte": int64(5)}},
@@ -92,7 +96,7 @@ func TestBuildQuery_Between(t *testing.T) {
 			},
 		},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"range": map[string]any{
@@ -116,7 +120,7 @@ func TestBuildQuery_In(t *testing.T) {
 			},
 		},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"terms": map[string]any{"status": []any{"RUNNING", "FAILED"}},
@@ -129,7 +133,7 @@ func TestBuildQuery_Exists(t *testing.T) {
 		Field:    "endTime",
 		Operator: types.OpExists,
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"exists": map[string]any{"field": "endTime"},
@@ -142,7 +146,7 @@ func TestBuildQuery_NotExists(t *testing.T) {
 		Field:    "endTime",
 		Operator: types.OpNotExists,
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"bool": map[string]any{
@@ -169,7 +173,7 @@ func TestBuildQuery_And(t *testing.T) {
 			}},
 		},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"bool": map[string]any{
@@ -197,7 +201,7 @@ func TestBuildQuery_Or(t *testing.T) {
 			}},
 		},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"bool": map[string]any{
@@ -234,7 +238,7 @@ func TestBuildQuery_Nested(t *testing.T) {
 			}},
 		},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	boolQ := q["bool"].(map[string]any)
 	must := boolQ["must"].([]map[string]any)
@@ -244,6 +248,45 @@ func TestBuildQuery_Nested(t *testing.T) {
 	assert.Len(t, should, 2)
 }
 
+func TestBuildQueryWithNestedPaths_CombinesSearchAttributeConditions(t *testing.T) {
+	t.Parallel()
+	filter := &types.Filter{And: &types.AndFilter{Operands: []*types.Filter{
+		{Cond: &types.Condition{
+			Field:    "metadata.status",
+			Operator: types.OpEQ,
+			Value:    types.Value{String: new("RUNNING")},
+		}},
+		{Cond: &types.Condition{
+			Field:    "metadata.searchAttributes.key",
+			Operator: types.OpEQ,
+			Value:    types.Value{String: new("CustomerId")},
+		}},
+		{Cond: &types.Condition{
+			Field:    "metadata.searchAttributes.value",
+			Operator: types.OpContains,
+			Value:    types.Value{String: new("123")},
+		}},
+	}}}
+
+	query, err := opensearch.BuildQueryWithNestedPaths(filter, []string{"metadata.searchAttributes"})
+
+	require.NoError(t, err)
+	assert.Equal(t, map[string]any{
+		"bool": map[string]any{
+			"must": []map[string]any{
+				{"term": map[string]any{"metadata.status": "RUNNING"}},
+				{"nested": map[string]any{
+					"path": "metadata.searchAttributes",
+					"query": map[string]any{"bool": map[string]any{"must": []map[string]any{
+						{"term": map[string]any{"metadata.searchAttributes.key": "CustomerId"}},
+						{"match_phrase": map[string]any{"metadata.searchAttributes.value": "123"}},
+					}}},
+				}},
+			},
+		},
+	}, query)
+}
+
 func TestBuildQuery_Wildcard(t *testing.T) {
 	t.Parallel()
 	f := &types.Filter{Cond: &types.Condition{
@@ -251,7 +294,7 @@ func TestBuildQuery_Wildcard(t *testing.T) {
 		Operator: types.OpStartsWith,
 		Value:    types.Value{String: new("temporal")},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
 		"wildcard": map[string]any{
@@ -270,7 +313,7 @@ func TestBuildQuery_UnknownField(t *testing.T) {
 		Operator: types.OpEQ,
 		Value:    types.Value{String: new("x")},
 	}}
-	q, err := opensearch.BuildQuery(f)
+	q, err := buildQuery(f)
 	require.NoError(t, err)
 	assert.NotNil(t, q)
 }

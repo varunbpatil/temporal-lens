@@ -2,8 +2,10 @@ package workflows
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
+	commonv1 "github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/common/v1"
 	v1 "github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1"
 
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -15,22 +17,21 @@ import (
 	"github.com/varunbpatil/temporal-lens/types"
 )
 
-// searchRequestFromProto parses an API search request without applying
-// domain-specific field or value validation.
-func searchRequestFromProto(request *v1.SearchRequest) (ports.SearchRequest, error) {
+// searchRequestFromProto parses an API search request against its searchable fields.
+func searchRequestFromProto(schema types.Schema, request *v1.SearchRequest) (ports.SearchRequest, error) {
 	if request == nil {
 		return ports.SearchRequest{}, fmt.Errorf("search request is required")
 	}
 	result := ports.SearchRequest{}
 	if request.GetFilter() != nil {
-		filter, err := types.ParseFilterSpec(nil, request.GetFilter())
+		filter, err := types.ParseFilterSpec(schema, request.GetFilter())
 		if err != nil {
 			return ports.SearchRequest{}, err
 		}
 		result.Filter = filter
 	}
 	if request.GetSort() != nil {
-		sort, err := types.ParseSortSpec(nil, request.GetSort())
+		sort, err := types.ParseSortSpec(schema, request.GetSort())
 		if err != nil {
 			return ports.SearchRequest{}, err
 		}
@@ -47,13 +48,13 @@ func searchRequestFromProto(request *v1.SearchRequest) (ports.SearchRequest, err
 }
 
 // workflowSpecFromProto parses one workflow selection into its domain form.
-func workflowSpecFromProto(selection *v1.WorkflowSelection) (ports.WorkflowSpec, error) {
+func workflowSpecFromProto(schema types.Schema, selection *v1.WorkflowSelection) (ports.WorkflowSpec, error) {
 	if selection == nil {
 		return ports.WorkflowSpec{}, fmt.Errorf("workflow selection is required")
 	}
 	switch selected := selection.GetSelection().(type) {
 	case *v1.WorkflowSelection_Filter:
-		filter, err := types.ParseFilterSpec(nil, selected.Filter)
+		filter, err := types.ParseFilterSpec(schema, selected.Filter)
 		if err != nil {
 			return ports.WorkflowSpec{}, err
 		}
@@ -141,7 +142,112 @@ func workflowToProto(workflow *models.Workflow) (*v1.Workflow, error) {
 		Id:       workflow.ID,
 		Metadata: workflowMetadataToProto(workflow.Metadata),
 		Data:     data,
+		Url:      workflow.URL,
 	}, nil
+}
+
+// searchSchemasToProto maps field metadata used by clients to render a generic
+// filter editor. Sorting paths makes schema responses stable for URLs and caches.
+func searchSchemasToProto(schemas types.SearchSchemas) *commonv1.SearchSchema {
+	return &commonv1.SearchSchema{
+		FixedFields:    schemaFieldsToProto(schemas.Fixed),
+		VariableFields: schemaFieldsToProto(schemas.Variable),
+	}
+}
+
+func schemaFieldsToProto(schema types.Schema) []*commonv1.SearchField {
+	paths := make([]string, 0, len(schema))
+	for path := range schema {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	fields := make([]*commonv1.SearchField, 0, len(paths))
+	for _, path := range paths {
+		field := schema[path]
+		operators := field.Operators
+		if operators == nil {
+			operators = types.DefaultOperators(field.Type)
+		}
+		convertedOperators := make([]commonv1.FilterOperator, 0, len(operators))
+		for _, operator := range operators {
+			convertedOperators = append(convertedOperators, operatorToProto(operator))
+		}
+		options := make([]*commonv1.SearchFieldOption, 0, len(field.Options))
+		for _, option := range field.Options {
+			options = append(options, &commonv1.SearchFieldOption{Label: option.Label, Value: option.Value})
+		}
+		fields = append(fields, &commonv1.SearchField{
+			Path:        path,
+			Type:        fieldTypeToProto(field.Type),
+			Operators:   convertedOperators,
+			Label:       field.Label,
+			Group:       field.Group,
+			Description: field.Description,
+			Options:     options,
+			Sortable:    field.Sortable,
+		})
+	}
+	return fields
+}
+
+func fieldTypeToProto(fieldType types.FieldType) commonv1.FieldType {
+	switch fieldType {
+	case types.FieldTypeKeyword:
+		return commonv1.FieldType_FIELD_TYPE_KEYWORD
+	case types.FieldTypeText:
+		return commonv1.FieldType_FIELD_TYPE_TEXT
+	case types.FieldTypeInt:
+		return commonv1.FieldType_FIELD_TYPE_INT
+	case types.FieldTypeDouble:
+		return commonv1.FieldType_FIELD_TYPE_DOUBLE
+	case types.FieldTypeBool:
+		return commonv1.FieldType_FIELD_TYPE_BOOL
+	case types.FieldTypeTimestamp:
+		return commonv1.FieldType_FIELD_TYPE_TIMESTAMP
+	default:
+		return commonv1.FieldType_FIELD_TYPE_UNSPECIFIED
+	}
+}
+
+func operatorToProto(operator types.Operator) commonv1.FilterOperator {
+	switch operator {
+	case types.OpEQ:
+		return commonv1.FilterOperator_FILTER_OPERATOR_EQ
+	case types.OpNEQ:
+		return commonv1.FilterOperator_FILTER_OPERATOR_NEQ
+	case types.OpContains:
+		return commonv1.FilterOperator_FILTER_OPERATOR_CONTAINS
+	case types.OpNotContains:
+		return commonv1.FilterOperator_FILTER_OPERATOR_NOT_CONTAINS
+	case types.OpLT:
+		return commonv1.FilterOperator_FILTER_OPERATOR_LT
+	case types.OpGT:
+		return commonv1.FilterOperator_FILTER_OPERATOR_GT
+	case types.OpLTE:
+		return commonv1.FilterOperator_FILTER_OPERATOR_LTE
+	case types.OpGTE:
+		return commonv1.FilterOperator_FILTER_OPERATOR_GTE
+	case types.OpBetween:
+		return commonv1.FilterOperator_FILTER_OPERATOR_BETWEEN
+	case types.OpIn:
+		return commonv1.FilterOperator_FILTER_OPERATOR_IN
+	case types.OpNotIn:
+		return commonv1.FilterOperator_FILTER_OPERATOR_NOT_IN
+	case types.OpStartsWith:
+		return commonv1.FilterOperator_FILTER_OPERATOR_STARTS_WITH
+	case types.OpEndsWith:
+		return commonv1.FilterOperator_FILTER_OPERATOR_ENDS_WITH
+	case types.OpExists:
+		return commonv1.FilterOperator_FILTER_OPERATOR_EXISTS
+	case types.OpNotExists:
+		return commonv1.FilterOperator_FILTER_OPERATOR_NOT_EXISTS
+	case types.OpIsEmpty:
+		return commonv1.FilterOperator_FILTER_OPERATOR_IS_EMPTY
+	case types.OpIsNotEmpty:
+		return commonv1.FilterOperator_FILTER_OPERATOR_IS_NOT_EMPTY
+	default:
+		return commonv1.FilterOperator_FILTER_OPERATOR_UNSPECIFIED
+	}
 }
 
 // workflowMetadataToProto converts Temporal execution metadata.

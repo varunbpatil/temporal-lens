@@ -35,18 +35,39 @@ func Register(mux *http.ServeMux, handler workflowsv1connect.WorkflowServiceHand
 	mux.Handle(path, httpHandler)
 }
 
+// GetSearchSchema returns fixed workflow fields and any fields supplied by a
+// deployment-specific mapper, allowing clients to build filter UIs dynamically.
+func (h *Handler) GetSearchSchema(
+	ctx context.Context,
+	_ *connect.Request[v1.GetSearchSchemaRequest],
+) (*connect.Response[v1.GetSearchSchemaResponse], error) {
+	return connect.NewResponse(&v1.GetSearchSchemaResponse{
+		Schema: searchSchemasToProto(h.svc.SearchSchemas(ctx)),
+	}), nil
+}
+
 // Search parses the common query specifications and searches indexed workflows.
 func (h *Handler) Search(
 	ctx context.Context,
 	req *connect.Request[v1.SearchRequest],
 ) (*connect.Response[v1.SearchResponse], error) {
-	searchRequest, err := searchRequestFromProto(req.Msg)
+	searchRequest, err := searchRequestFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg)
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
 	searchResponse, err := h.svc.Search(ctx, searchRequest)
 	if err != nil {
 		return nil, serviceError(err)
+	}
+	for _, workflow := range searchResponse.Workflows {
+		if workflow == nil {
+			continue
+		}
+		workflowURL, urlErr := h.svc.WorkflowURL(ctx, workflow.Metadata)
+		if urlErr != nil {
+			return nil, serviceError(fmt.Errorf("workflow URL: %w", urlErr))
+		}
+		workflow.URL = workflowURL
 	}
 	response, err := searchResponseToProto(searchResponse)
 	if err != nil {
@@ -60,7 +81,7 @@ func (h *Handler) Signal(
 	ctx context.Context,
 	req *connect.Request[v1.SignalRequest],
 ) (*connect.Response[v1.SignalResponse], error) {
-	workflowSpec, err := workflowSpecFromProto(req.Msg.GetWorkflows())
+	workflowSpec, err := workflowSpecFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
@@ -79,7 +100,7 @@ func (h *Handler) Reset(
 	ctx context.Context,
 	req *connect.Request[v1.ResetRequest],
 ) (*connect.Response[v1.ResetResponse], error) {
-	workflowSpec, err := workflowSpecFromProto(req.Msg.GetWorkflows())
+	workflowSpec, err := workflowSpecFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
@@ -102,7 +123,7 @@ func (h *Handler) Terminate(
 	ctx context.Context,
 	req *connect.Request[v1.TerminateRequest],
 ) (*connect.Response[v1.TerminateResponse], error) {
-	workflowSpec, err := workflowSpecFromProto(req.Msg.GetWorkflows())
+	workflowSpec, err := workflowSpecFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
 	}

@@ -4,6 +4,7 @@
   "options": {
     "typeAware": true
   },
+  "ignorePatterns": ["src/gen/**"],
   "rules": {
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]

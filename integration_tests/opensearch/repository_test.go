@@ -150,6 +150,56 @@ func TestAddAndSearch(t *testing.T) {
 	assert.Empty(t, secondCursorPage.NextCursor)
 }
 
+func TestSearch_NestedSearchAttributesMatchSameObject(t *testing.T) {
+	t.Parallel()
+	schema := types.Schema{
+		"id":                              {Type: types.FieldTypeKeyword},
+		"metadata.searchAttributes.key":   {Type: types.FieldTypeKeyword},
+		"metadata.searchAttributes.value": {Type: types.FieldTypeText},
+	}
+	repo := newTestRepository(t, schema)
+	index := "test-search-nested-search-attributes"
+	require.NoError(t, repo.CreateIndex(t.Context(), index))
+	t.Cleanup(func() { _ = repo.DeleteIndex(t.Context(), index) })
+
+	require.NoError(t, repo.Add(t.Context(), index, []*models.Workflow{
+		{
+			ID: "matching-workflow",
+			Metadata: models.WorkflowMetadata{SearchAttributes: []models.SearchAttribute{
+				{Key: "CustomerID", Value: "123"},
+			}},
+		},
+		{
+			ID: "cross-matched-workflow",
+			Metadata: models.WorkflowMetadata{SearchAttributes: []models.SearchAttribute{
+				{Key: "CustomerID", Value: "not-a-match"},
+				{Key: "Other", Value: "123"},
+			}},
+		},
+	}))
+	refreshIndex(index)
+
+	response, err := repo.Search(t.Context(), []string{index}, ports.SearchRequest{
+		Filter: &types.Filter{And: &types.AndFilter{Operands: []*types.Filter{
+			{Cond: &types.Condition{
+				Field:    "metadata.searchAttributes.key",
+				Operator: types.OpEQ,
+				Value:    types.Value{String: new("CustomerID")},
+			}},
+			{Cond: &types.Condition{
+				Field:    "metadata.searchAttributes.value",
+				Operator: types.OpContains,
+				Value:    types.Value{String: new("123")},
+			}},
+		}}},
+	})
+
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, response.TotalHits)
+	require.Len(t, response.Workflows, 1)
+	assert.Equal(t, "matching-workflow", response.Workflows[0].ID)
+}
+
 func TestListIndexes(t *testing.T) {
 	t.Parallel()
 	schema := types.Schema{

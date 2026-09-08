@@ -11,10 +11,112 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file temporal_lens/common/v1/common.proto.
  */
-export const file_temporal_lens_common_v1_common: GenFile /*@__PURE__*/ = fileDesc(
-  "CiR0ZW1wb3JhbF9sZW5zL2NvbW1vbi92MS9jb21tb24ucHJvdG8SF3RlbXBvcmFsX2xlbnMuY29tbW9uLnYxIoYBCgpGaWx0ZXJTcGVjEjMKBGxlYWYYASABKAsyIy50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5MZWFmRmlsdGVySAASOQoHbG9naWNhbBgCIAEoCzImLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkxvZ2ljYWxGaWx0ZXJIAEIICgZmaWx0ZXIiggEKDUxvZ2ljYWxGaWx0ZXISOgoIb3BlcmF0b3IYASABKA4yKC50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5Mb2dpY2FsT3BlcmF0b3ISNQoIb3BlcmFuZHMYAiADKAsyIy50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5GaWx0ZXJTcGVjIosBCgpMZWFmRmlsdGVyEg0KBWZpZWxkGAEgASgJEjkKCG9wZXJhdG9yGAIgASgOMicudGVtcG9yYWxfbGVucy5jb21tb24udjEuRmlsdGVyT3BlcmF0b3ISMwoFdmFsdWUYAyABKAsyJC50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5GaWx0ZXJWYWx1ZSLkAgoLRmlsdGVyVmFsdWUSFgoMc3RyaW5nX3ZhbHVlGAEgASgJSAASEwoJaW50X3ZhbHVlGAIgASgDSAASFgoMZG91YmxlX3ZhbHVlGAMgASgBSAASFAoKYm9vbF92YWx1ZRgEIAEoCEgAEjUKD3RpbWVzdGFtcF92YWx1ZRgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIABI4CgpudWxsX3ZhbHVlGAYgASgOMiIudGVtcG9yYWxfbGVucy5jb21tb24udjEuTnVsbFZhbHVlSAASPgoNYmV0d2Vlbl92YWx1ZRgHIAEoCzIlLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkJldHdlZW5WYWx1ZUgAEkAKDnJlcGVhdGVkX3ZhbHVlGAggASgLMiYudGVtcG9yYWxfbGVucy5jb21tb24udjEuUmVwZWF0ZWRWYWx1ZUgAQgcKBXZhbHVlInYKDEJldHdlZW5WYWx1ZRIzCgVzdGFydBgBIAEoCzIkLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclZhbHVlEjEKA2VuZBgCIAEoCzIkLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclZhbHVlIkUKDVJlcGVhdGVkVmFsdWUSNAoGdmFsdWVzGAEgAygLMiQudGVtcG9yYWxfbGVucy5jb21tb24udjEuRmlsdGVyVmFsdWUiTAoIU29ydFNwZWMSDQoFZmllbGQYASABKAkSMQoFb3JkZXIYAiABKA4yIi50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5Tb3J0T3JkZXIimAEKDlBhZ2luYXRpb25TcGVjEjsKBm9mZnNldBgBIAEoCzIpLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLk9mZnNldFBhZ2luYXRpb25IABI7CgZjdXJzb3IYAiABKAsyKS50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5DdXJzb3JQYWdpbmF0aW9uSABCDAoKcGFnaW5hdGlvbiI6ChBPZmZzZXRQYWdpbmF0aW9uEhEKCXBhZ2Vfc2l6ZRgBIAEoBRITCgtwYWdlX251bWJlchgCIAEoBSI1ChBDdXJzb3JQYWdpbmF0aW9uEhEKCXBhZ2Vfc2l6ZRgBIAEoBRIOCgZjdXJzb3IYAiABKAkqZgoPTG9naWNhbE9wZXJhdG9yEiAKHExPR0lDQUxfT1BFUkFUT1JfVU5TUEVDSUZJRUQQABIYChRMT0dJQ0FMX09QRVJBVE9SX0FORBABEhcKE0xPR0lDQUxfT1BFUkFUT1JfT1IQAiqRBAoORmlsdGVyT3BlcmF0b3ISHwobRklMVEVSX09QRVJBVE9SX1VOU1BFQ0lGSUVEEAASFgoSRklMVEVSX09QRVJBVE9SX0VREAESFwoTRklMVEVSX09QRVJBVE9SX05FURACEhwKGEZJTFRFUl9PUEVSQVRPUl9DT05UQUlOUxADEiAKHEZJTFRFUl9PUEVSQVRPUl9OT1RfQ09OVEFJTlMQBBIWChJGSUxURVJfT1BFUkFUT1JfTFQQBRIWChJGSUxURVJfT1BFUkFUT1JfR1QQBhIXChNGSUxURVJfT1BFUkFUT1JfTFRFEAcSFwoTRklMVEVSX09QRVJBVE9SX0dURRAIEhsKF0ZJTFRFUl9PUEVSQVRPUl9CRVRXRUVOEAkSFgoSRklMVEVSX09QRVJBVE9SX0lOEAoSGgoWRklMVEVSX09QRVJBVE9SX05PVF9JThALEh8KG0ZJTFRFUl9PUEVSQVRPUl9TVEFSVFNfV0lUSBAMEh0KGUZJTFRFUl9PUEVSQVRPUl9FTkRTX1dJVEgQDRIaChZGSUxURVJfT1BFUkFUT1JfRVhJU1RTEA4SHgoaRklMVEVSX09QRVJBVE9SX05PVF9FWElTVFMQDxIcChhGSUxURVJfT1BFUkFUT1JfSVNfRU1QVFkQEBIgChxGSUxURVJfT1BFUkFUT1JfSVNfTk9UX0VNUFRZEBEqPAoJTnVsbFZhbHVlEhoKFk5VTExfVkFMVUVfVU5TUEVDSUZJRUQQABITCg9OVUxMX1ZBTFVFX05VTEwQASpQCglTb3J0T3JkZXISGgoWU09SVF9PUkRFUl9VTlNQRUNJRklFRBAAEhIKDlNPUlRfT1JERVJfQVNDEAESEwoPU09SVF9PUkRFUl9ERVNDEAJC9gEKG2NvbS50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MUILQ29tbW9uUHJvdG9QAVpQZ2l0aHViLmNvbS92YXJ1bmJwYXRpbC90ZW1wb3JhbC1sZW5zL3Byb3Rvcy9nZW4vdGVtcG9yYWxfbGVucy9jb21tb24vdjE7Y29tbW9udjGiAgNUQ1iqAhZUZW1wb3JhbExlbnMuQ29tbW9uLlYxygIWVGVtcG9yYWxMZW5zXENvbW1vblxWMeICIlRlbXBvcmFsTGVuc1xDb21tb25cVjFcR1BCTWV0YWRhdGHqAhhUZW1wb3JhbExlbnM6OkNvbW1vbjo6VjFiBnByb3RvMw",
-  [file_google_protobuf_timestamp],
-);
+export const file_temporal_lens_common_v1_common: GenFile = /*@__PURE__*/
+  fileDesc("CiR0ZW1wb3JhbF9sZW5zL2NvbW1vbi92MS9jb21tb24ucHJvdG8SF3RlbXBvcmFsX2xlbnMuY29tbW9uLnYxIokBCgxTZWFyY2hTY2hlbWESOgoMZml4ZWRfZmllbGRzGAEgAygLMiQudGVtcG9yYWxfbGVucy5jb21tb24udjEuU2VhcmNoRmllbGQSPQoPdmFyaWFibGVfZmllbGRzGAIgAygLMiQudGVtcG9yYWxfbGVucy5jb21tb24udjEuU2VhcmNoRmllbGQiiwIKC1NlYXJjaEZpZWxkEgwKBHBhdGgYASABKAkSMAoEdHlwZRgCIAEoDjIiLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpZWxkVHlwZRI6CglvcGVyYXRvcnMYAyADKA4yJy50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5GaWx0ZXJPcGVyYXRvchINCgVsYWJlbBgEIAEoCRINCgVncm91cBgFIAEoCRITCgtkZXNjcmlwdGlvbhgGIAEoCRI7CgdvcHRpb25zGAcgAygLMioudGVtcG9yYWxfbGVucy5jb21tb24udjEuU2VhcmNoRmllbGRPcHRpb24SEAoIc29ydGFibGUYCCABKAgiMQoRU2VhcmNoRmllbGRPcHRpb24SDQoFbGFiZWwYASABKAkSDQoFdmFsdWUYAiABKAkihgEKCkZpbHRlclNwZWMSMwoEbGVhZhgBIAEoCzIjLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkxlYWZGaWx0ZXJIABI5Cgdsb2dpY2FsGAIgASgLMiYudGVtcG9yYWxfbGVucy5jb21tb24udjEuTG9naWNhbEZpbHRlckgAQggKBmZpbHRlciKCAQoNTG9naWNhbEZpbHRlchI6CghvcGVyYXRvchgBIAEoDjIoLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkxvZ2ljYWxPcGVyYXRvchI1CghvcGVyYW5kcxgCIAMoCzIjLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclNwZWMiiwEKCkxlYWZGaWx0ZXISDQoFZmllbGQYASABKAkSOQoIb3BlcmF0b3IYAiABKA4yJy50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5GaWx0ZXJPcGVyYXRvchIzCgV2YWx1ZRgDIAEoCzIkLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclZhbHVlIuQCCgtGaWx0ZXJWYWx1ZRIWCgxzdHJpbmdfdmFsdWUYASABKAlIABITCglpbnRfdmFsdWUYAiABKANIABIWCgxkb3VibGVfdmFsdWUYAyABKAFIABIUCgpib29sX3ZhbHVlGAQgASgISAASNQoPdGltZXN0YW1wX3ZhbHVlGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgAEjgKCm51bGxfdmFsdWUYBiABKA4yIi50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5OdWxsVmFsdWVIABI+Cg1iZXR3ZWVuX3ZhbHVlGAcgASgLMiUudGVtcG9yYWxfbGVucy5jb21tb24udjEuQmV0d2VlblZhbHVlSAASQAoOcmVwZWF0ZWRfdmFsdWUYCCABKAsyJi50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5SZXBlYXRlZFZhbHVlSABCBwoFdmFsdWUidgoMQmV0d2VlblZhbHVlEjMKBXN0YXJ0GAEgASgLMiQudGVtcG9yYWxfbGVucy5jb21tb24udjEuRmlsdGVyVmFsdWUSMQoDZW5kGAIgASgLMiQudGVtcG9yYWxfbGVucy5jb21tb24udjEuRmlsdGVyVmFsdWUiRQoNUmVwZWF0ZWRWYWx1ZRI0CgZ2YWx1ZXMYASADKAsyJC50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5GaWx0ZXJWYWx1ZSJMCghTb3J0U3BlYxINCgVmaWVsZBgBIAEoCRIxCgVvcmRlchgCIAEoDjIiLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLlNvcnRPcmRlciKYAQoOUGFnaW5hdGlvblNwZWMSOwoGb2Zmc2V0GAEgASgLMikudGVtcG9yYWxfbGVucy5jb21tb24udjEuT2Zmc2V0UGFnaW5hdGlvbkgAEjsKBmN1cnNvchgCIAEoCzIpLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkN1cnNvclBhZ2luYXRpb25IAEIMCgpwYWdpbmF0aW9uIjoKEE9mZnNldFBhZ2luYXRpb24SEQoJcGFnZV9zaXplGAEgASgFEhMKC3BhZ2VfbnVtYmVyGAIgASgFIjUKEEN1cnNvclBhZ2luYXRpb24SEQoJcGFnZV9zaXplGAEgASgFEg4KBmN1cnNvchgCIAEoCSquAQoJRmllbGRUeXBlEhoKFkZJRUxEX1RZUEVfVU5TUEVDSUZJRUQQABIWChJGSUVMRF9UWVBFX0tFWVdPUkQQARITCg9GSUVMRF9UWVBFX1RFWFQQAhISCg5GSUVMRF9UWVBFX0lOVBADEhUKEUZJRUxEX1RZUEVfRE9VQkxFEAQSEwoPRklFTERfVFlQRV9CT09MEAUSGAoURklFTERfVFlQRV9USU1FU1RBTVAQBipmCg9Mb2dpY2FsT3BlcmF0b3ISIAocTE9HSUNBTF9PUEVSQVRPUl9VTlNQRUNJRklFRBAAEhgKFExPR0lDQUxfT1BFUkFUT1JfQU5EEAESFwoTTE9HSUNBTF9PUEVSQVRPUl9PUhACKpEECg5GaWx0ZXJPcGVyYXRvchIfChtGSUxURVJfT1BFUkFUT1JfVU5TUEVDSUZJRUQQABIWChJGSUxURVJfT1BFUkFUT1JfRVEQARIXChNGSUxURVJfT1BFUkFUT1JfTkVREAISHAoYRklMVEVSX09QRVJBVE9SX0NPTlRBSU5TEAMSIAocRklMVEVSX09QRVJBVE9SX05PVF9DT05UQUlOUxAEEhYKEkZJTFRFUl9PUEVSQVRPUl9MVBAFEhYKEkZJTFRFUl9PUEVSQVRPUl9HVBAGEhcKE0ZJTFRFUl9PUEVSQVRPUl9MVEUQBxIXChNGSUxURVJfT1BFUkFUT1JfR1RFEAgSGwoXRklMVEVSX09QRVJBVE9SX0JFVFdFRU4QCRIWChJGSUxURVJfT1BFUkFUT1JfSU4QChIaChZGSUxURVJfT1BFUkFUT1JfTk9UX0lOEAsSHwobRklMVEVSX09QRVJBVE9SX1NUQVJUU19XSVRIEAwSHQoZRklMVEVSX09QRVJBVE9SX0VORFNfV0lUSBANEhoKFkZJTFRFUl9PUEVSQVRPUl9FWElTVFMQDhIeChpGSUxURVJfT1BFUkFUT1JfTk9UX0VYSVNUUxAPEhwKGEZJTFRFUl9PUEVSQVRPUl9JU19FTVBUWRAQEiAKHEZJTFRFUl9PUEVSQVRPUl9JU19OT1RfRU1QVFkQESo8CglOdWxsVmFsdWUSGgoWTlVMTF9WQUxVRV9VTlNQRUNJRklFRBAAEhMKD05VTExfVkFMVUVfTlVMTBABKlAKCVNvcnRPcmRlchIaChZTT1JUX09SREVSX1VOU1BFQ0lGSUVEEAASEgoOU09SVF9PUkRFUl9BU0MQARITCg9TT1JUX09SREVSX0RFU0MQAkL2AQobY29tLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxQgtDb21tb25Qcm90b1ABWlBnaXRodWIuY29tL3ZhcnVuYnBhdGlsL3RlbXBvcmFsLWxlbnMvcHJvdG9zL2dlbi90ZW1wb3JhbF9sZW5zL2NvbW1vbi92MTtjb21tb252MaICA1RDWKoCFlRlbXBvcmFsTGVucy5Db21tb24uVjHKAhZUZW1wb3JhbExlbnNcQ29tbW9uXFYx4gIiVGVtcG9yYWxMZW5zXENvbW1vblxWMVxHUEJNZXRhZGF0YeoCGFRlbXBvcmFsTGVuczo6Q29tbW9uOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+
+/**
+ * SearchSchema describes the fields that a domain makes available for search.
+ * Fixed fields are built into the domain; variable fields are supplied by a
+ * configured payload mapper and can vary by deployment.
+ *
+ * @generated from message temporal_lens.common.v1.SearchSchema
+ */
+export type SearchSchema = Message<"temporal_lens.common.v1.SearchSchema"> & {
+  /**
+   * @generated from field: repeated temporal_lens.common.v1.SearchField fixed_fields = 1;
+   */
+  fixedFields: SearchField[];
+
+  /**
+   * @generated from field: repeated temporal_lens.common.v1.SearchField variable_fields = 2;
+   */
+  variableFields: SearchField[];
+};
+
+/**
+ * Describes the message temporal_lens.common.v1.SearchSchema.
+ * Use `create(SearchSchemaSchema)` to create a new message.
+ */
+export const SearchSchemaSchema: GenMessage<SearchSchema> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 0);
+
+/**
+ * SearchField describes how one indexed field can be filtered and displayed.
+ *
+ * @generated from message temporal_lens.common.v1.SearchField
+ */
+export type SearchField = Message<"temporal_lens.common.v1.SearchField"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: temporal_lens.common.v1.FieldType type = 2;
+   */
+  type: FieldType;
+
+  /**
+   * @generated from field: repeated temporal_lens.common.v1.FilterOperator operators = 3;
+   */
+  operators: FilterOperator[];
+
+  /**
+   * @generated from field: string label = 4;
+   */
+  label: string;
+
+  /**
+   * @generated from field: string group = 5;
+   */
+  group: string;
+
+  /**
+   * @generated from field: string description = 6;
+   */
+  description: string;
+
+  /**
+   * @generated from field: repeated temporal_lens.common.v1.SearchFieldOption options = 7;
+   */
+  options: SearchFieldOption[];
+
+  /**
+   * @generated from field: bool sortable = 8;
+   */
+  sortable: boolean;
+};
+
+/**
+ * Describes the message temporal_lens.common.v1.SearchField.
+ * Use `create(SearchFieldSchema)` to create a new message.
+ */
+export const SearchFieldSchema: GenMessage<SearchField> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 1);
+
+/**
+ * SearchFieldOption is a known value (enum) offered as a choice in a filter editor.
+ *
+ * @generated from message temporal_lens.common.v1.SearchFieldOption
+ */
+export type SearchFieldOption = Message<"temporal_lens.common.v1.SearchFieldOption"> & {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label: string;
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message temporal_lens.common.v1.SearchFieldOption.
+ * Use `create(SearchFieldOptionSchema)` to create a new message.
+ */
+export const SearchFieldOptionSchema: GenMessage<SearchFieldOption> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 2);
 
 /**
  * FilterSpec is a recursive filter expression supporting complex AND/OR logic.
@@ -25,32 +127,27 @@ export type FilterSpec = Message<"temporal_lens.common.v1.FilterSpec"> & {
   /**
    * @generated from oneof temporal_lens.common.v1.FilterSpec.filter
    */
-  filter:
-    | {
-        /**
-         * @generated from field: temporal_lens.common.v1.LeafFilter leaf = 1;
-         */
-        value: LeafFilter;
-        case: "leaf";
-      }
-    | {
-        /**
-         * @generated from field: temporal_lens.common.v1.LogicalFilter logical = 2;
-         */
-        value: LogicalFilter;
-        case: "logical";
-      }
-    | { case: undefined; value?: undefined };
+  filter: {
+    /**
+     * @generated from field: temporal_lens.common.v1.LeafFilter leaf = 1;
+     */
+    value: LeafFilter;
+    case: "leaf";
+  } | {
+    /**
+     * @generated from field: temporal_lens.common.v1.LogicalFilter logical = 2;
+     */
+    value: LogicalFilter;
+    case: "logical";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
  * Describes the message temporal_lens.common.v1.FilterSpec.
  * Use `create(FilterSpecSchema)` to create a new message.
  */
-export const FilterSpecSchema: GenMessage<FilterSpec> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  0,
-);
+export const FilterSpecSchema: GenMessage<FilterSpec> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 3);
 
 /**
  * LogicalFilter combines multiple FilterSpecs with AND/OR logic.
@@ -73,10 +170,8 @@ export type LogicalFilter = Message<"temporal_lens.common.v1.LogicalFilter"> & {
  * Describes the message temporal_lens.common.v1.LogicalFilter.
  * Use `create(LogicalFilterSchema)` to create a new message.
  */
-export const LogicalFilterSchema: GenMessage<LogicalFilter> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  1,
-);
+export const LogicalFilterSchema: GenMessage<LogicalFilter> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 4);
 
 /**
  * LeafFilter is a single field-level filter condition.
@@ -104,10 +199,8 @@ export type LeafFilter = Message<"temporal_lens.common.v1.LeafFilter"> & {
  * Describes the message temporal_lens.common.v1.LeafFilter.
  * Use `create(LeafFilterSchema)` to create a new message.
  */
-export const LeafFilterSchema: GenMessage<LeafFilter> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  2,
-);
+export const LeafFilterSchema: GenMessage<LeafFilter> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 5);
 
 /**
  * FilterValue is a typed value for filter comparisons.
@@ -118,74 +211,63 @@ export type FilterValue = Message<"temporal_lens.common.v1.FilterValue"> & {
   /**
    * @generated from oneof temporal_lens.common.v1.FilterValue.value
    */
-  value:
-    | {
-        /**
-         * @generated from field: string string_value = 1;
-         */
-        value: string;
-        case: "stringValue";
-      }
-    | {
-        /**
-         * @generated from field: int64 int_value = 2;
-         */
-        value: bigint;
-        case: "intValue";
-      }
-    | {
-        /**
-         * @generated from field: double double_value = 3;
-         */
-        value: number;
-        case: "doubleValue";
-      }
-    | {
-        /**
-         * @generated from field: bool bool_value = 4;
-         */
-        value: boolean;
-        case: "boolValue";
-      }
-    | {
-        /**
-         * @generated from field: google.protobuf.Timestamp timestamp_value = 5;
-         */
-        value: Timestamp;
-        case: "timestampValue";
-      }
-    | {
-        /**
-         * @generated from field: temporal_lens.common.v1.NullValue null_value = 6;
-         */
-        value: NullValue;
-        case: "nullValue";
-      }
-    | {
-        /**
-         * @generated from field: temporal_lens.common.v1.BetweenValue between_value = 7;
-         */
-        value: BetweenValue;
-        case: "betweenValue";
-      }
-    | {
-        /**
-         * @generated from field: temporal_lens.common.v1.RepeatedValue repeated_value = 8;
-         */
-        value: RepeatedValue;
-        case: "repeatedValue";
-      }
-    | { case: undefined; value?: undefined };
+  value: {
+    /**
+     * @generated from field: string string_value = 1;
+     */
+    value: string;
+    case: "stringValue";
+  } | {
+    /**
+     * @generated from field: int64 int_value = 2;
+     */
+    value: bigint;
+    case: "intValue";
+  } | {
+    /**
+     * @generated from field: double double_value = 3;
+     */
+    value: number;
+    case: "doubleValue";
+  } | {
+    /**
+     * @generated from field: bool bool_value = 4;
+     */
+    value: boolean;
+    case: "boolValue";
+  } | {
+    /**
+     * @generated from field: google.protobuf.Timestamp timestamp_value = 5;
+     */
+    value: Timestamp;
+    case: "timestampValue";
+  } | {
+    /**
+     * @generated from field: temporal_lens.common.v1.NullValue null_value = 6;
+     */
+    value: NullValue;
+    case: "nullValue";
+  } | {
+    /**
+     * @generated from field: temporal_lens.common.v1.BetweenValue between_value = 7;
+     */
+    value: BetweenValue;
+    case: "betweenValue";
+  } | {
+    /**
+     * @generated from field: temporal_lens.common.v1.RepeatedValue repeated_value = 8;
+     */
+    value: RepeatedValue;
+    case: "repeatedValue";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
  * Describes the message temporal_lens.common.v1.FilterValue.
  * Use `create(FilterValueSchema)` to create a new message.
  */
-export const FilterValueSchema: GenMessage<FilterValue> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  3,
-);
+export const FilterValueSchema: GenMessage<FilterValue> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 6);
 
 /**
  * BetweenValue represents an inclusive range [start, end].
@@ -208,10 +290,8 @@ export type BetweenValue = Message<"temporal_lens.common.v1.BetweenValue"> & {
  * Describes the message temporal_lens.common.v1.BetweenValue.
  * Use `create(BetweenValueSchema)` to create a new message.
  */
-export const BetweenValueSchema: GenMessage<BetweenValue> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  4,
-);
+export const BetweenValueSchema: GenMessage<BetweenValue> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 7);
 
 /**
  * RepeatedValue holds multiple values for IN/NOT_IN operators.
@@ -229,10 +309,8 @@ export type RepeatedValue = Message<"temporal_lens.common.v1.RepeatedValue"> & {
  * Describes the message temporal_lens.common.v1.RepeatedValue.
  * Use `create(RepeatedValueSchema)` to create a new message.
  */
-export const RepeatedValueSchema: GenMessage<RepeatedValue> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  5,
-);
+export const RepeatedValueSchema: GenMessage<RepeatedValue> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 8);
 
 /**
  * SortSpec defines a sort order for a single field.
@@ -255,10 +333,8 @@ export type SortSpec = Message<"temporal_lens.common.v1.SortSpec"> & {
  * Describes the message temporal_lens.common.v1.SortSpec.
  * Use `create(SortSpecSchema)` to create a new message.
  */
-export const SortSpecSchema: GenMessage<SortSpec> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  6,
-);
+export const SortSpecSchema: GenMessage<SortSpec> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 9);
 
 /**
  * PaginationSpec defines either offset-based or cursor-based pagination.
@@ -269,32 +345,27 @@ export type PaginationSpec = Message<"temporal_lens.common.v1.PaginationSpec"> &
   /**
    * @generated from oneof temporal_lens.common.v1.PaginationSpec.pagination
    */
-  pagination:
-    | {
-        /**
-         * @generated from field: temporal_lens.common.v1.OffsetPagination offset = 1;
-         */
-        value: OffsetPagination;
-        case: "offset";
-      }
-    | {
-        /**
-         * @generated from field: temporal_lens.common.v1.CursorPagination cursor = 2;
-         */
-        value: CursorPagination;
-        case: "cursor";
-      }
-    | { case: undefined; value?: undefined };
+  pagination: {
+    /**
+     * @generated from field: temporal_lens.common.v1.OffsetPagination offset = 1;
+     */
+    value: OffsetPagination;
+    case: "offset";
+  } | {
+    /**
+     * @generated from field: temporal_lens.common.v1.CursorPagination cursor = 2;
+     */
+    value: CursorPagination;
+    case: "cursor";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
  * Describes the message temporal_lens.common.v1.PaginationSpec.
  * Use `create(PaginationSpecSchema)` to create a new message.
  */
-export const PaginationSpecSchema: GenMessage<PaginationSpec> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  7,
-);
+export const PaginationSpecSchema: GenMessage<PaginationSpec> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 10);
 
 /**
  * OffsetPagination uses page number and page size.
@@ -317,10 +388,8 @@ export type OffsetPagination = Message<"temporal_lens.common.v1.OffsetPagination
  * Describes the message temporal_lens.common.v1.OffsetPagination.
  * Use `create(OffsetPaginationSchema)` to create a new message.
  */
-export const OffsetPaginationSchema: GenMessage<OffsetPagination> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  8,
-);
+export const OffsetPaginationSchema: GenMessage<OffsetPagination> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 11);
 
 /**
  * CursorPagination uses an opaque cursor for forward/backward traversal.
@@ -343,10 +412,56 @@ export type CursorPagination = Message<"temporal_lens.common.v1.CursorPagination
  * Describes the message temporal_lens.common.v1.CursorPagination.
  * Use `create(CursorPaginationSchema)` to create a new message.
  */
-export const CursorPaginationSchema: GenMessage<CursorPagination> /*@__PURE__*/ = messageDesc(
-  file_temporal_lens_common_v1_common,
-  9,
-);
+export const CursorPaginationSchema: GenMessage<CursorPagination> = /*@__PURE__*/
+  messageDesc(file_temporal_lens_common_v1_common, 12);
+
+/**
+ * FieldType controls the filter value editor and server-side validation.
+ *
+ * @generated from enum temporal_lens.common.v1.FieldType
+ */
+export enum FieldType {
+  /**
+   * @generated from enum value: FIELD_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: FIELD_TYPE_KEYWORD = 1;
+   */
+  KEYWORD = 1,
+
+  /**
+   * @generated from enum value: FIELD_TYPE_TEXT = 2;
+   */
+  TEXT = 2,
+
+  /**
+   * @generated from enum value: FIELD_TYPE_INT = 3;
+   */
+  INT = 3,
+
+  /**
+   * @generated from enum value: FIELD_TYPE_DOUBLE = 4;
+   */
+  DOUBLE = 4,
+
+  /**
+   * @generated from enum value: FIELD_TYPE_BOOL = 5;
+   */
+  BOOL = 5,
+
+  /**
+   * @generated from enum value: FIELD_TYPE_TIMESTAMP = 6;
+   */
+  TIMESTAMP = 6,
+}
+
+/**
+ * Describes the enum temporal_lens.common.v1.FieldType.
+ */
+export const FieldTypeSchema: GenEnum<FieldType> = /*@__PURE__*/
+  enumDesc(file_temporal_lens_common_v1_common, 0);
 
 /**
  * @generated from enum temporal_lens.common.v1.LogicalOperator
@@ -371,10 +486,8 @@ export enum LogicalOperator {
 /**
  * Describes the enum temporal_lens.common.v1.LogicalOperator.
  */
-export const LogicalOperatorSchema: GenEnum<LogicalOperator> /*@__PURE__*/ = enumDesc(
-  file_temporal_lens_common_v1_common,
-  0,
-);
+export const LogicalOperatorSchema: GenEnum<LogicalOperator> = /*@__PURE__*/
+  enumDesc(file_temporal_lens_common_v1_common, 1);
 
 /**
  * FilterOperator defines the comparison operator.
@@ -476,10 +589,8 @@ export enum FilterOperator {
 /**
  * Describes the enum temporal_lens.common.v1.FilterOperator.
  */
-export const FilterOperatorSchema: GenEnum<FilterOperator> /*@__PURE__*/ = enumDesc(
-  file_temporal_lens_common_v1_common,
-  1,
-);
+export const FilterOperatorSchema: GenEnum<FilterOperator> = /*@__PURE__*/
+  enumDesc(file_temporal_lens_common_v1_common, 2);
 
 /**
  * NullValue represents a null/absent field value.
@@ -501,10 +612,8 @@ export enum NullValue {
 /**
  * Describes the enum temporal_lens.common.v1.NullValue.
  */
-export const NullValueSchema: GenEnum<NullValue> /*@__PURE__*/ = enumDesc(
-  file_temporal_lens_common_v1_common,
-  2,
-);
+export const NullValueSchema: GenEnum<NullValue> = /*@__PURE__*/
+  enumDesc(file_temporal_lens_common_v1_common, 3);
 
 /**
  * @generated from enum temporal_lens.common.v1.SortOrder
@@ -529,7 +638,6 @@ export enum SortOrder {
 /**
  * Describes the enum temporal_lens.common.v1.SortOrder.
  */
-export const SortOrderSchema: GenEnum<SortOrder> /*@__PURE__*/ = enumDesc(
-  file_temporal_lens_common_v1_common,
-  3,
-);
+export const SortOrderSchema: GenEnum<SortOrder> = /*@__PURE__*/
+  enumDesc(file_temporal_lens_common_v1_common, 4);
+

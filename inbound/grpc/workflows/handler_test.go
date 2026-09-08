@@ -23,6 +23,14 @@ func TestHandlerSearchParsesCommonSpecsAndMapsResponse(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service := mocks.NewMockWorkflowService(controller)
+	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{
+		Fixed: types.Schema{
+			"metadata.startTime": {Type: types.FieldTypeTimestamp, Sortable: true},
+		},
+		Variable: types.Schema{
+			"data.custom": {Type: types.FieldTypeInt},
+		},
+	})
 	service.EXPECT().
 		Search(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, request ports.SearchRequest) (ports.SearchResponse, error) {
@@ -49,6 +57,9 @@ func TestHandlerSearchParsesCommonSpecsAndMapsResponse(t *testing.T) {
 				NextCursor: "next",
 			}, nil
 		})
+	service.EXPECT().
+		WorkflowURL(gomock.Any(), gomock.Any()).
+		Return("https://temporal.example/namespaces/payments/workflows/workflow-id/run-id", nil)
 
 	handler := workflowhandler.NewHandler(service)
 	response, err := handler.Search(t.Context(), connect.NewRequest(&v1.SearchRequest{
@@ -67,6 +78,11 @@ func TestHandlerSearchParsesCommonSpecsAndMapsResponse(t *testing.T) {
 	assert.Equal(t, "next", response.Msg.GetNextCursor())
 	require.Len(t, response.Msg.GetWorkflows(), 1)
 	assert.Equal(t, "workflow-1", response.Msg.GetWorkflows()[0].GetId())
+	assert.Equal(
+		t,
+		"https://temporal.example/namespaces/payments/workflows/workflow-id/run-id",
+		response.Msg.GetWorkflows()[0].GetUrl(),
+	)
 	assert.Equal(t, v1.WorkflowStatus_WORKFLOW_STATUS_RUNNING, response.Msg.GetWorkflows()[0].GetMetadata().GetStatus())
 }
 
@@ -74,6 +90,7 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service := mocks.NewMockWorkflowService(controller)
+	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{}).Times(3)
 	executions := &v1.WorkflowSelection{Selection: &v1.WorkflowSelection_Executions{
 		Executions: &v1.ExecutionList{Executions: []*v1.WorkflowExecution{{
 			Namespace: "payments", WorkflowId: "workflow-id", RunId: "run-id",
@@ -125,4 +142,50 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 	assert.EqualValues(t, 4, indexes.Msg.GetIndexes()[0].GetDocumentCount())
 	_, err = handler.DeleteIndex(t.Context(), connect.NewRequest(&v1.DeleteIndexRequest{Index: "workflows-2026-01-02"}))
 	require.NoError(t, err)
+}
+
+func TestHandlerSearchRejectsFilterOutsideSchema(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := mocks.NewMockWorkflowService(controller)
+	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{
+		Fixed: types.Schema{
+			"metadata.status": {Type: types.FieldTypeKeyword},
+		},
+	})
+
+	handler := workflowhandler.NewHandler(service)
+	_, err := handler.Search(t.Context(), connect.NewRequest(&v1.SearchRequest{
+		Filter: &commonv1.FilterSpec{Filter: &commonv1.FilterSpec_Leaf{Leaf: &commonv1.LeafFilter{
+			Field:    "data.notIndexed",
+			Operator: commonv1.FilterOperator_FILTER_OPERATOR_EQ,
+			Value:    &commonv1.FilterValue{Value: &commonv1.FilterValue_StringValue{StringValue: "value"}},
+		}}},
+	}))
+	require.Error(t, err)
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
+func TestHandlerSignalRejectsFilterOutsideSchema(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := mocks.NewMockWorkflowService(controller)
+	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{
+		Fixed: types.Schema{
+			"metadata.status": {Type: types.FieldTypeKeyword},
+		},
+	})
+
+	handler := workflowhandler.NewHandler(service)
+	_, err := handler.Signal(t.Context(), connect.NewRequest(&v1.SignalRequest{
+		Workflows: &v1.WorkflowSelection{Selection: &v1.WorkflowSelection_Filter{
+			Filter: &commonv1.FilterSpec{Filter: &commonv1.FilterSpec_Leaf{Leaf: &commonv1.LeafFilter{
+				Field:    "data.notIndexed",
+				Operator: commonv1.FilterOperator_FILTER_OPERATOR_EQ,
+				Value:    &commonv1.FilterValue{Value: &commonv1.FilterValue_StringValue{StringValue: "value"}},
+			}}},
+		}},
+	}))
+	require.Error(t, err)
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }

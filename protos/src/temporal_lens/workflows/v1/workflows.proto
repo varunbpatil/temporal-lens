@@ -8,12 +8,19 @@ import "google/protobuf/timestamp.proto";
 import "temporal_lens/common/v1/common.proto";
 
 service WorkflowService {
+  rpc GetSearchSchema(GetSearchSchemaRequest) returns (GetSearchSchemaResponse);
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc Signal(SignalRequest) returns (SignalResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
   rpc Terminate(TerminateRequest) returns (TerminateResponse);
   rpc ListIndexes(ListIndexesRequest) returns (ListIndexesResponse);
   rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse);
+}
+
+message GetSearchSchemaRequest {}
+
+message GetSearchSchemaResponse {
+  temporal_lens.common.v1.SearchSchema schema = 1;
 }
 
 message SearchRequest {
@@ -33,6 +40,7 @@ message Workflow {
   string id = 1;
   WorkflowMetadata metadata = 2;
   WorkflowData data = 3;
+  string url = 4;
 }
 
 message WorkflowMetadata {

@@ -154,6 +154,20 @@ func (mr *MockWorkflowServiceMockRecorder) Search(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockWorkflowService)(nil).Search), ctx, req)
 }
 
+// SearchSchemas mocks base method.
+func (m *MockWorkflowService) SearchSchemas(ctx context.Context) types.SearchSchemas {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchSchemas", ctx)
+	ret0, _ := ret[0].(types.SearchSchemas)
+	return ret0
+}
+
+// SearchSchemas indicates an expected call of SearchSchemas.
+func (mr *MockWorkflowServiceMockRecorder) SearchSchemas(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchSchemas", reflect.TypeOf((*MockWorkflowService)(nil).SearchSchemas), ctx)
+}
+
 // Signal mocks base method.
 func (m *MockWorkflowService) Signal(ctx context.Context, req ports.SignalRequest) error {
 	m.ctrl.T.Helper()
@@ -208,6 +222,21 @@ func (m *MockWorkflowService) Terminate(ctx context.Context, req ports.Terminate
 func (mr *MockWorkflowServiceMockRecorder) Terminate(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Terminate", reflect.TypeOf((*MockWorkflowService)(nil).Terminate), ctx, req)
+}
+
+// WorkflowURL mocks base method.
+func (m *MockWorkflowService) WorkflowURL(ctx context.Context, metadata models.WorkflowMetadata) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowURL", ctx, metadata)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowURL indicates an expected call of WorkflowURL.
+func (mr *MockWorkflowServiceMockRecorder) WorkflowURL(ctx, metadata any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowURL", reflect.TypeOf((*MockWorkflowService)(nil).WorkflowURL), ctx, metadata)
 }
 
 // MockWorkflowSource is a mock of WorkflowSource interface.
