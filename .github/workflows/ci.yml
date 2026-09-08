@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  backend:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,3 +33,26 @@ jobs:
 
       - name: Integration Tests
         run: make go/test-integration
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        run: make ui/install
+
+      - name: Check formatting
+        run: make ui/fmt-check
+
+      - name: Lint
+        run: make ui/lint

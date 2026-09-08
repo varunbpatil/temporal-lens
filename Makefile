@@ -94,7 +94,7 @@ proto/breaking: ## Check for breaking changes
 
 .PHONY: ui/install
 ui/install: ## Install UI dependencies
-	cd ui && npm install
+	cd ui && npm ci
 
 .PHONY: ui/dev
 ui/dev: ## Start UI dev server
@@ -108,9 +108,17 @@ ui/build: ## Build UI for production
 ui/lint: ## Lint UI code
 	cd ui && npm run lint
 
+.PHONY: ui/lint-fix
+ui/lint-fix: ## Fix UI lint issues, including suggestions
+	cd ui && npm run lint-fix
+
 .PHONY: ui/fmt
 ui/fmt: ## Format UI code
 	cd ui && npm run fmt
+
+.PHONY: ui/fmt-check
+ui/fmt-check: ## Check UI formatting
+	cd ui && npm run fmt-check
 
 # ------------------------------------
 #  Docker

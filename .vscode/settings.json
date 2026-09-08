@@ -1,4 +1,7 @@
 {
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
   "gopls": {
     "build.buildFlags": ["-tags=all"]
   }

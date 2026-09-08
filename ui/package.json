@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "lint-fix": "oxlint --fix --fix-suggestions",
     "fmt": "oxfmt --write .",
+    "fmt-check": "oxfmt --check .",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -20,6 +22,7 @@
     "@tanstack/react-router": "^1.170.32",
     "@tanstack/router-plugin": "^1.168.35",
     "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
     "cn": "^0.2.5",
     "lucide-react": "^1.40.0",
     "react": "^19.2.8",
