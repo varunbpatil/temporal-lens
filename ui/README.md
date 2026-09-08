@@ -1,32 +1,78 @@
-# React + TypeScript + Vite
+# Temporal Lens UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The UI is a React single-page application for Temporal Lens. It is built with
+Vite, TypeScript, TanStack Router, TanStack Query, Buf Connect, Tailwind CSS v4,
+and shadcn/ui.
 
-Currently, two official plugins are available:
+When the Go service is built with UI assets, its HTTP server serves the
+production build at `/` and exposes Connect API endpoints below `/api`. During
+development, Vite proxies `/api` to the Go server at `http://localhost:8080`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Commands
 
-## React Compiler
+From the repository root:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+make ui/dev    # Start Vite with hot reload
+make ui/build  # Type-check and create ui/dist
+make ui/lint   # Run Oxlint
+make ui/fmt    # Format UI files with Oxfmt
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Run the workflow service separately when developing against the API. The Vite
+proxy assumes its HTTP address is the default `:8080`.
+
+## Structure
+
+```text
+ui/
+├── public/                         # Files copied unchanged into the build
+├── src/
+│   ├── assets/                     # Source assets imported by UI code
+│   ├── components/
+│   │   ├── ui/                     # shadcn/ui primitives; keep CLI-compatible
+│   │   └── ...                     # Custom components
+│   ├── gen/                        # Generated Buf protobuf and Connect code
+│   ├── routes/                     # File-based TanStack Router routes
+│   ├── index.css                   # Tailwind v4 and shadcn design tokens
+│   ├── main.tsx                    # Application providers and startup
+│   └── routeTree.gen.ts            # Generated route tree; do not edit
+├── components.json                 # shadcn/ui configuration
+├── vite.config.ts                  # Vite, router, Tailwind, aliases, API proxy
+└── package.json
+```
+
+### Application entry point
+
+`src/main.tsx` creates the application-wide providers, in this order:
+
+1. `TransportProvider` supplies one Buf Connect transport with `/api` as its base URL.
+2. `QueryClientProvider` supplies the TanStack Query cache.
+3. `RouterProvider` renders the file-based TanStack Router route tree.
+
+Generated Connect Query hooks use the transport from `TransportProvider`. API
+requests therefore go to paths such as
+`/api/temporal_lens.workflows.v1.WorkflowService/Search` without each feature
+needing to configure a client.
+
+### Routes
+
+Routes live in `src/routes`. TanStack Router generates `src/routeTree.gen.ts`
+from these files during development and builds. Do not edit the generated file.
+
+### Generated API code
+
+`src/gen` contains TypeScript generated from the repository protobuf files.
+Use the generated message types and Connect Query method descriptors instead of
+hand-writing API request types. Regenerate them from the repository root:
+
+```sh
+make proto/generate
+```
+
+## Styling
+
+`src/index.css` is the Tailwind CSS v4 + shadcn theme stylesheet.
+Use Tailwind utility classes and shadcn/ui primitives for new UI. Keep
+domain-specific composition in feature components rather than changing the
+generated primitives in `src/components/ui`.
