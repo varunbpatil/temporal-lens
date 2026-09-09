@@ -6,10 +6,12 @@ SHELL := /usr/bin/env bash
 #  Vars
 # ------------------------------------
 
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-LDFLAGS := -ldflags "-X github.com/varunbpatil/temporal-lens/version.Version=$(VERSION) -X github.com/varunbpatil/temporal-lens/version.GitCommit=$(COMMIT) -X github.com/varunbpatil/temporal-lens/version.BuildTime=$(BUILD_TIME)"
+VERSION                ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT                 ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_TIME             ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LDFLAGS                := -ldflags "-X github.com/varunbpatil/temporal-lens/version.Version=$(VERSION) -X github.com/varunbpatil/temporal-lens/version.GitCommit=$(COMMIT) -X github.com/varunbpatil/temporal-lens/version.BuildTime=$(BUILD_TIME)"
+WAIT_FOR               ?=
+WAIT_FOR_RETRY_SECONDS ?= 1
 
 # ------------------------------------
 #  Help
@@ -131,3 +133,11 @@ docker/build: ## Build Docker image
 		--build-arg COMMIT=$(COMMIT) \
 		--build-arg BUILD_TIME=$(BUILD_TIME) \
 		-t temporal-lens .
+
+# ------------------------------------
+#  Local dependencies
+# ------------------------------------
+
+.PHONY: wait
+wait: ## Wait for WAIT_FOR, an HTTP(S) URL or host:port
+	@WAIT_FOR="$(WAIT_FOR)" WAIT_FOR_RETRY_SECONDS="$(WAIT_FOR_RETRY_SECONDS)" scripts/wait.sh
