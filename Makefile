@@ -37,6 +37,10 @@ go/build-ui: ## Build the application with embedded UI assets
 go/run: ## Run the application
 	go run ./cmd/workflows
 
+.PHONY: go/seed
+go/seed: ## Seed Temporal with deterministic UI test workflows
+	go run ./cmd/temporal-seed $(ARGS)
+
 .PHONY: go/test
 go/test: ## Run unit tests
 	go test -race ./... -count=1

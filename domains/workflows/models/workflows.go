@@ -195,6 +195,11 @@ func WorkflowSchema() types.Schema {
 
 func workflowMetadataSchema() types.Schema {
 	return types.Schema{
+		"id": {
+			Type:  types.FieldTypeKeyword,
+			Label: "Document ID",
+			Group: workflowFieldGroup,
+		},
 		"metadata.workflowId": {
 			Type:  types.FieldTypeText,
 			Label: "Workflow ID",
