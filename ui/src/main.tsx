@@ -6,6 +6,7 @@ import { TransportProvider } from "@connectrpc/connect-query";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { TimeZoneProvider } from "@/lib/timezone";
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
 
@@ -33,9 +34,11 @@ createRoot(document.getElementById("root")!).render(
           storageKey="temporal-lens:theme"
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            <RouterProvider router={router} />
-          </TooltipProvider>
+          <TimeZoneProvider>
+            <TooltipProvider>
+              <RouterProvider router={router} />
+            </TooltipProvider>
+          </TimeZoneProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </TransportProvider>

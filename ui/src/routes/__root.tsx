@@ -1,7 +1,11 @@
-import { Outlet, createRootRoute } from "@tanstack/react-router";
+import { createRootRoute } from "@tanstack/react-router";
+import { RootLayout } from "./-root-layout";
 
 const Route = createRootRoute({
-  component: () => <Outlet />,
+  head: () => ({
+    meta: [{ title: "Temporal Lens" }],
+  }),
+  component: RootLayout,
 });
 
 export { Route };

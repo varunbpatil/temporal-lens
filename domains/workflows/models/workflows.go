@@ -179,10 +179,10 @@ const (
 
 const (
 	// Field groups.
-	workflowFieldGroup        = "Workflow"
-	activityFieldGroup        = "Activities"
-	childWorkflowFieldGroup   = "Child Workflows"
-	searchAttributeFieldGroup = "Search Attributes"
+	workflowFieldGroup         = "Workflow"
+	activityFieldGroup         = "Activity"
+	childWorkflowFieldGroup    = "Child Workflow"
+	searchAttributesFieldGroup = "Search Attribute"
 )
 
 // WorkflowSchema describes fields that Temporal Lens indexes without a custom
@@ -202,7 +202,7 @@ func workflowMetadataSchema() types.Schema {
 		},
 		"metadata.workflowId": {
 			Type:  types.FieldTypeText,
-			Label: "Workflow ID",
+			Label: "ID",
 			Group: workflowFieldGroup,
 		},
 		"metadata.Namespace": {
@@ -212,18 +212,18 @@ func workflowMetadataSchema() types.Schema {
 		},
 		"metadata.workflowType": {
 			Type:  types.FieldTypeText,
-			Label: "Workflow type",
+			Label: "Type",
 			Group: workflowFieldGroup,
 		},
 		"metadata.startTime": {
 			Type:     types.FieldTypeTimestamp,
-			Label:    "Started",
+			Label:    "Started", //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
 			Group:    workflowFieldGroup,
 			Sortable: true,
 		},
 		"metadata.endTime": {
 			Type:     types.FieldTypeTimestamp,
-			Label:    "Finished",
+			Label:    "Finished", //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
 			Group:    workflowFieldGroup,
 			Sortable: true,
 		},
@@ -245,13 +245,13 @@ func workflowMetadataSchema() types.Schema {
 		},
 		"metadata.searchAttributes.key": {
 			Type:  types.FieldTypeKeyword,
-			Label: "Search attribute name",
-			Group: searchAttributeFieldGroup,
+			Label: "Name",
+			Group: searchAttributesFieldGroup,
 		},
 		"metadata.searchAttributes.value": {
 			Type:  types.FieldTypeText,
-			Label: "Search attribute value",
-			Group: searchAttributeFieldGroup,
+			Label: "Value",
+			Group: searchAttributesFieldGroup,
 		},
 	}
 }
@@ -260,77 +260,77 @@ func workflowDataSchema() types.Schema {
 	return types.Schema{
 		"data.errors": {
 			Type:  types.FieldTypeText,
-			Label: "Workflow errors",
+			Label: "Errors", //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
 			Group: workflowFieldGroup,
 		},
 		"data.activities.id": {
 			Type:  types.FieldTypeText,
-			Label: "Activity ID",
+			Label: "ID",
 			Group: activityFieldGroup,
 		},
 		"data.activities.name": {
 			Type:  types.FieldTypeText,
-			Label: "Activity name",
+			Label: "Name",
 			Group: activityFieldGroup,
 		},
 		"data.activities.errors": {
 			Type:  types.FieldTypeText,
-			Label: "Activity errors",
+			Label: "Errors",
 			Group: activityFieldGroup,
 		},
 		"data.activities.attempts": {
 			Type:  types.FieldTypeInt,
-			Label: "Activity attempts",
+			Label: "Attempts",
 			Group: activityFieldGroup,
 		},
 		"data.activities.startTime": {
 			Type:  types.FieldTypeTimestamp,
-			Label: "Activity started",
+			Label: "Started",
 			Group: activityFieldGroup,
 		},
 		"data.activities.endTime": {
 			Type:  types.FieldTypeTimestamp,
-			Label: "Activity finished",
+			Label: "Finished",
 			Group: activityFieldGroup,
 		},
 		"data.activities.paused": {
 			Type:  types.FieldTypeBool,
-			Label: "Activity paused",
+			Label: "Paused",
 			Group: activityFieldGroup,
 		},
 		"data.childWorkflows.workflowId": {
 			Type:  types.FieldTypeText,
-			Label: "Child workflow ID",
+			Label: "ID",
 			Group: childWorkflowFieldGroup,
 		},
 		"data.childWorkflows.Namespace": {
 			Type:  types.FieldTypeText,
-			Label: "Child namespace",
+			Label: "Namespace",
 			Group: childWorkflowFieldGroup,
 		},
 		"data.childWorkflows.workflowType": {
 			Type:  types.FieldTypeText,
-			Label: "Child workflow type",
+			Label: "Type",
 			Group: childWorkflowFieldGroup,
 		},
 		"data.childWorkflows.errors": {
 			Type:  types.FieldTypeText,
-			Label: "Child workflow errors",
+			Label: "Errors",
 			Group: childWorkflowFieldGroup,
 		},
 		"data.childWorkflows.attempts": {
 			Type:  types.FieldTypeInt,
-			Label: "Child workflow attempts",
+			Label: "Attempts",
 			Group: childWorkflowFieldGroup,
 		},
 		"data.childWorkflows.startTime": {
 			Type:  types.FieldTypeTimestamp,
-			Label: "Child workflow started",
+			Label: "Started",
 			Group: childWorkflowFieldGroup,
 		},
 		"data.childWorkflows.endTime": {
 			Type:  types.FieldTypeTimestamp,
-			Label: "Child workflow finished",
+			Label: "Finished",
 			Group: childWorkflowFieldGroup,
 		},
 	}
