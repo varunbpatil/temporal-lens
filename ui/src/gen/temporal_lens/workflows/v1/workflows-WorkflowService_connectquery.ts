@@ -25,6 +25,11 @@ export const signal = WorkflowService.method.signal;
 export const reset = WorkflowService.method.reset;
 
 /**
+ * @generated from rpc temporal_lens.workflows.v1.WorkflowService.Cancel
+ */
+export const cancel = WorkflowService.method.cancel;
+
+/**
  * @generated from rpc temporal_lens.workflows.v1.WorkflowService.Terminate
  */
 export const terminate = WorkflowService.method.terminate;

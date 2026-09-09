@@ -12,6 +12,7 @@ service WorkflowService {
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc Signal(SignalRequest) returns (SignalResponse);
   rpc Reset(ResetRequest) returns (ResetResponse);
+  rpc Cancel(CancelRequest) returns (CancelResponse);
   rpc Terminate(TerminateRequest) returns (TerminateResponse);
   rpc ListIndexes(ListIndexesRequest) returns (ListIndexesResponse);
   rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse);
@@ -153,6 +154,12 @@ enum ResetActivityPosition {
 }
 
 message ResetResponse {}
+
+message CancelRequest {
+  WorkflowSelection workflows = 1;
+}
+
+message CancelResponse {}
 
 message TerminateRequest {
   WorkflowSelection workflows = 1;

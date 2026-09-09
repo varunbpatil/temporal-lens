@@ -96,6 +96,20 @@ func (m *MockWorkflowService) EXPECT() *MockWorkflowServiceMockRecorder {
 	return m.recorder
 }
 
+// Cancel mocks base method.
+func (m *MockWorkflowService) Cancel(ctx context.Context, req ports.CancelRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Cancel", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Cancel indicates an expected call of Cancel.
+func (mr *MockWorkflowServiceMockRecorder) Cancel(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cancel", reflect.TypeOf((*MockWorkflowService)(nil).Cancel), ctx, req)
+}
+
 // DeleteIndex mocks base method.
 func (m *MockWorkflowService) DeleteIndex(ctx context.Context, index string) error {
 	m.ctrl.T.Helper()
@@ -261,6 +275,20 @@ func NewMockWorkflowSource(ctrl *gomock.Controller) *MockWorkflowSource {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockWorkflowSource) EXPECT() *MockWorkflowSourceMockRecorder {
 	return m.recorder
+}
+
+// Cancel mocks base method.
+func (m *MockWorkflowSource) Cancel(ctx context.Context, req ports.InternalCancelRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Cancel", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Cancel indicates an expected call of Cancel.
+func (mr *MockWorkflowSourceMockRecorder) Cancel(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cancel", reflect.TypeOf((*MockWorkflowSource)(nil).Cancel), ctx, req)
 }
 
 // Reset mocks base method.

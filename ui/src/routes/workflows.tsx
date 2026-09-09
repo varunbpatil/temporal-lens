@@ -2,7 +2,14 @@ import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ExternalLinkIcon, RefreshCwIcon, RotateCcwIcon, SendIcon, Trash2Icon } from "lucide-react";
+import {
+  CircleXIcon,
+  ExternalLinkIcon,
+  RefreshCwIcon,
+  RotateCcwIcon,
+  SendIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -56,6 +63,7 @@ import {
 } from "@/gen/temporal_lens/common/v1/common_pb";
 import {
   GetSearchSchemaRequestSchema,
+  CancelRequestSchema,
   ResetActivityPosition,
   ResetActivitySchema,
   ResetPointSchema,
@@ -69,6 +77,7 @@ import {
 } from "@/gen/temporal_lens/workflows/v1/workflows_pb";
 import {
   getSearchSchema,
+  cancel,
   reset,
   search,
   signal,
@@ -214,6 +223,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
   const [resetValidationError, setResetValidationError] = useState<string>();
   const [terminateOpen, setTerminateOpen] = useState(false);
   const [terminationReason, setTerminationReason] = useState("");
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const searchInput = useMemo(() => {
     try {
@@ -265,6 +275,12 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
     onSuccess: () => {
       setTerminateOpen(false);
       setTerminationReason("");
+      clearSelectionAfterAction();
+    },
+  });
+  const cancelMutation = useMutation(cancel, {
+    onSuccess: () => {
+      setCancelOpen(false);
       clearSelectionAfterAction();
     },
   });
@@ -376,6 +392,9 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
         reason: terminationReason,
       }),
     );
+  };
+  const submitCancel = () => {
+    cancelMutation.mutate(create(CancelRequestSchema, { workflows: selectionForAction() }));
   };
   const submitSignal = () => {
     const name = signalName.trim();
@@ -534,6 +553,14 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               className:
                 "border-amber-500/50 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300",
               onSelect: () => setResetOpen(true),
+            },
+            {
+              label: "Cancel",
+              icon: <CircleXIcon aria-hidden="true" />,
+              variant: "outline",
+              className:
+                "border-orange-500/50 bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 dark:text-orange-300",
+              onSelect: () => setCancelOpen(true),
             },
             {
               label: "Terminate",
@@ -701,6 +728,36 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
             >
               <RotateCcwIcon aria-hidden="true" />{" "}
               {resetMutation.isPending ? "Resetting…" : "Reset workflows"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel selected workflows?</DialogTitle>
+            <DialogDescription>
+              This requests cancellation of every selected workflow. Workflows may run cleanup code
+              before they close.
+            </DialogDescription>
+          </DialogHeader>
+          {cancelMutation.isError ? (
+            <Alert variant="destructive">
+              <AlertDescription>Unable to cancel workflows. Please try again.</AlertDescription>
+            </Alert>
+          ) : null}
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" disabled={cancelMutation.isPending} />}>
+              Back
+            </DialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={submitCancel}
+              disabled={cancelMutation.isPending}
+            >
+              <CircleXIcon aria-hidden="true" />{" "}
+              {cancelMutation.isPending ? "Requesting cancellation…" : "Cancel workflows"}
             </Button>
           </DialogFooter>
         </DialogContent>

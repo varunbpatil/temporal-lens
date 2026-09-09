@@ -170,11 +170,73 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	}, data.ChildWorkflows[0])
 }
 
+func TestSourceCancelsWorkflowsWithNativeBatchOperation(t *testing.T) {
+	t.Parallel()
+	listener := bufconn.Listen(1 << 20)
+	server := grpc.NewServer()
+	requests := make(chan *workflowservice.StartBatchOperationRequest, 1)
+	workflowservice.RegisterWorkflowServiceServer(server, &batchOperationServer{requests: requests})
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(func() {
+		server.Stop()
+		require.NoError(t, listener.Close())
+	})
+
+	baseURL := url.URL{Scheme: "http", Host: "temporal.example"}
+	source, err := temporalworkflows.NewSource(t.Context(), temporalworkflows.WorkflowSourceParams{
+		Config: config.TemporalConfig{
+			Namespaces:               []string{"payments"},
+			Endpoint:                 "passthrough:///temporal",
+			ConnPoolSize:             1,
+			BulkActionsPerSecond:     1,
+			ListRequestsPerSecond:    1,
+			HistoryRequestsPerSecond: 1,
+			BaseURL:                  baseURL,
+		},
+		DialOptions: []grpc.DialOption{
+			grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
+				return listener.Dial()
+			}),
+		},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, source.Close()) })
+
+	err = source.Cancel(t.Context(), ports.InternalCancelRequest{Executions: []ports.ExecutionInfo{{
+		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",
+	}}})
+	require.NoError(t, err)
+
+	request := <-requests
+	require.Equal(t, "payments", request.GetNamespace())
+	require.InEpsilon(t, 1, request.GetMaxOperationsPerSecond(), 0.001)
+	require.Len(t, request.GetTargetExecutions(), 1)
+	require.Equal(t, "invoice-1", request.GetTargetExecutions()[0].GetBusinessId())
+	require.Equal(t, "run-1", request.GetTargetExecutions()[0].GetRunId())
+	_, ok := request.GetOperation().(*workflowservice.StartBatchOperationRequest_CancellationOperation)
+	require.True(t, ok)
+	require.Equal(t, "temporal-lens", request.GetCancellationOperation().GetIdentity())
+}
+
 type workflowDataServer struct {
 	workflowservice.UnimplementedWorkflowServiceServer
 
 	events      []*historypb.HistoryEvent
 	description *workflowservice.DescribeWorkflowExecutionResponse
+}
+
+type batchOperationServer struct {
+	workflowservice.UnimplementedWorkflowServiceServer
+
+	requests chan<- *workflowservice.StartBatchOperationRequest
+}
+
+func (server *batchOperationServer) StartBatchOperation(
+	_ context.Context,
+	request *workflowservice.StartBatchOperationRequest,
+) (*workflowservice.StartBatchOperationResponse, error) {
+	server.requests <- request
+	return &workflowservice.StartBatchOperationResponse{}, nil
 }
 
 func (server *workflowDataServer) GetWorkflowExecutionHistory(

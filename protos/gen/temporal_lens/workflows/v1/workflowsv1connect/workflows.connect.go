@@ -42,6 +42,8 @@ const (
 	WorkflowServiceSignalProcedure = "/temporal_lens.workflows.v1.WorkflowService/Signal"
 	// WorkflowServiceResetProcedure is the fully-qualified name of the WorkflowService's Reset RPC.
 	WorkflowServiceResetProcedure = "/temporal_lens.workflows.v1.WorkflowService/Reset"
+	// WorkflowServiceCancelProcedure is the fully-qualified name of the WorkflowService's Cancel RPC.
+	WorkflowServiceCancelProcedure = "/temporal_lens.workflows.v1.WorkflowService/Cancel"
 	// WorkflowServiceTerminateProcedure is the fully-qualified name of the WorkflowService's Terminate
 	// RPC.
 	WorkflowServiceTerminateProcedure = "/temporal_lens.workflows.v1.WorkflowService/Terminate"
@@ -59,6 +61,7 @@ type WorkflowServiceClient interface {
 	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 	Signal(context.Context, *connect.Request[v1.SignalRequest]) (*connect.Response[v1.SignalResponse], error)
 	Reset(context.Context, *connect.Request[v1.ResetRequest]) (*connect.Response[v1.ResetResponse], error)
+	Cancel(context.Context, *connect.Request[v1.CancelRequest]) (*connect.Response[v1.CancelResponse], error)
 	Terminate(context.Context, *connect.Request[v1.TerminateRequest]) (*connect.Response[v1.TerminateResponse], error)
 	ListIndexes(context.Context, *connect.Request[v1.ListIndexesRequest]) (*connect.Response[v1.ListIndexesResponse], error)
 	DeleteIndex(context.Context, *connect.Request[v1.DeleteIndexRequest]) (*connect.Response[v1.DeleteIndexResponse], error)
@@ -99,6 +102,12 @@ func NewWorkflowServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(workflowServiceMethods.ByName("Reset")),
 			connect.WithClientOptions(opts...),
 		),
+		cancel: connect.NewClient[v1.CancelRequest, v1.CancelResponse](
+			httpClient,
+			baseURL+WorkflowServiceCancelProcedure,
+			connect.WithSchema(workflowServiceMethods.ByName("Cancel")),
+			connect.WithClientOptions(opts...),
+		),
 		terminate: connect.NewClient[v1.TerminateRequest, v1.TerminateResponse](
 			httpClient,
 			baseURL+WorkflowServiceTerminateProcedure,
@@ -126,6 +135,7 @@ type workflowServiceClient struct {
 	search          *connect.Client[v1.SearchRequest, v1.SearchResponse]
 	signal          *connect.Client[v1.SignalRequest, v1.SignalResponse]
 	reset           *connect.Client[v1.ResetRequest, v1.ResetResponse]
+	cancel          *connect.Client[v1.CancelRequest, v1.CancelResponse]
 	terminate       *connect.Client[v1.TerminateRequest, v1.TerminateResponse]
 	listIndexes     *connect.Client[v1.ListIndexesRequest, v1.ListIndexesResponse]
 	deleteIndex     *connect.Client[v1.DeleteIndexRequest, v1.DeleteIndexResponse]
@@ -151,6 +161,11 @@ func (c *workflowServiceClient) Reset(ctx context.Context, req *connect.Request[
 	return c.reset.CallUnary(ctx, req)
 }
 
+// Cancel calls temporal_lens.workflows.v1.WorkflowService.Cancel.
+func (c *workflowServiceClient) Cancel(ctx context.Context, req *connect.Request[v1.CancelRequest]) (*connect.Response[v1.CancelResponse], error) {
+	return c.cancel.CallUnary(ctx, req)
+}
+
 // Terminate calls temporal_lens.workflows.v1.WorkflowService.Terminate.
 func (c *workflowServiceClient) Terminate(ctx context.Context, req *connect.Request[v1.TerminateRequest]) (*connect.Response[v1.TerminateResponse], error) {
 	return c.terminate.CallUnary(ctx, req)
@@ -173,6 +188,7 @@ type WorkflowServiceHandler interface {
 	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 	Signal(context.Context, *connect.Request[v1.SignalRequest]) (*connect.Response[v1.SignalResponse], error)
 	Reset(context.Context, *connect.Request[v1.ResetRequest]) (*connect.Response[v1.ResetResponse], error)
+	Cancel(context.Context, *connect.Request[v1.CancelRequest]) (*connect.Response[v1.CancelResponse], error)
 	Terminate(context.Context, *connect.Request[v1.TerminateRequest]) (*connect.Response[v1.TerminateResponse], error)
 	ListIndexes(context.Context, *connect.Request[v1.ListIndexesRequest]) (*connect.Response[v1.ListIndexesResponse], error)
 	DeleteIndex(context.Context, *connect.Request[v1.DeleteIndexRequest]) (*connect.Response[v1.DeleteIndexResponse], error)
@@ -209,6 +225,12 @@ func NewWorkflowServiceHandler(svc WorkflowServiceHandler, opts ...connect.Handl
 		connect.WithSchema(workflowServiceMethods.ByName("Reset")),
 		connect.WithHandlerOptions(opts...),
 	)
+	workflowServiceCancelHandler := connect.NewUnaryHandler(
+		WorkflowServiceCancelProcedure,
+		svc.Cancel,
+		connect.WithSchema(workflowServiceMethods.ByName("Cancel")),
+		connect.WithHandlerOptions(opts...),
+	)
 	workflowServiceTerminateHandler := connect.NewUnaryHandler(
 		WorkflowServiceTerminateProcedure,
 		svc.Terminate,
@@ -237,6 +259,8 @@ func NewWorkflowServiceHandler(svc WorkflowServiceHandler, opts ...connect.Handl
 			workflowServiceSignalHandler.ServeHTTP(w, r)
 		case WorkflowServiceResetProcedure:
 			workflowServiceResetHandler.ServeHTTP(w, r)
+		case WorkflowServiceCancelProcedure:
+			workflowServiceCancelHandler.ServeHTTP(w, r)
 		case WorkflowServiceTerminateProcedure:
 			workflowServiceTerminateHandler.ServeHTTP(w, r)
 		case WorkflowServiceListIndexesProcedure:
@@ -266,6 +290,10 @@ func (UnimplementedWorkflowServiceHandler) Signal(context.Context, *connect.Requ
 
 func (UnimplementedWorkflowServiceHandler) Reset(context.Context, *connect.Request[v1.ResetRequest]) (*connect.Response[v1.ResetResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("temporal_lens.workflows.v1.WorkflowService.Reset is not implemented"))
+}
+
+func (UnimplementedWorkflowServiceHandler) Cancel(context.Context, *connect.Request[v1.CancelRequest]) (*connect.Response[v1.CancelResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("temporal_lens.workflows.v1.WorkflowService.Cancel is not implemented"))
 }
 
 func (UnimplementedWorkflowServiceHandler) Terminate(context.Context, *connect.Request[v1.TerminateRequest]) (*connect.Response[v1.TerminateResponse], error) {

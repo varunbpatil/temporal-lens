@@ -90,7 +90,7 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	service := mocks.NewMockWorkflowService(controller)
-	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{}).Times(3)
+	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{}).Times(4)
 	executions := &v1.WorkflowSelection{Selection: &v1.WorkflowSelection_Executions{
 		Executions: &v1.ExecutionList{Executions: []*v1.WorkflowExecution{{
 			Namespace: "payments", WorkflowId: "workflow-id", RunId: "run-id",
@@ -116,6 +116,11 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 		}}},
 		Reason: "cancelled",
 	}).Return(nil)
+	service.EXPECT().Cancel(gomock.Any(), ports.CancelRequest{
+		WorkflowSpec: ports.WorkflowSpec{Executions: []ports.ExecutionInfo{{
+			Namespace: "payments", WorkflowID: "workflow-id", RunID: "run-id",
+		}}},
+	}).Return(nil)
 	service.EXPECT().
 		ListIndexes(gomock.Any()).
 		Return([]ports.IndexInfo{{Name: "workflows-2026-01-02", DocumentCount: 4}}, nil)
@@ -135,6 +140,8 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 	_, err = handler.Terminate(t.Context(), connect.NewRequest(&v1.TerminateRequest{
 		Workflows: executions, Reason: "cancelled",
 	}))
+	require.NoError(t, err)
+	_, err = handler.Cancel(t.Context(), connect.NewRequest(&v1.CancelRequest{Workflows: executions}))
 	require.NoError(t, err)
 	indexes, err := handler.ListIndexes(t.Context(), connect.NewRequest(&v1.ListIndexesRequest{}))
 	require.NoError(t, err)

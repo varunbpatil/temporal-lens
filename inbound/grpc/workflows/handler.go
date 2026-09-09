@@ -119,6 +119,21 @@ func (h *Handler) Reset(
 	return connect.NewResponse(&v1.ResetResponse{}), nil
 }
 
+// Cancel requests cancellation of workflows selected by a filter or explicit executions.
+func (h *Handler) Cancel(
+	ctx context.Context,
+	req *connect.Request[v1.CancelRequest],
+) (*connect.Response[v1.CancelResponse], error) {
+	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
+	if err != nil {
+		return nil, invalidArgument(err)
+	}
+	if serviceErr := h.svc.Cancel(ctx, ports.CancelRequest{WorkflowSpec: workflowSpec}); serviceErr != nil {
+		return nil, serviceError(serviceErr)
+	}
+	return connect.NewResponse(&v1.CancelResponse{}), nil
+}
+
 // Terminate terminates workflows selected by a filter or explicit executions.
 func (h *Handler) Terminate(
 	ctx context.Context,

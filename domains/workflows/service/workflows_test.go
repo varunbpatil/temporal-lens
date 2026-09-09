@@ -182,6 +182,22 @@ func TestServiceTerminatesAllFilterMatches(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestServiceCancelsExplicitExecutions(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	source := mocks.NewMockWorkflowSource(controller)
+	repository := mocks.NewMockWorkflowRepository(controller)
+	executions := []ports.ExecutionInfo{{Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1"}}
+	source.EXPECT().Cancel(gomock.Any(), ports.InternalCancelRequest{Executions: executions}).Return(nil)
+	svc := newService(t, source, repository, "workflows-")
+
+	err := svc.Cancel(t.Context(), ports.CancelRequest{
+		WorkflowSpec: ports.WorkflowSpec{Executions: executions},
+	})
+
+	require.NoError(t, err)
+}
+
 func TestServiceGroupsActivityResetsByNamespaceAndEventID(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

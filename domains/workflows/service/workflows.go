@@ -248,6 +248,15 @@ func (s *Service) Reset(ctx context.Context, req ports.ResetRequest) error {
 	return s.resetByActivity(ctx, executions, *req.ResetPoint.Activity, req.Reason)
 }
 
+// Cancel resolves a workflow selection and requests cancellation from Temporal.
+func (s *Service) Cancel(ctx context.Context, req ports.CancelRequest) error {
+	executions, err := s.resolveExecutions(ctx, req.WorkflowSpec)
+	if err != nil {
+		return err
+	}
+	return s.source.Cancel(ctx, ports.InternalCancelRequest{Executions: executions})
+}
+
 // resetByActivity resolves one reset point per execution, because matching activity
 // instances can be scheduled by different workflow tasks in different histories.
 func (s *Service) resetByActivity(

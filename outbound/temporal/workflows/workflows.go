@@ -1201,6 +1201,30 @@ func (s *Source) Reset(ctx context.Context, req ports.InternalResetRequest) erro
 	)
 }
 
+// Cancel requests cancellation of Temporal workflows.
+func (s *Source) Cancel(ctx context.Context, req ports.InternalCancelRequest) error {
+	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.
+	return s.forEachNamespace(
+		ctx,
+		req.Executions,
+		func(ctx context.Context, pool *clientPool, namespace string, executions []ports.ExecutionInfo) error {
+			_, err := pool.client().StartBatchOperation(
+				ctx,
+				&workflowservice.StartBatchOperationRequest{
+					Namespace:              namespace,
+					TargetExecutions:       targetExecutions(executions),
+					JobId:                  uuid.NewString(),
+					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
+					Operation: &workflowservice.StartBatchOperationRequest_CancellationOperation{
+						CancellationOperation: &batchpb.BatchOperationCancellation{Identity: clientIdentity},
+					},
+				},
+			)
+			return err
+		},
+	)
+}
+
 // Terminate terminates Temporal workflows.
 func (s *Source) Terminate(ctx context.Context, req ports.InternalTerminateRequest) error {
 	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.

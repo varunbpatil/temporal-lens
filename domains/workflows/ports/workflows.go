@@ -29,6 +29,9 @@ type WorkflowService interface {
 	// Reset workflows
 	Reset(ctx context.Context, req ResetRequest) error
 
+	// Request cancellation of workflows.
+	Cancel(ctx context.Context, req CancelRequest) error
+
 	// Terminate workflows
 	Terminate(ctx context.Context, req TerminateRequest) error
 
@@ -67,6 +70,9 @@ type WorkflowSource interface {
 
 	// Reset workflows
 	Reset(ctx context.Context, req InternalResetRequest) error
+
+	// Request cancellation of workflows.
+	Cancel(ctx context.Context, req InternalCancelRequest) error
 
 	// Terminate workflows
 	Terminate(ctx context.Context, req InternalTerminateRequest) error

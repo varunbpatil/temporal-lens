@@ -43,10 +43,7 @@ type SignalRequest struct {
 	Payload []byte
 }
 
-// InternalSignalRequest is pretty much the same as [SignalRequest] except that it
-// contains concrete execution targets whereas [SignalRequest] can contain either
-// concrete execution targets or a filter query which the domain service resolves
-// to concrete execution targets.
+// InternalSignalRequest is the resolved, concrete counterpart to [SignalRequest].
 type InternalSignalRequest struct {
 	// Concrete workflow executions to signal
 	Executions []ExecutionInfo
@@ -69,10 +66,7 @@ type ResetRequest struct {
 	Reason string
 }
 
-// InternalResetRequest is pretty much the same as [ResetRequest] except that it
-// contains concrete execution targets whereas [ResetRequest] can contain either
-// concrete execution targets or a filter query which the domain service resolves
-// to concrete execution targets.
+// InternalResetRequest is the resolved, concrete counterpart to [ResetRequest].
 type InternalResetRequest struct {
 	// Concrete workflow executions to reset
 	Executions []ExecutionInfo
@@ -84,6 +78,17 @@ type InternalResetRequest struct {
 	Reason string
 }
 
+type CancelRequest struct {
+	// Workflow spec
+	WorkflowSpec WorkflowSpec
+}
+
+// InternalCancelRequest is the resolved, concrete counterpart to [CancelRequest].
+type InternalCancelRequest struct {
+	// Concrete workflow executions to request cancellation for
+	Executions []ExecutionInfo
+}
+
 type TerminateRequest struct {
 	// Workflow spec
 	WorkflowSpec WorkflowSpec
@@ -92,10 +97,7 @@ type TerminateRequest struct {
 	Reason string
 }
 
-// InternalTerminateRequest is pretty much the same as [TerminateRequest] except that it
-// contains concrete execution targets whereas [TerminateRequest] can contain either
-// concrete execution targets or a filter query which the domain service resolves
-// to concrete execution targets.
+// InternalTerminateRequest is the resolved, concrete counterpart to [TerminateRequest].
 type InternalTerminateRequest struct {
 	// Concrete workflow executions to terminate
 	Executions []ExecutionInfo
