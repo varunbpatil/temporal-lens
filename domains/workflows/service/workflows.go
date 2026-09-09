@@ -185,9 +185,34 @@ func (s *Service) Search(ctx context.Context, req ports.SearchRequest) (ports.Se
 func (s *Service) SearchSchemas(_ context.Context) types.SearchSchemas {
 	variable := types.Schema{}
 	if s.mapper != nil {
-		variable = s.mapper.Schema()
+		variable = payloadSearchSchema(s.mapper.Schema())
 	}
 	return types.SearchSchemas{Fixed: models.WorkflowSchema(), Variable: variable}
+}
+
+// payloadSearchSchema expands context-independent mapper fields for every
+// Temporal payload location that is indexed.
+func payloadSearchSchema(mapperSchema types.Schema) types.Schema {
+	type payloadSchemaContext struct {
+		prefix string
+		group  string
+	}
+	contexts := []payloadSchemaContext{
+		{prefix: "data.inputs", group: "Workflow Inputs"},
+		{prefix: "data.outputs", group: "Workflow Outputs"},
+		{prefix: "data.activities.inputs", group: "Activity Inputs"},
+		{prefix: "data.activities.outputs", group: "Activity Outputs"},
+		{prefix: "data.childWorkflows.inputs", group: "Child Workflow Inputs"},
+		{prefix: "data.childWorkflows.outputs", group: "Child Workflow Outputs"},
+	}
+	schema := make(types.Schema, len(mapperSchema)*len(contexts))
+	for _, context := range contexts {
+		for name, field := range mapperSchema {
+			field.Group = context.group
+			schema[context.prefix+"."+name] = field
+		}
+	}
+	return schema
 }
 
 // Signal resolves a workflow selection and sends it to Temporal.

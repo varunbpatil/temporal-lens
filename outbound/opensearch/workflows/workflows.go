@@ -24,16 +24,19 @@ import (
 var _ ports.WorkflowRepository = (*Repository)(nil)
 
 type Repository struct {
-	client *opensearchapi.Client
-	schema types.Schema
+	client       *opensearchapi.Client
+	searchSchema func() types.Schema
 }
 
 type WorkflowRepositoryParams struct {
-	Config config.OpenSearchConfig
-	Schema types.Schema
+	Config       config.OpenSearchConfig
+	SearchSchema func() types.Schema
 }
 
 func NewRepository(_ context.Context, params WorkflowRepositoryParams) (*Repository, error) {
+	if params.SearchSchema == nil {
+		return nil, errors.New("OpenSearch workflow search schema provider is required")
+	}
 	osConfig := opensearch.Config{
 		Addresses:          params.Config.Addresses,
 		Username:           params.Config.Username,
@@ -54,8 +57,8 @@ func NewRepository(_ context.Context, params WorkflowRepositoryParams) (*Reposit
 	}
 
 	return &Repository{
-		client: client,
-		schema: params.Schema,
+		client:       client,
+		searchSchema: params.SearchSchema,
 	}, nil
 }
 
@@ -66,7 +69,7 @@ func (r *Repository) Close() error {
 
 // CreateIndex creates an index with the full explicit mapping.
 func (r *Repository) CreateIndex(ctx context.Context, index string) error {
-	mapping := os.BuildIndexMapping(r.schema, workflowNestedPaths())
+	mapping := os.BuildIndexMapping(r.searchSchema(), workflowNestedPaths())
 
 	body, err := json.Marshal(mapping)
 	if err != nil {

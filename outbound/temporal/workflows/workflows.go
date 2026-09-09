@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"math"
 	"net/url"
 	"os"
 	"path"
@@ -38,6 +39,7 @@ import (
 	"github.com/varunbpatil/temporal-lens/config"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
+	"github.com/varunbpatil/temporal-lens/types"
 )
 
 const (
@@ -913,20 +915,80 @@ func mappedPayloads(payloads *commonpb.Payloads, mapper ports.Mapper) (map[strin
 	if mapper == nil {
 		return fields, nil
 	}
+	schema := mapper.Schema()
 	for _, payload := range payloads.GetPayloads() {
 		value, err := jsonPayload(payload)
 		if err != nil {
 			return nil, err
 		}
+		var mappingErr error
 		flattenJSON(value, "$", func(key string, value any) {
+			if mappingErr != nil {
+				return
+			}
 			field := mapper.Map(key, value)
 			if field.Name != "" {
+				if validationErr := validateMappedField(schema, key, field); validationErr != nil {
+					mappingErr = validationErr
+					return
+				}
 				// Multiple payloads or paths may intentionally map to one result field.
 				fields[field.Name] = append(fields[field.Name], field.Value)
 			}
 		})
+		if mappingErr != nil {
+			return nil, mappingErr
+		}
 	}
 	return fields, nil
+}
+
+// validateMappedField keeps mapper output aligned with the schema used to create
+// the OpenSearch mapping. JSON numbers are float64 after [json.Unmarshal].
+func validateMappedField(schema types.Schema, path string, field ports.Field) error {
+	fieldSchema, ok := schema[field.Name]
+	if !ok {
+		return fmt.Errorf("mapper returned undeclared field %q for payload path %q", field.Name, path)
+	}
+	if mappedValueMatchesType(field.Value, fieldSchema.Type) {
+		return nil
+	}
+	return fmt.Errorf(
+		"mapper returned %T for field %q at payload path %q; schema requires %s",
+		field.Value,
+		field.Name,
+		path,
+		fieldSchema.Type,
+	)
+}
+
+func mappedValueMatchesType(value any, fieldType types.FieldType) bool {
+	switch fieldType {
+	case types.FieldTypeKeyword, types.FieldTypeText:
+		_, ok := value.(string)
+		return ok
+	case types.FieldTypeInt:
+		number, ok := value.(float64)
+		return ok && !math.IsInf(number, 0) && !math.IsNaN(number) && math.Trunc(number) == number
+	case types.FieldTypeDouble:
+		number, ok := value.(float64)
+		return ok && !math.IsInf(number, 0) && !math.IsNaN(number)
+	case types.FieldTypeBool:
+		_, ok := value.(bool)
+		return ok
+	case types.FieldTypeTimestamp:
+		switch value := value.(type) {
+		case time.Time:
+			return !value.IsZero()
+		case string:
+			_, err := time.Parse(time.RFC3339, value)
+			return err == nil
+		default:
+			return false
+		}
+	default:
+		return false
+	}
 }
 
 // jsonPayload decodes one JSON-encoded Temporal payload into a generic Go value.

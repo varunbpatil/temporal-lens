@@ -24,6 +24,7 @@ import (
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
 	"github.com/varunbpatil/temporal-lens/mocks"
 	temporalworkflows "github.com/varunbpatil/temporal-lens/outbound/temporal/workflows"
+	"github.com/varunbpatil/temporal-lens/types"
 )
 
 func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
@@ -34,9 +35,22 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	mapper.EXPECT().
 		Map(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(key string, value any) ports.Field {
-			return ports.Field{Name: strings.TrimPrefix(key, "$."), Value: value}
+			name := strings.TrimPrefix(key, "$.")
+			if index := strings.LastIndexByte(name, '.'); index >= 0 {
+				name = name[index+1:]
+			}
+			return ports.Field{Name: name, Value: value}
 		}).
 		AnyTimes()
+	mapper.EXPECT().Schema().Return(types.Schema{
+		"amount":  {Type: types.FieldTypeDouble},
+		"id":      {Type: types.FieldTypeKeyword},
+		"ignored": {Type: types.FieldTypeBool},
+		"nested":  {Type: types.FieldTypeKeyword},
+		"order":   {Type: types.FieldTypeKeyword},
+		"receipt": {Type: types.FieldTypeKeyword},
+		"status":  {Type: types.FieldTypeKeyword},
+	}).AnyTimes()
 
 	start := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
 	events := []*historypb.HistoryEvent{
@@ -123,8 +137,8 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	require.EqualValues(t, 2, resetEventIDByName)
 
 	require.Equal(t, map[string][]any{
-		"customer.id":    {"customer-1"},
-		"wrapped.nested": {"value"},
+		"id":     {"customer-1"},
+		"nested": {"value"},
 	}, data.Inputs)
 	require.Equal(t, map[string][]any{"status": {"complete"}}, data.Outputs)
 	require.Len(t, data.Activities, 3)

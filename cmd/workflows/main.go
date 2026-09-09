@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/varunbpatil/temporal-lens/config"
-	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	workflowservice "github.com/varunbpatil/temporal-lens/domains/workflows/service"
 	grpcserver "github.com/varunbpatil/temporal-lens/inbound/grpc"
 	grpcworkflows "github.com/varunbpatil/temporal-lens/inbound/grpc/workflows"
 	httpserver "github.com/varunbpatil/temporal-lens/inbound/http"
+	"github.com/varunbpatil/temporal-lens/mapper"
 	opensearchworkflows "github.com/varunbpatil/temporal-lens/outbound/opensearch/workflows"
 	temporalworkflows "github.com/varunbpatil/temporal-lens/outbound/temporal/workflows"
 	"github.com/varunbpatil/temporal-lens/types"
@@ -63,10 +63,16 @@ func run() int {
 	}
 	lm.Add("Temporal workflow source", types.CloseOnly(source.Close))
 
+	var workflowSvc *workflowservice.Service
+
 	// Temporal workflow repository
 	repository, err := opensearchworkflows.NewRepository(ctx, opensearchworkflows.WorkflowRepositoryParams{
 		Config: cfg.OpenSearch,
-		Schema: models.WorkflowSchema(),
+
+		// Repository needs the schema from the workflow service,
+		// but the workflow service itself needs the repository.
+		// This closure is a way of overcoming that circular dependency.
+		SearchSchema: func() types.Schema { return workflowSvc.SearchSchemas(context.Background()).Combined() },
 	})
 	if err != nil {
 		logger.Error("create OpenSearch workflow repository", "error", err)
@@ -75,11 +81,12 @@ func run() int {
 	lm.Add("OpenSearch workflow repository", types.CloseOnly(repository.Close))
 
 	// Workflow service
-	workflowSvc, err := workflowservice.NewService(ctx, workflowservice.WorkflowServiceParams{
+	workflowSvc, err = workflowservice.NewService(ctx, workflowservice.WorkflowServiceParams{
 		Config:     cfg.Temporal,
 		Source:     source,
 		Repository: repository,
 		Logger:     logger,
+		Mapper:     mapper.Mapper{},
 	})
 	if err != nil {
 		logger.Error("create workflow service", "error", err)

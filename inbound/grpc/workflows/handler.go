@@ -11,6 +11,7 @@ import (
 	grpcutil "github.com/varunbpatil/temporal-lens/inbound/grpc"
 	v1 "github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1"
 	"github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1/workflowsv1connect"
+	"github.com/varunbpatil/temporal-lens/types"
 )
 
 var _ workflowsv1connect.WorkflowServiceHandler = (*Handler)(nil)
@@ -35,14 +36,14 @@ func Register(mux *http.ServeMux, handler workflowsv1connect.WorkflowServiceHand
 	mux.Handle(path, httpHandler)
 }
 
-// GetSearchSchema returns fixed workflow fields and any fields supplied by a
-// deployment-specific mapper, allowing clients to build filter UIs dynamically.
+// GetSearchSchema returns every indexed workflow field so clients can build
+// filter UIs dynamically.
 func (h *Handler) GetSearchSchema(
 	ctx context.Context,
 	_ *connect.Request[v1.GetSearchSchemaRequest],
 ) (*connect.Response[v1.GetSearchSchemaResponse], error) {
 	return connect.NewResponse(&v1.GetSearchSchemaResponse{
-		Schema: searchSchemasToProto(h.svc.SearchSchemas(ctx)),
+		Schema: searchSchemaToProto(h.searchSchema(ctx)),
 	}), nil
 }
 
@@ -51,7 +52,7 @@ func (h *Handler) Search(
 	ctx context.Context,
 	req *connect.Request[v1.SearchRequest],
 ) (*connect.Response[v1.SearchResponse], error) {
-	searchRequest, err := searchRequestFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg)
+	searchRequest, err := searchRequestFromProto(h.searchSchema(ctx), req.Msg)
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
@@ -81,7 +82,7 @@ func (h *Handler) Signal(
 	ctx context.Context,
 	req *connect.Request[v1.SignalRequest],
 ) (*connect.Response[v1.SignalResponse], error) {
-	workflowSpec, err := workflowSpecFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg.GetWorkflows())
+	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
@@ -100,7 +101,7 @@ func (h *Handler) Reset(
 	ctx context.Context,
 	req *connect.Request[v1.ResetRequest],
 ) (*connect.Response[v1.ResetResponse], error) {
-	workflowSpec, err := workflowSpecFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg.GetWorkflows())
+	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
@@ -123,7 +124,7 @@ func (h *Handler) Terminate(
 	ctx context.Context,
 	req *connect.Request[v1.TerminateRequest],
 ) (*connect.Response[v1.TerminateResponse], error) {
-	workflowSpec, err := workflowSpecFromProto(h.svc.SearchSchemas(ctx).Combined(), req.Msg.GetWorkflows())
+	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
@@ -164,6 +165,12 @@ func (h *Handler) DeleteIndex(
 		return nil, serviceError(err)
 	}
 	return connect.NewResponse(&v1.DeleteIndexResponse{}), nil
+}
+
+// searchSchema is the full set of indexed paths. Every incoming filter and
+// sort is validated against it, including filters used for bulk actions.
+func (h *Handler) searchSchema(ctx context.Context) types.Schema {
+	return h.svc.SearchSchemas(ctx).Combined()
 }
 
 // invalidArgument reports an input that cannot be parsed into the domain request.

@@ -324,15 +324,13 @@ func (SortOrder) EnumDescriptor() ([]byte, []int) {
 	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
-// SearchSchema describes the fields that a domain makes available for search.
-// Fixed fields are built into the domain; variable fields are supplied by a
-// configured payload mapper and can vary by deployment.
+// SearchSchema describes the complete set of fields that a domain makes
+// available for search.
 type SearchSchema struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	FixedFields    []*SearchField         `protobuf:"bytes,1,rep,name=fixed_fields,json=fixedFields,proto3" json:"fixed_fields,omitempty"`
-	VariableFields []*SearchField         `protobuf:"bytes,2,rep,name=variable_fields,json=variableFields,proto3" json:"variable_fields,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Fields        []*SearchField         `protobuf:"bytes,1,rep,name=fields,proto3" json:"fields,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SearchSchema) Reset() {
@@ -365,16 +363,9 @@ func (*SearchSchema) Descriptor() ([]byte, []int) {
 	return file_temporal_lens_common_v1_common_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SearchSchema) GetFixedFields() []*SearchField {
+func (x *SearchSchema) GetFields() []*SearchField {
 	if x != nil {
-		return x.FixedFields
-	}
-	return nil
-}
-
-func (x *SearchSchema) GetVariableFields() []*SearchField {
-	if x != nil {
-		return x.VariableFields
+		return x.Fields
 	}
 	return nil
 }
@@ -1253,10 +1244,9 @@ var File_temporal_lens_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_temporal_lens_common_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"$temporal_lens/common/v1/common.proto\x12\x17temporal_lens.common.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
-	"\fSearchSchema\x12G\n" +
-	"\ffixed_fields\x18\x01 \x03(\v2$.temporal_lens.common.v1.SearchFieldR\vfixedFields\x12M\n" +
-	"\x0fvariable_fields\x18\x02 \x03(\v2$.temporal_lens.common.v1.SearchFieldR\x0evariableFields\"\xd0\x02\n" +
+	"$temporal_lens/common/v1/common.proto\x12\x17temporal_lens.common.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"L\n" +
+	"\fSearchSchema\x12<\n" +
+	"\x06fields\x18\x01 \x03(\v2$.temporal_lens.common.v1.SearchFieldR\x06fields\"\xd0\x02\n" +
 	"\vSearchField\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x126\n" +
 	"\x04type\x18\x02 \x01(\x0e2\".temporal_lens.common.v1.FieldTypeR\x04type\x12E\n" +
@@ -1391,32 +1381,31 @@ var file_temporal_lens_common_v1_common_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil), // 18: google.protobuf.Timestamp
 }
 var file_temporal_lens_common_v1_common_proto_depIdxs = []int32{
-	6,  // 0: temporal_lens.common.v1.SearchSchema.fixed_fields:type_name -> temporal_lens.common.v1.SearchField
-	6,  // 1: temporal_lens.common.v1.SearchSchema.variable_fields:type_name -> temporal_lens.common.v1.SearchField
-	0,  // 2: temporal_lens.common.v1.SearchField.type:type_name -> temporal_lens.common.v1.FieldType
-	2,  // 3: temporal_lens.common.v1.SearchField.operators:type_name -> temporal_lens.common.v1.FilterOperator
-	7,  // 4: temporal_lens.common.v1.SearchField.options:type_name -> temporal_lens.common.v1.SearchFieldOption
-	10, // 5: temporal_lens.common.v1.FilterSpec.leaf:type_name -> temporal_lens.common.v1.LeafFilter
-	9,  // 6: temporal_lens.common.v1.FilterSpec.logical:type_name -> temporal_lens.common.v1.LogicalFilter
-	1,  // 7: temporal_lens.common.v1.LogicalFilter.operator:type_name -> temporal_lens.common.v1.LogicalOperator
-	8,  // 8: temporal_lens.common.v1.LogicalFilter.operands:type_name -> temporal_lens.common.v1.FilterSpec
-	2,  // 9: temporal_lens.common.v1.LeafFilter.operator:type_name -> temporal_lens.common.v1.FilterOperator
-	11, // 10: temporal_lens.common.v1.LeafFilter.value:type_name -> temporal_lens.common.v1.FilterValue
-	18, // 11: temporal_lens.common.v1.FilterValue.timestamp_value:type_name -> google.protobuf.Timestamp
-	3,  // 12: temporal_lens.common.v1.FilterValue.null_value:type_name -> temporal_lens.common.v1.NullValue
-	12, // 13: temporal_lens.common.v1.FilterValue.between_value:type_name -> temporal_lens.common.v1.BetweenValue
-	13, // 14: temporal_lens.common.v1.FilterValue.repeated_value:type_name -> temporal_lens.common.v1.RepeatedValue
-	11, // 15: temporal_lens.common.v1.BetweenValue.start:type_name -> temporal_lens.common.v1.FilterValue
-	11, // 16: temporal_lens.common.v1.BetweenValue.end:type_name -> temporal_lens.common.v1.FilterValue
-	11, // 17: temporal_lens.common.v1.RepeatedValue.values:type_name -> temporal_lens.common.v1.FilterValue
-	4,  // 18: temporal_lens.common.v1.SortSpec.order:type_name -> temporal_lens.common.v1.SortOrder
-	16, // 19: temporal_lens.common.v1.PaginationSpec.offset:type_name -> temporal_lens.common.v1.OffsetPagination
-	17, // 20: temporal_lens.common.v1.PaginationSpec.cursor:type_name -> temporal_lens.common.v1.CursorPagination
-	21, // [21:21] is the sub-list for method output_type
-	21, // [21:21] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	6,  // 0: temporal_lens.common.v1.SearchSchema.fields:type_name -> temporal_lens.common.v1.SearchField
+	0,  // 1: temporal_lens.common.v1.SearchField.type:type_name -> temporal_lens.common.v1.FieldType
+	2,  // 2: temporal_lens.common.v1.SearchField.operators:type_name -> temporal_lens.common.v1.FilterOperator
+	7,  // 3: temporal_lens.common.v1.SearchField.options:type_name -> temporal_lens.common.v1.SearchFieldOption
+	10, // 4: temporal_lens.common.v1.FilterSpec.leaf:type_name -> temporal_lens.common.v1.LeafFilter
+	9,  // 5: temporal_lens.common.v1.FilterSpec.logical:type_name -> temporal_lens.common.v1.LogicalFilter
+	1,  // 6: temporal_lens.common.v1.LogicalFilter.operator:type_name -> temporal_lens.common.v1.LogicalOperator
+	8,  // 7: temporal_lens.common.v1.LogicalFilter.operands:type_name -> temporal_lens.common.v1.FilterSpec
+	2,  // 8: temporal_lens.common.v1.LeafFilter.operator:type_name -> temporal_lens.common.v1.FilterOperator
+	11, // 9: temporal_lens.common.v1.LeafFilter.value:type_name -> temporal_lens.common.v1.FilterValue
+	18, // 10: temporal_lens.common.v1.FilterValue.timestamp_value:type_name -> google.protobuf.Timestamp
+	3,  // 11: temporal_lens.common.v1.FilterValue.null_value:type_name -> temporal_lens.common.v1.NullValue
+	12, // 12: temporal_lens.common.v1.FilterValue.between_value:type_name -> temporal_lens.common.v1.BetweenValue
+	13, // 13: temporal_lens.common.v1.FilterValue.repeated_value:type_name -> temporal_lens.common.v1.RepeatedValue
+	11, // 14: temporal_lens.common.v1.BetweenValue.start:type_name -> temporal_lens.common.v1.FilterValue
+	11, // 15: temporal_lens.common.v1.BetweenValue.end:type_name -> temporal_lens.common.v1.FilterValue
+	11, // 16: temporal_lens.common.v1.RepeatedValue.values:type_name -> temporal_lens.common.v1.FilterValue
+	4,  // 17: temporal_lens.common.v1.SortSpec.order:type_name -> temporal_lens.common.v1.SortOrder
+	16, // 18: temporal_lens.common.v1.PaginationSpec.offset:type_name -> temporal_lens.common.v1.OffsetPagination
+	17, // 19: temporal_lens.common.v1.PaginationSpec.cursor:type_name -> temporal_lens.common.v1.CursorPagination
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_temporal_lens_common_v1_common_proto_init() }

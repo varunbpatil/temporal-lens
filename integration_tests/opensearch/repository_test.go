@@ -22,7 +22,7 @@ func newTestRepository(t *testing.T, schema types.Schema) *workflows.Repository 
 		Config: config.OpenSearchConfig{
 			Addresses: []string{sharedAddr},
 		},
-		Schema: schema,
+		SearchSchema: func() types.Schema { return schema },
 	})
 	require.NoError(t, err)
 	return repo

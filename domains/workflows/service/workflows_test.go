@@ -69,6 +69,46 @@ func TestServiceIndexesWorkflowInDailyShard(t *testing.T) {
 	require.Equal(t, metadata, &state.adds[0].workflows[0].Metadata)
 }
 
+func TestServiceExpandsMapperSchemaForEveryPayloadContext(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	mapper := mocks.NewMockMapper(controller)
+	mapper.EXPECT().Schema().Return(types.Schema{
+		"amount": {
+			Type:     types.FieldTypeDouble,
+			Label:    "Amount",
+			Group:    "Mapper-defined group",
+			Sortable: true,
+		},
+	})
+
+	svc := newServiceWithMapper(
+		t,
+		mocks.NewMockWorkflowSource(controller),
+		mocks.NewMockWorkflowRepository(controller),
+		"workflows-",
+		mapper,
+	)
+
+	schemas := svc.SearchSchemas(t.Context())
+	require.Len(t, schemas.Variable, 6)
+	for path, group := range map[string]string{
+		"data.inputs.amount":                 "Workflow Inputs",
+		"data.outputs.amount":                "Workflow Outputs",
+		"data.activities.inputs.amount":      "Activity Inputs",
+		"data.activities.outputs.amount":     "Activity Outputs",
+		"data.childWorkflows.inputs.amount":  "Child Workflow Inputs",
+		"data.childWorkflows.outputs.amount": "Child Workflow Outputs",
+	} {
+		field, ok := schemas.Variable[path]
+		require.True(t, ok, "expected schema field %q", path)
+		require.Equal(t, types.FieldTypeDouble, field.Type)
+		require.Equal(t, "Amount", field.Label)
+		require.Equal(t, group, field.Group)
+		require.True(t, field.Sortable)
+	}
+}
+
 func TestServiceSearchesAllWorkflowShards(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
@@ -206,6 +246,16 @@ func newService(
 	repository ports.WorkflowRepository,
 	indexPrefix string,
 ) *service.Service {
+	return newServiceWithMapper(t, source, repository, indexPrefix, nil)
+}
+
+func newServiceWithMapper(
+	t *testing.T,
+	source ports.WorkflowSource,
+	repository ports.WorkflowRepository,
+	indexPrefix string,
+	mapper ports.Mapper,
+) *service.Service {
 	t.Helper()
 	svc, err := service.NewService(t.Context(), service.WorkflowServiceParams{
 		Config: config.TemporalConfig{
@@ -219,6 +269,7 @@ func newService(
 		},
 		Source:     source,
 		Repository: repository,
+		Mapper:     mapper,
 		Logger:     slog.New(slog.DiscardHandler),
 	})
 	require.NoError(t, err)

@@ -189,3 +189,36 @@ func TestHandlerSignalRejectsFilterOutsideSchema(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }
+
+func TestHandlerSignalAcceptsMapperFieldFromCombinedSchema(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := mocks.NewMockWorkflowService(controller)
+	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{
+		Fixed: types.Schema{
+			"metadata.status": {Type: types.FieldTypeKeyword},
+		},
+		Variable: types.Schema{
+			"data.inputs.amount": {Type: types.FieldTypeInt},
+		},
+	})
+	service.EXPECT().Signal(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, request ports.SignalRequest) error {
+			require.Equal(t, "data.inputs.amount", request.WorkflowSpec.Filter.Cond.Field)
+			return nil
+		},
+	)
+
+	handler := workflowhandler.NewHandler(service)
+	_, err := handler.Signal(t.Context(), connect.NewRequest(&v1.SignalRequest{
+		Workflows: &v1.WorkflowSelection{Selection: &v1.WorkflowSelection_Filter{
+			Filter: &commonv1.FilterSpec{Filter: &commonv1.FilterSpec_Leaf{Leaf: &commonv1.LeafFilter{
+				Field:    "data.inputs.amount",
+				Operator: commonv1.FilterOperator_FILTER_OPERATOR_EQ,
+				Value:    &commonv1.FilterValue{Value: &commonv1.FilterValue_IntValue{IntValue: 42}},
+			}}},
+		}},
+		Signal: "process",
+	}))
+	require.NoError(t, err)
+}

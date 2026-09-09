@@ -4,12 +4,10 @@ package temporal_lens.common.v1;
 
 import "google/protobuf/timestamp.proto";
 
-// SearchSchema describes the fields that a domain makes available for search.
-// Fixed fields are built into the domain; variable fields are supplied by a
-// configured payload mapper and can vary by deployment.
+// SearchSchema describes the complete set of fields that a domain makes
+// available for search.
 message SearchSchema {
-  repeated SearchField fixed_fields = 1;
-  repeated SearchField variable_fields = 2;
+  repeated SearchField fields = 1;
 }
 
 // SearchField describes how one indexed field can be filtered and displayed.

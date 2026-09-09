@@ -146,12 +146,11 @@ func workflowToProto(workflow *models.Workflow) (*v1.Workflow, error) {
 	}, nil
 }
 
-// searchSchemasToProto maps field metadata used by clients to render a generic
+// searchSchemaToProto maps field metadata used by clients to render a generic
 // filter editor. Sorting paths makes schema responses stable for URLs and caches.
-func searchSchemasToProto(schemas types.SearchSchemas) *commonv1.SearchSchema {
+func searchSchemaToProto(schema types.Schema) *commonv1.SearchSchema {
 	return &commonv1.SearchSchema{
-		FixedFields:    schemaFieldsToProto(schemas.Fixed),
-		VariableFields: schemaFieldsToProto(schemas.Variable),
+		Fields: schemaFieldsToProto(schema),
 	}
 }
 
