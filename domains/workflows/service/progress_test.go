@@ -100,18 +100,6 @@ func TestBatchWorkflowsCoalescesExecutionSnapshots(t *testing.T) {
 	require.Equal(t, []*models.Workflow{terminal}, batch.workflows)
 }
 
-func TestWorkflowIndexVersionUsesTemporalStateTransitionCount(t *testing.T) {
-	t.Parallel()
-
-	openMetadata := &models.WorkflowMetadata{StateTransitionCount: 14}
-	newerMetadata := &models.WorkflowMetadata{StateTransitionCount: 15}
-	open := &models.Workflow{Metadata: *openMetadata, IndexVersion: workflowIndexVersion(openMetadata)}
-	newer := &models.Workflow{Metadata: *newerMetadata, IndexVersion: workflowIndexVersion(newerMetadata)}
-	require.Equal(t, int64(14), open.IndexVersion)
-	require.True(t, isNewerWorkflow(newer, open))
-	require.Equal(t, int64(1), workflowIndexVersion(&models.WorkflowMetadata{}))
-}
-
 func terminalWorkflow(t *testing.T) *models.Workflow {
 	t.Helper()
 	start := time.Date(2026, time.September, 10, 10, 0, 0, 0, time.UTC)

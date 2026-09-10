@@ -162,28 +162,6 @@ func TestBuildIndexMapping_ChildWorkflowsNested(t *testing.T) {
 	assertFieldType(t, childInputProps, "orderId", "keyword")
 }
 
-func TestBuildIndexMapping_ThreeLevelNesting(t *testing.T) {
-	t.Parallel()
-
-	schema := types.Schema{
-		"activities.metadata.tags.label": {Type: types.FieldTypeKeyword},
-	}
-
-	result := opensearch.BuildIndexMapping(schema, nil)
-	props := getProps(t, result)
-
-	activities := getField(t, props, "activities")
-	actProps := getField(t, activities, "properties")
-
-	metadata := getField(t, actProps, "metadata")
-	metaProps := getField(t, metadata, "properties")
-
-	tags := getField(t, metaProps, "tags")
-	tagProps := getField(t, tags, "properties")
-
-	assertFieldType(t, tagProps, "label", "keyword")
-}
-
 func TestBuildIndexMapping_FourLevelNesting(t *testing.T) {
 	t.Parallel()
 

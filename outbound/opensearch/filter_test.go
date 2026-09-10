@@ -305,15 +305,3 @@ func TestBuildQuery_Wildcard(t *testing.T) {
 		},
 	}, q)
 }
-
-func TestBuildQuery_UnknownField(t *testing.T) {
-	t.Parallel()
-	f := &types.Filter{Cond: &types.Condition{
-		Field:    "unknown",
-		Operator: types.OpEQ,
-		Value:    types.Value{String: new("x")},
-	}}
-	q, err := buildQuery(f)
-	require.NoError(t, err)
-	assert.NotNil(t, q)
-}

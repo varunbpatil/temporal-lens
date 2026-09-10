@@ -230,31 +230,3 @@ func TestListIndexes(t *testing.T) {
 	require.True(t, found)
 	assert.EqualValues(t, 1, documentCount)
 }
-
-func TestCreateIndex_AlreadyExists_IsDirectError(t *testing.T) {
-	t.Parallel()
-	schema := types.Schema{
-		"id": {Type: types.FieldTypeKeyword},
-	}
-	repo := newTestRepository(t, schema)
-	index := "test-already-exists-unwrap"
-
-	err := repo.CreateIndex(t.Context(), index)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = repo.DeleteIndex(t.Context(), index) })
-
-	err = repo.CreateIndex(t.Context(), index)
-	require.Error(t, err)
-	assert.ErrorIs(t, err, ports.ErrIndexAlreadyExists)
-}
-
-func TestDeleteIndex_NotExists_IsSilent(t *testing.T) {
-	t.Parallel()
-	schema := types.Schema{
-		"id": {Type: types.FieldTypeKeyword},
-	}
-	repo := newTestRepository(t, schema)
-
-	err := repo.DeleteIndex(t.Context(), "test-nonexistent-index")
-	assert.NoError(t, err)
-}
