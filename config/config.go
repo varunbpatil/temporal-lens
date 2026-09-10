@@ -36,6 +36,7 @@ type TemporalConfig struct {
 	HistoryRequestsPerSecond int           `env:"HISTORY_REQUESTS_PER_SECOND" envDefault:"8"`
 	IndexPrefix              string        `env:"INDEX_PREFIX"                envDefault:"workflows-"`
 	IndexVersion             int           `env:"INDEX_VERSION"               envDefault:"1"`
+	ProgressFile             string        `env:"PROGRESS_FILE"`
 	RetentionPeriod          time.Duration `env:"RETENTION_PERIOD"            envDefault:"720h"`
 	RetentionCron            string        `env:"RETENTION_CRON"              envDefault:"0 0 * * *"`
 	DataWorkers              int           `env:"DATA_WORKERS"                envDefault:"8"`

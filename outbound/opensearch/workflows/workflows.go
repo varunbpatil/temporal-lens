@@ -144,8 +144,10 @@ func (r *Repository) Add(ctx context.Context, index string, workflows []*models.
 	for _, w := range workflows {
 		meta, err := json.Marshal(map[string]any{
 			"index": map[string]any{
-				"_index": index,
-				"_id":    w.ID,
+				"_index":       index,
+				"_id":          w.ID,
+				"version":      w.IndexVersion,
+				"version_type": "external_gte",
 			},
 		})
 		if err != nil {

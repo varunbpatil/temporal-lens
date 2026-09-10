@@ -22,6 +22,10 @@ type Workflow struct {
 	// URL is the canonical Temporal UI link. It is returned to API clients but
 	// not stored in OpenSearch because it is derived from workflow metadata.
 	URL string `json:"-"`
+
+	// IndexVersion is assigned by the workflow service before indexing. It is
+	// OpenSearch write metadata rather than a user-facing workflow field.
+	IndexVersion int64 `json:"-"`
 }
 
 // WorkflowMetadata is the Temporal workflow metadata.
@@ -48,6 +52,10 @@ type WorkflowMetadata struct {
 
 	// Workflow execution status
 	Status Status `json:"status"`
+
+	// StateTransitionCount is Temporal's monotonically increasing revision for
+	// this run. It is indexing metadata, not a user-facing workflow field.
+	StateTransitionCount int64 `json:"-"`
 
 	// Workflow search attributes
 	SearchAttributes []SearchAttribute `json:"searchAttributes"`

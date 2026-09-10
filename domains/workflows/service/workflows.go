@@ -48,6 +48,10 @@ const (
 	// before becoming visible in OpenSearch.
 	batchFlushInterval = 2 * time.Minute
 
+	// progressFlushInterval bounds how much completed-workflow progress can be
+	// lost if a process exits unexpectedly.
+	progressFlushInterval = time.Minute
+
 	// actionSearchPageSize balances action-target resolution throughput with the
 	// size of each OpenSearch cursor page.
 	actionSearchPageSize = 1_000
@@ -75,6 +79,7 @@ type Service struct {
 	dataWorkers     int
 	indexWorkers    int
 	indexBatchSize  int
+	progress        *terminalProgress
 
 	lifecycleMu sync.Mutex
 	started     bool
@@ -111,6 +116,20 @@ func NewService(_ context.Context, params WorkflowServiceParams) (*Service, erro
 	if _, err := cron.ParseStandard(params.Config.RetentionCron); err != nil {
 		return nil, fmt.Errorf("parse Temporal retention cron: %w", err)
 	}
+	indexPrefix := fmt.Sprintf(
+		"%s%d.%d-",
+		params.Config.IndexPrefix,
+		workflowIndexSchemaVersion,
+		params.Config.IndexVersion,
+	)
+	var progress *terminalProgress
+	if params.Config.ProgressFile != "" {
+		loadedProgress, loadErr := newTerminalProgress(params.Config.ProgressFile, indexPrefix)
+		if loadErr != nil {
+			return nil, fmt.Errorf("load workflow progress: %w", loadErr)
+		}
+		progress = loadedProgress
+	}
 	return &Service{
 		source:          params.Source,
 		repository:      params.Repository,
@@ -118,17 +137,13 @@ func NewService(_ context.Context, params WorkflowServiceParams) (*Service, erro
 		logger:          params.Logger,
 		namespaces:      params.Config.Namespaces,
 		indexBasePrefix: params.Config.IndexPrefix,
-		indexPrefix: fmt.Sprintf(
-			"%s%d.%d-",
-			params.Config.IndexPrefix,
-			workflowIndexSchemaVersion,
-			params.Config.IndexVersion,
-		),
-		retention:      params.Config.RetentionPeriod,
-		retentionCron:  params.Config.RetentionCron,
-		dataWorkers:    params.Config.DataWorkers,
-		indexWorkers:   params.Config.IndexWorkers,
-		indexBatchSize: params.Config.IndexBatchSize,
+		indexPrefix:     indexPrefix,
+		retention:       params.Config.RetentionPeriod,
+		retentionCron:   params.Config.RetentionCron,
+		dataWorkers:     params.Config.DataWorkers,
+		indexWorkers:    params.Config.IndexWorkers,
+		indexBatchSize:  params.Config.IndexBatchSize,
+		progress:        progress,
 	}, nil
 }
 
@@ -332,9 +347,16 @@ func (s *Service) run(ctx context.Context, done chan<- struct{}) {
 	var retention sync.WaitGroup
 	retention.Go(func() { s.deleteExpiredShardsLoop(ctx) })
 
+	var progress sync.WaitGroup
+	if s.progress != nil {
+		progress.Go(func() { s.flushProgressLoop(ctx) })
+	}
+
 	indexWorkers.Wait()
 	batcher.Wait()
 	retention.Wait()
+	progress.Wait()
+	s.saveProgress(ctx)
 }
 
 // metadataLoop describes one independently scheduled Temporal listing stream.
@@ -421,29 +443,67 @@ func (s *Service) fetchWorkflowData(
 	output chan<- *models.Workflow,
 ) {
 	for metadata := range input {
-		for data, err := range s.source.StreamWorkflowData(ctx, ports.StreamWorkflowDataRequest{Metadata: metadata}, s.mapper) {
-			if err != nil {
-				s.logger.ErrorContext(
-					ctx,
-					"fetch Temporal workflow history",
-					"error",
-					err,
-					"workflow_id",
-					metadata.WorkflowID,
-				)
-				break
-			}
-			if data == nil {
-				continue
-			}
-			workflow := &models.Workflow{ID: workflowDocumentID(*metadata), Metadata: *metadata, Data: *data}
-			select {
-			case output <- workflow:
-			case <-ctx.Done():
-				return
-			}
+		if !s.fetchOneWorkflowData(ctx, metadata, output) {
+			return
 		}
 	}
+}
+
+func (s *Service) fetchOneWorkflowData(
+	ctx context.Context,
+	metadata *models.WorkflowMetadata,
+	output chan<- *models.Workflow,
+) bool {
+	progressID, shouldFetch := s.reserveTerminalProgress(metadata)
+	if !shouldFetch {
+		return true
+	}
+	queued := false
+	if progressID != "" {
+		defer func() {
+			if !queued {
+				s.progress.release(progressID)
+			}
+		}()
+	}
+
+	for data, err := range s.source.StreamWorkflowData(ctx, ports.StreamWorkflowDataRequest{Metadata: metadata}, s.mapper) {
+		if err != nil {
+			s.logger.ErrorContext(
+				ctx,
+				"fetch Temporal workflow history",
+				"error",
+				err,
+				"workflow_id",
+				metadata.WorkflowID,
+			)
+			return true
+		}
+		if data == nil {
+			continue
+		}
+		workflow := &models.Workflow{
+			ID:           workflowDocumentID(*metadata),
+			Metadata:     *metadata,
+			Data:         *data,
+			IndexVersion: workflowIndexVersion(metadata),
+		}
+		select {
+		case output <- workflow:
+			queued = true
+		case <-ctx.Done():
+			return false
+		}
+	}
+	return true
+}
+
+func (s *Service) reserveTerminalProgress(metadata *models.WorkflowMetadata) (string, bool) {
+	if s.progress == nil || metadata.EndTime == nil {
+		return "", true
+	}
+	id := workflowDocumentID(*metadata)
+	return id, s.progress.reserve(id)
 }
 
 // workflowBatch keeps an OpenSearch bulk request within one daily shard.
@@ -454,7 +514,7 @@ type workflowBatch struct {
 
 // batchWorkflows groups documents by shard and flushes full or time-aged batches.
 func (s *Service) batchWorkflows(ctx context.Context, input <-chan *models.Workflow, output chan<- workflowBatch) {
-	pending := make(map[string][]*models.Workflow)
+	pending := make(map[string]map[string]*models.Workflow)
 	ticker := time.NewTicker(batchFlushInterval)
 	defer ticker.Stop()
 	for {
@@ -465,7 +525,12 @@ func (s *Service) batchWorkflows(ctx context.Context, input <-chan *models.Workf
 				return
 			}
 			index := s.workflowIndex(workflow.Metadata.StartTime)
-			pending[index] = append(pending[index], workflow)
+			if pending[index] == nil {
+				pending[index] = make(map[string]*models.Workflow)
+			}
+			if existing := pending[index][workflow.ID]; existing == nil || isNewerWorkflow(workflow, existing) {
+				pending[index][workflow.ID] = workflow
+			}
 			if len(pending[index]) >= s.indexBatchSize && !s.flushWorkflowBatch(ctx, pending, output, index) {
 				return
 			}
@@ -479,10 +544,23 @@ func (s *Service) batchWorkflows(ctx context.Context, input <-chan *models.Workf
 	}
 }
 
+// workflowIndexVersion derives the OpenSearch external version from Temporal's
+// monotonic per-run revision. Versions must be positive for OpenSearch.
+func workflowIndexVersion(metadata *models.WorkflowMetadata) int64 {
+	return max(metadata.StateTransitionCount, 1)
+}
+
+func isNewerWorkflow(candidate, existing *models.Workflow) bool {
+	if candidate.IndexVersion != existing.IndexVersion {
+		return candidate.IndexVersion > existing.IndexVersion
+	}
+	return candidate.Metadata.EndTime != nil && existing.Metadata.EndTime == nil
+}
+
 // flushWorkflowBatches sends every pending shard batch to the indexing workers.
 func (s *Service) flushWorkflowBatches(
 	ctx context.Context,
-	pending map[string][]*models.Workflow,
+	pending map[string]map[string]*models.Workflow,
 	output chan<- workflowBatch,
 ) bool {
 	for index := range pending {
@@ -496,14 +574,19 @@ func (s *Service) flushWorkflowBatches(
 // flushWorkflowBatch sends one shard batch and removes it only after it is accepted.
 func (s *Service) flushWorkflowBatch(
 	ctx context.Context,
-	pending map[string][]*models.Workflow,
+	pending map[string]map[string]*models.Workflow,
 	output chan<- workflowBatch,
 	index string,
 ) bool {
-	workflows := pending[index]
-	if len(workflows) == 0 {
+	byID := pending[index]
+	if len(byID) == 0 {
 		return true
 	}
+	workflows := make([]*models.Workflow, 0, len(byID))
+	for _, workflow := range byID {
+		workflows = append(workflows, workflow)
+	}
+	sort.Slice(workflows, func(left, right int) bool { return workflows[left].ID < workflows[right].ID })
 	select {
 	case output <- workflowBatch{index: index, workflows: workflows}:
 		delete(pending, index)
@@ -520,11 +603,59 @@ func (s *Service) indexBatches(ctx context.Context, batches <-chan workflowBatch
 	for batch := range batches {
 		if err := s.ensureIndex(ctx, batch.index); err != nil {
 			s.logger.ErrorContext(ctx, "create workflow shard", "error", err, "index", batch.index)
+			s.releaseTerminalProgress(batch.workflows)
 			continue
 		}
 		if err := s.repository.Add(ctx, batch.index, batch.workflows); err != nil {
 			s.logger.ErrorContext(ctx, "index workflow batch", "error", err, "index", batch.index)
+			s.releaseTerminalProgress(batch.workflows)
+			continue
 		}
+		s.completeTerminalProgress(batch.workflows)
+	}
+}
+
+func (s *Service) releaseTerminalProgress(workflows []*models.Workflow) {
+	if s.progress == nil {
+		return
+	}
+	for _, workflow := range workflows {
+		if workflow.Metadata.EndTime != nil {
+			s.progress.release(workflow.ID)
+		}
+	}
+}
+
+func (s *Service) completeTerminalProgress(workflows []*models.Workflow) {
+	if s.progress == nil {
+		return
+	}
+	for _, workflow := range workflows {
+		if workflow.Metadata.EndTime != nil {
+			s.progress.complete(workflow.ID)
+		}
+	}
+}
+
+func (s *Service) flushProgressLoop(ctx context.Context) {
+	ticker := time.NewTicker(progressFlushInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			s.saveProgress(ctx)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (s *Service) saveProgress(ctx context.Context) {
+	if s.progress == nil {
+		return
+	}
+	if err := s.progress.save(); err != nil {
+		s.logger.ErrorContext(ctx, "save workflow progress", "error", err)
 	}
 }
 

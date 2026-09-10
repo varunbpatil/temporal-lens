@@ -997,14 +997,15 @@ func metadataFromInfo(namespace string, info *workflowpb.WorkflowExecutionInfo) 
 		attrs = append(attrs, models.SearchAttribute{Key: key, Value: string(value.GetData())})
 	}
 	return &models.WorkflowMetadata{
-		Namespace:        namespace,
-		WorkflowID:       info.GetExecution().GetWorkflowId(),
-		RunID:            info.GetExecution().GetRunId(),
-		WorkflowType:     info.GetType().GetName(),
-		StartTime:        timeFromProto(info.GetStartTime()),
-		EndTime:          endPtr,
-		Status:           statusFromTemporal(info.GetStatus()),
-		SearchAttributes: attrs,
+		Namespace:            namespace,
+		WorkflowID:           info.GetExecution().GetWorkflowId(),
+		RunID:                info.GetExecution().GetRunId(),
+		WorkflowType:         info.GetType().GetName(),
+		StartTime:            timeFromProto(info.GetStartTime()),
+		EndTime:              endPtr,
+		Status:               statusFromTemporal(info.GetStatus()),
+		StateTransitionCount: info.GetStateTransitionCount(),
+		SearchAttributes:     attrs,
 	}
 }
 

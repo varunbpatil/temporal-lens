@@ -99,6 +99,7 @@ docker run --env-file .env temporal-lens
 | `TEMPORAL_HISTORY_REQUESTS_PER_SECOND` | Maximum workflow history RPCs per second per namespace                | No          | `8`          |
 | `TEMPORAL_INDEX_PREFIX`                | Prefix for versioned daily OpenSearch workflow shard indexes          | No          | `workflows-` |
 | `TEMPORAL_INDEX_VERSION`               | Positive deployment generation; bump after mapper corrections         | No          | `1`          |
+| `TEMPORAL_PROGRESS_FILE`               | Optional file for indexed terminal-workflow progress                  | No          | —            |
 | `TEMPORAL_RETENTION_PERIOD`            | Retain workflow shards for this duration                              | No          | `720h`       |
 | `TEMPORAL_RETENTION_CRON`              | UTC five-field cron schedule for deleting expired workflow shards     | No          | `0 0 * * *`  |
 | `TEMPORAL_DATA_WORKERS`                | Concurrent workers fetching workflow histories                        | No          | `8`          |
@@ -106,8 +107,8 @@ docker run --env-file .env temporal-lens
 | `TEMPORAL_INDEX_BATCH_SIZE`            | Workflows per OpenSearch bulk request                                 | No          | `100`        |
 
 Workflow shards are named `<prefix><application-version>.<index-version>-<UTC date>`.
-The application version changes with incompatible mappings; set and bump `TEMPORAL_INDEX_VERSION` when a
-deployment needs to discard an incorrect mapper generation.
+The application version changes with incompatible mappings; set and bump `TEMPORAL_INDEX_VERSION`
+when a deployment needs to discard an incorrect mapper generation.
 
 ## License
 
