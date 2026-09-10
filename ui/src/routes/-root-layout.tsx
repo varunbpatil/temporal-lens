@@ -2,11 +2,12 @@ import { HeadContent, Link, Outlet, useRouterState } from "@tanstack/react-route
 import { GlobeIcon, MonitorIcon, MoonIcon, SearchIcon, SunIcon, WorkflowIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
-import { timeZones, useTimeZone } from "@/lib/timezone";
+import { timeZoneRegions, useTimeZone } from "@/lib/timezone";
 
 import {
   Command,
   CommandEmpty,
+  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
@@ -61,20 +62,24 @@ function TimeZonePicker({
       <PopoverContent side="right" align="end" className="w-max max-w-96 p-0">
         <Command>
           <CommandInput placeholder="Filter time zones…" />
-          <CommandList className="mt-2">
+          <CommandList>
             <CommandEmpty>No matching time zones.</CommandEmpty>
-            {timeZones.map((candidate) => (
-              <CommandItem
-                key={candidate}
-                value={candidate}
-                data-checked={candidate === value}
-                onSelect={() => {
-                  onChange(candidate);
-                  setOpen(false);
-                }}
-              >
-                <span className="min-w-0 flex-1 truncate">{candidate}</span>
-              </CommandItem>
+            {timeZoneRegions.map(({ region, zones }) => (
+              <CommandGroup key={region} heading={region}>
+                {zones.map((candidate) => (
+                  <CommandItem
+                    key={candidate.name}
+                    value={candidate.name}
+                    data-checked={candidate.name === value}
+                    onSelect={() => {
+                      onChange(candidate.name);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{candidate.name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             ))}
           </CommandList>
         </Command>

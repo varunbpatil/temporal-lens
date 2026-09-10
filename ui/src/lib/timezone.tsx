@@ -1,16 +1,46 @@
 // oxlint-disable react/only-export-components -- The provider and its timezone conversion API must share one module.
+import { getTimeZones } from "@vvo/tzdb";
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 const storageKey = "temporal-lens:time-zone";
 const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-export const timeZones = [
-  browserTimeZone,
-  "UTC",
-  ...Intl.supportedValuesOf("timeZone").filter(
-    (timeZone) => timeZone !== browserTimeZone && timeZone !== "UTC",
+export interface TimeZoneOption {
+  name: string;
+}
+
+const regionOrder = ["Universal", "Africa", "America", "Antarctica", "Asia", "Europe", "Oceania"];
+
+/**
+ * Maintained IANA timezone metadata, grouped by geographical region for the picker.
+ * @vvo/tzdb also omits zones unavailable in the current browser at runtime.
+ */
+export const timeZoneRegions = Object.entries(
+  getTimeZones({ includeUtc: true }).reduce<Record<string, TimeZoneOption[]>>(
+    (regions, timeZone) => {
+      const name = timeZone.name === "Etc/UTC" ? "UTC" : timeZone.name;
+      const region = timeZone.name === "Etc/UTC" ? "Universal" : timeZone.continentName || "Other";
+      const option = { name };
+      (regions[region] ??= []).push(option);
+      return regions;
+    },
+    {},
   ),
-];
+)
+  .sort(([left], [right]) => {
+    const leftOrder = regionOrder.indexOf(left);
+    const rightOrder = regionOrder.indexOf(right);
+    return (
+      (leftOrder === -1 ? regionOrder.length : leftOrder) -
+        (rightOrder === -1 ? regionOrder.length : rightOrder) || left.localeCompare(right)
+    );
+  })
+  .map(([region, zones]) => ({
+    region,
+    zones: zones.sort((left, right) => left.name.localeCompare(right.name)),
+  }));
+
+export const timeZones = timeZoneRegions.flatMap(({ zones }) => zones.map(({ name }) => name));
 
 interface TimeZoneContextValue {
   timeZone: string;
