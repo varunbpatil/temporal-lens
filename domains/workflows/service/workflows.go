@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,10 @@ import (
 const (
 	// workflowIndexDateLayout is the UTC daily suffix used for shard names.
 	workflowIndexDateLayout = "2006-01-02"
+
+	// workflowIndexSchemaVersion changes only when this application's OpenSearch
+	// mapping requires a new index generation.
+	workflowIndexSchemaVersion = 1
 
 	// recentClosedLookback catches workflows that have just completed without
 	// repeatedly scanning the full retention period.
@@ -62,13 +67,14 @@ type Service struct {
 	mapper     ports.Mapper
 	logger     *slog.Logger
 
-	namespaces     []string
-	indexPrefix    string
-	retention      time.Duration
-	retentionCron  string
-	dataWorkers    int
-	indexWorkers   int
-	indexBatchSize int
+	namespaces      []string
+	indexBasePrefix string
+	indexPrefix     string
+	retention       time.Duration
+	retentionCron   string
+	dataWorkers     int
+	indexWorkers    int
+	indexBatchSize  int
 
 	lifecycleMu sync.Mutex
 	started     bool
@@ -92,25 +98,32 @@ func NewService(_ context.Context, params WorkflowServiceParams) (*Service, erro
 	}
 	if len(params.Config.Namespaces) == 0 ||
 		params.Config.IndexPrefix == "" ||
+		params.Config.IndexVersion <= 0 ||
 		params.Config.RetentionPeriod <= 0 ||
 		params.Config.RetentionCron == "" ||
 		params.Config.DataWorkers < 1 ||
 		params.Config.IndexWorkers < 1 ||
 		params.Config.IndexBatchSize < 1 {
 		return nil, errors.New(
-			"temporal namespaces, index prefix, positive retention period, retention cron, workers, and index batch size are required",
+			"temporal namespaces, index prefix, valid index version, positive retention period, retention cron, workers, and index batch size are required",
 		)
 	}
 	if _, err := cron.ParseStandard(params.Config.RetentionCron); err != nil {
 		return nil, fmt.Errorf("parse Temporal retention cron: %w", err)
 	}
 	return &Service{
-		source:         params.Source,
-		repository:     params.Repository,
-		mapper:         params.Mapper,
-		logger:         params.Logger,
-		namespaces:     params.Config.Namespaces,
-		indexPrefix:    params.Config.IndexPrefix,
+		source:          params.Source,
+		repository:      params.Repository,
+		mapper:          params.Mapper,
+		logger:          params.Logger,
+		namespaces:      params.Config.Namespaces,
+		indexBasePrefix: params.Config.IndexPrefix,
+		indexPrefix: fmt.Sprintf(
+			"%s%d.%d-",
+			params.Config.IndexPrefix,
+			workflowIndexSchemaVersion,
+			params.Config.IndexVersion,
+		),
 		retention:      params.Config.RetentionPeriod,
 		retentionCron:  params.Config.RetentionCron,
 		dataWorkers:    params.Config.DataWorkers,
@@ -271,7 +284,7 @@ func (s *Service) ListIndexes(ctx context.Context) ([]ports.IndexInfo, error) {
 
 // DeleteIndex deletes one date-sharded workflow index.
 func (s *Service) DeleteIndex(ctx context.Context, index string) error {
-	if _, ok := s.workflowIndexDate(index); !ok {
+	if !s.isActiveWorkflowIndex(index) {
 		return fmt.Errorf("invalid workflow shard index %q", index)
 	}
 	if err := s.repository.DeleteIndex(ctx, index); err != nil {
@@ -537,17 +550,27 @@ func (s *Service) deleteExpiredShardsLoop(ctx context.Context) {
 	<-scheduler.Stop().Done()
 }
 
-// deleteExpiredShards deletes only days whose entire shard precedes the retention cutoff.
-// Failures are logged; the next configured cron run retries the affected shard.
+// deleteExpiredShards deletes superseded index generations immediately and active
+// shards once their entire day precedes the retention cutoff. Failures are logged;
+// the next configured cron run retries the affected shard.
 func (s *Service) deleteExpiredShards(ctx context.Context) {
-	indexes, err := s.workflowIndexes(ctx)
+	indexes, err := s.repository.ListIndexes(ctx)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "list workflow shards for retention", "error", err)
 		return
 	}
 	cutoff := time.Now().UTC().Add(-s.retention)
 	for _, index := range indexes {
-		day, _ := s.workflowIndexDate(index.Name)
+		day, ok := s.ownedWorkflowIndexDate(index.Name)
+		if !ok {
+			continue
+		}
+		if !s.isActiveWorkflowIndex(index.Name) {
+			if deleteErr := s.repository.DeleteIndex(ctx, index.Name); deleteErr != nil {
+				s.logger.ErrorContext(ctx, "delete superseded workflow shard", "error", deleteErr, "index", index.Name)
+			}
+			continue
+		}
 		if day.AddDate(0, 0, 1).After(cutoff) {
 			continue
 		}
@@ -565,7 +588,7 @@ func (s *Service) workflowIndexes(ctx context.Context) ([]ports.IndexInfo, error
 	}
 	shards := make([]ports.IndexInfo, 0, len(indexes))
 	for _, index := range indexes {
-		if _, ok := s.workflowIndexDate(index.Name); ok {
+		if s.isActiveWorkflowIndex(index.Name) {
 			shards = append(shards, index)
 		}
 	}
@@ -615,13 +638,42 @@ func (s *Service) workflowIndex(start time.Time) string {
 	return s.indexPrefix + start.UTC().Format(workflowIndexDateLayout)
 }
 
-// workflowIndexDate validates and parses a service-owned daily shard name.
-func (s *Service) workflowIndexDate(index string) (time.Time, bool) {
+// isActiveWorkflowIndex validates a daily shard in the active index generation.
+func (s *Service) isActiveWorkflowIndex(index string) bool {
 	if !strings.HasPrefix(index, s.indexPrefix) {
-		return time.Time{}, false
+		return false
 	}
 	date, err := time.Parse(workflowIndexDateLayout, strings.TrimPrefix(index, s.indexPrefix))
-	if err != nil || s.workflowIndex(date) != index {
+	return err == nil && s.workflowIndex(date) == index
+}
+
+// ownedWorkflowIndexDate recognizes any versioned shard this service owns so
+// retention also cleans up generations superseded by a schema or deployment bump.
+func (s *Service) ownedWorkflowIndexDate(index string) (time.Time, bool) {
+	if !strings.HasPrefix(index, s.indexBasePrefix) {
+		return time.Time{}, false
+	}
+
+	suffix := strings.TrimPrefix(index, s.indexBasePrefix)
+	if len(suffix) <= len(workflowIndexDateLayout) {
+		return time.Time{}, false
+	}
+
+	dateText := suffix[len(suffix)-len(workflowIndexDateLayout):]
+	versionPrefix := strings.TrimSuffix(suffix[:len(suffix)-len(workflowIndexDateLayout)], "-")
+	schemaVersion, deploymentVersion, ok := strings.Cut(versionPrefix, ".")
+	if !ok {
+		return time.Time{}, false
+	}
+	if _, err := strconv.ParseUint(schemaVersion, 10, 0); err != nil {
+		return time.Time{}, false
+	}
+	if deployment, err := strconv.ParseUint(deploymentVersion, 10, 0); err != nil || deployment == 0 {
+		return time.Time{}, false
+	}
+
+	date, err := time.Parse(workflowIndexDateLayout, dateText)
+	if err != nil {
 		return time.Time{}, false
 	}
 	return date, true

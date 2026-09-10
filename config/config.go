@@ -35,6 +35,7 @@ type TemporalConfig struct {
 	ListRequestsPerSecond    int           `env:"LIST_REQUESTS_PER_SECOND"    envDefault:"8"`
 	HistoryRequestsPerSecond int           `env:"HISTORY_REQUESTS_PER_SECOND" envDefault:"8"`
 	IndexPrefix              string        `env:"INDEX_PREFIX"                envDefault:"workflows-"`
+	IndexVersion             int           `env:"INDEX_VERSION"               envDefault:"1"`
 	RetentionPeriod          time.Duration `env:"RETENTION_PERIOD"            envDefault:"720h"`
 	RetentionCron            string        `env:"RETENTION_CRON"              envDefault:"0 0 * * *"`
 	DataWorkers              int           `env:"DATA_WORKERS"                envDefault:"8"`

@@ -30,6 +30,8 @@ func TestServiceIndexesWorkflowInDailyShard(t *testing.T) {
 		StartTime: time.Date(2026, time.September, 7, 18, 0, 0, 0, time.FixedZone("IST", 5*60*60)),
 	}
 	state := newRepositoryState()
+	supersededIndex := "temporal-workflows-1.2-2099-01-01"
+	state.indexes[supersededIndex] = true
 
 	source.EXPECT().
 		StreamWorkflowMetadata(gomock.Any(), gomock.Any()).
@@ -58,12 +60,12 @@ func TestServiceIndexesWorkflowInDailyShard(t *testing.T) {
 	require.Eventually(t, func() bool {
 		state.mu.Lock()
 		defer state.mu.Unlock()
-		return len(state.adds) == 1
+		return len(state.adds) == 1 && !state.indexes[supersededIndex]
 	}, time.Second, 10*time.Millisecond)
 
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	require.Equal(t, "temporal-workflows-2026-09-07", state.adds[0].index)
+	require.Equal(t, "temporal-workflows-1.1-2026-09-07", state.adds[0].index)
 	require.Len(t, state.adds[0].workflows, 1)
 	require.NotEmpty(t, state.adds[0].workflows[0].ID)
 	require.Equal(t, metadata, &state.adds[0].workflows[0].Metadata)
@@ -115,8 +117,9 @@ func TestServiceSearchesAllWorkflowShards(t *testing.T) {
 	source := mocks.NewMockWorkflowSource(controller)
 	repository := mocks.NewMockWorkflowRepository(controller)
 	repository.EXPECT().ListIndexes(gomock.Any()).Return([]ports.IndexInfo{
-		{Name: "workflows-2026-09-06"},
-		{Name: "workflows-2026-09-07"},
+		{Name: "workflows-1.1-2026-09-06"},
+		{Name: "workflows-1.1-2026-09-07"},
+		{Name: "workflows-1.2-2026-09-07"},
 		{Name: "unrelated-index"},
 	}, nil)
 	var searchIndexes []string
@@ -131,7 +134,11 @@ func TestServiceSearchesAllWorkflowShards(t *testing.T) {
 	response, err := svc.Search(t.Context(), ports.SearchRequest{})
 	require.NoError(t, err)
 	require.EqualValues(t, 2, response.TotalHits)
-	require.Equal(t, []string{"workflows-2026-09-06", "workflows-2026-09-07"}, searchIndexes)
+	require.Equal(
+		t,
+		[]string{"workflows-1.1-2026-09-06", "workflows-1.1-2026-09-07"},
+		searchIndexes,
+	)
 }
 
 func TestServiceTerminatesAllFilterMatches(t *testing.T) {
@@ -141,7 +148,7 @@ func TestServiceTerminatesAllFilterMatches(t *testing.T) {
 	repository := mocks.NewMockWorkflowRepository(controller)
 	repository.EXPECT().
 		ListIndexes(gomock.Any()).
-		Return([]ports.IndexInfo{{Name: "workflows-2026-09-07"}}, nil).
+		Return([]ports.IndexInfo{{Name: "workflows-1.1-2026-09-07"}}, nil).
 		AnyTimes()
 	searchCalls := 0
 	repository.EXPECT().
@@ -244,6 +251,7 @@ func newServiceWithMapper(
 		Config: config.TemporalConfig{
 			Namespaces:      []string{"payments"},
 			IndexPrefix:     indexPrefix,
+			IndexVersion:    1,
 			RetentionPeriod: 24 * time.Hour,
 			RetentionCron:   "0 0 * * *",
 			DataWorkers:     1,
