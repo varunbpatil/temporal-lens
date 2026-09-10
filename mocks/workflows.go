@@ -291,6 +291,21 @@ func (mr *MockWorkflowSourceMockRecorder) Cancel(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cancel", reflect.TypeOf((*MockWorkflowSource)(nil).Cancel), ctx, req)
 }
 
+// FetchWorkflowData mocks base method.
+func (m *MockWorkflowSource) FetchWorkflowData(ctx context.Context, req ports.FetchWorkflowDataRequest, mapper ports.Mapper) (*models.WorkflowData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchWorkflowData", ctx, req, mapper)
+	ret0, _ := ret[0].(*models.WorkflowData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchWorkflowData indicates an expected call of FetchWorkflowData.
+func (mr *MockWorkflowSourceMockRecorder) FetchWorkflowData(ctx, req, mapper any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchWorkflowData", reflect.TypeOf((*MockWorkflowSource)(nil).FetchWorkflowData), ctx, req, mapper)
+}
+
 // Reset mocks base method.
 func (m *MockWorkflowSource) Reset(ctx context.Context, req ports.InternalResetRequest) error {
 	m.ctrl.T.Helper()
@@ -317,20 +332,6 @@ func (m *MockWorkflowSource) Signal(ctx context.Context, req ports.InternalSigna
 func (mr *MockWorkflowSourceMockRecorder) Signal(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Signal", reflect.TypeOf((*MockWorkflowSource)(nil).Signal), ctx, req)
-}
-
-// StreamWorkflowData mocks base method.
-func (m *MockWorkflowSource) StreamWorkflowData(ctx context.Context, req ports.StreamWorkflowDataRequest, mapper ports.Mapper) iter.Seq2[*models.WorkflowData, error] {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StreamWorkflowData", ctx, req, mapper)
-	ret0, _ := ret[0].(iter.Seq2[*models.WorkflowData, error])
-	return ret0
-}
-
-// StreamWorkflowData indicates an expected call of StreamWorkflowData.
-func (mr *MockWorkflowSourceMockRecorder) StreamWorkflowData(ctx, req, mapper any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamWorkflowData", reflect.TypeOf((*MockWorkflowSource)(nil).StreamWorkflowData), ctx, req, mapper)
 }
 
 // StreamWorkflowMetadata mocks base method.

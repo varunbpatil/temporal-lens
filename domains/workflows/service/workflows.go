@@ -467,33 +467,32 @@ func (s *Service) fetchOneWorkflowData(
 		}()
 	}
 
-	for data, err := range s.source.StreamWorkflowData(ctx, ports.StreamWorkflowDataRequest{Metadata: metadata}, s.mapper) {
-		if err != nil {
-			s.logger.ErrorContext(
-				ctx,
-				"fetch Temporal workflow history",
-				"error",
-				err,
-				"workflow_id",
-				metadata.WorkflowID,
-			)
-			return true
-		}
-		if data == nil {
-			continue
-		}
-		workflow := &models.Workflow{
-			ID:           workflowDocumentID(*metadata),
-			Metadata:     *metadata,
-			Data:         *data,
-			IndexVersion: workflowIndexVersion(metadata),
-		}
-		select {
-		case output <- workflow:
-			queued = true
-		case <-ctx.Done():
-			return false
-		}
+	data, err := s.source.FetchWorkflowData(ctx, ports.FetchWorkflowDataRequest{Metadata: metadata}, s.mapper)
+	if err != nil {
+		s.logger.ErrorContext(
+			ctx,
+			"fetch Temporal workflow history",
+			"error",
+			err,
+			"workflow_id",
+			metadata.WorkflowID,
+		)
+		return true
+	}
+	if data == nil {
+		return true
+	}
+	workflow := &models.Workflow{
+		ID:           workflowDocumentID(*metadata),
+		Metadata:     *metadata,
+		Data:         *data,
+		IndexVersion: workflowIndexVersion(metadata),
+	}
+	select {
+	case output <- workflow:
+		queued = true
+	case <-ctx.Done():
+		return false
 	}
 	return true
 }

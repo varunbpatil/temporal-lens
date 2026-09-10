@@ -146,7 +146,7 @@ type StreamWorkflowMetadataRequest struct {
 	Lookback time.Duration
 }
 
-type StreamWorkflowDataRequest struct {
+type FetchWorkflowDataRequest struct {
 	Metadata *models.WorkflowMetadata
 }
 

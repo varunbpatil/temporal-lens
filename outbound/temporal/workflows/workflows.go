@@ -350,25 +350,20 @@ func listWorkflowMetadataPage(
 	}
 }
 
-// StreamWorkflowData streams workflow data.
-func (s *Source) StreamWorkflowData(
+// FetchWorkflowData retrieves and builds one workflow record from its history and current state.
+func (s *Source) FetchWorkflowData(
 	ctx context.Context,
-	req ports.StreamWorkflowDataRequest,
+	req ports.FetchWorkflowDataRequest,
 	mapper ports.Mapper,
-) iter.Seq2[*models.WorkflowData, error] {
-	return func(yield func(*models.WorkflowData, error) bool) {
-		if req.Metadata == nil {
-			yield(nil, errors.New("workflow metadata is required"))
-			return
-		}
-		pool, err := s.clientPool(req.Metadata.Namespace)
-		if err != nil {
-			yield(nil, err)
-			return
-		}
-		data, dataErr := streamWorkflowData(ctx, pool.client(), *req.Metadata, mapper, pool.dataLimiter)
-		yield(data, dataErr)
+) (*models.WorkflowData, error) {
+	if req.Metadata == nil {
+		return nil, errors.New("workflow metadata is required")
 	}
+	pool, err := s.clientPool(req.Metadata.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	return streamWorkflowData(ctx, pool.client(), *req.Metadata, mapper, pool.dataLimiter)
 }
 
 // workflowHistoryPage obtains one complete decoded history page under the namespace data limit.

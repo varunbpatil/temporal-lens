@@ -107,19 +107,16 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, source.Close()) })
 
-	var data *models.WorkflowData
-	for result, streamErr := range source.StreamWorkflowData(
+	data, err := source.FetchWorkflowData(
 		context.Background(),
-		ports.StreamWorkflowDataRequest{Metadata: &models.WorkflowMetadata{
+		ports.FetchWorkflowDataRequest{Metadata: &models.WorkflowMetadata{
 			Namespace:  "parent-namespace",
 			WorkflowID: "parent-id",
 			RunID:      "parent-run",
 		}},
 		mapper,
-	) {
-		require.NoError(t, streamErr)
-		data = result
-	}
+	)
+	require.NoError(t, err)
 	require.NotNil(t, data)
 	require.Equal(t, map[string][]any{
 		"id":     {"customer-1"},

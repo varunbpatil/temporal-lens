@@ -50,12 +50,12 @@ type WorkflowSource interface {
 		req StreamWorkflowMetadataRequest,
 	) iter.Seq2[*models.WorkflowMetadata, error]
 
-	// Stream workflow data
-	StreamWorkflowData(
+	// Fetch workflow data
+	FetchWorkflowData(
 		ctx context.Context,
-		req StreamWorkflowDataRequest,
+		req FetchWorkflowDataRequest,
 		mapper Mapper,
-	) iter.Seq2[*models.WorkflowData, error]
+	) (*models.WorkflowData, error)
 
 	// Signal workflows
 	Signal(ctx context.Context, req InternalSignalRequest) error

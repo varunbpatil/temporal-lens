@@ -44,10 +44,8 @@ func TestServiceIndexesWorkflowInDailyShard(t *testing.T) {
 		}).
 		AnyTimes()
 	source.EXPECT().
-		StreamWorkflowData(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(context.Context, ports.StreamWorkflowDataRequest, ports.Mapper) iter.Seq2[*models.WorkflowData, error] {
-			return func(yield func(*models.WorkflowData, error) bool) { yield(&models.WorkflowData{}, nil) }
-		}).
+		FetchWorkflowData(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&models.WorkflowData{}, nil).
 		AnyTimes()
 	repository.EXPECT().ListIndexes(gomock.Any()).DoAndReturn(state.listIndexes).AnyTimes()
 	repository.EXPECT().CreateIndex(gomock.Any(), gomock.Any()).DoAndReturn(state.createIndex).AnyTimes()
