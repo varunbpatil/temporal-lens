@@ -495,6 +495,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
           getRowID={(workflow) => workflow.id}
           selection={selection}
           onSelectionChange={onSelectionChange}
+          onSelectAllMatchingResults={() => onSelectionChange({ kind: "all" })}
           totalRows={totalRows}
           visibleColumnIDs={visibleColumnIDs}
           onVisibleColumnIDsChange={(columnIDs) => {

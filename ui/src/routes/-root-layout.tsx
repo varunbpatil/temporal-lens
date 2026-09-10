@@ -1,5 +1,5 @@
 import { HeadContent, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { GlobeIcon, MonitorIcon, MoonIcon, SearchIcon, SunIcon, WorkflowIcon } from "lucide-react";
+import { GlobeIcon, MonitorIcon, MoonIcon, SearchIcon, SunIcon, TelescopeIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { timeZoneRegions, useTimeZone } from "@/lib/timezone";
@@ -124,7 +124,7 @@ export function RootLayout() {
                   tooltip="Temporal Lens"
                 >
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <WorkflowIcon />
+                    <TelescopeIcon />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">Temporal Lens</span>

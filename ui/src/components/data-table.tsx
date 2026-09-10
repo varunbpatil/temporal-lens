@@ -6,6 +6,8 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
   Columns3Icon,
 } from "lucide-react";
 
@@ -51,8 +53,8 @@ export interface DataTableSort {
 }
 
 // `all` means every result matching the current query is selected, including
-// rows outside the current page. Toggling an individual row converts it to an
-// explicit selection of the other rows currently on the page.
+// rows outside the current page. The header checkbox only changes the current
+// page; callers opt into `all` through the explicit matching-results action.
 export type DataTableSelection = { kind: "explicit"; ids: ReadonlySet<string> } | { kind: "all" };
 
 export interface DataTableBulkAction {
@@ -69,6 +71,7 @@ export interface DataTableProps<Row> {
   getRowID: (row: Row) => string;
   selection: DataTableSelection;
   onSelectionChange: (selection: DataTableSelection) => void;
+  onSelectAllMatchingResults?: () => void;
   totalRows: number;
   visibleColumnIDs: ReadonlySet<string>;
   onVisibleColumnIDsChange: (columnIDs: ReadonlySet<string>) => void;
@@ -121,6 +124,7 @@ export function DataTable<Row>({
   getRowID,
   selection,
   onSelectionChange,
+  onSelectAllMatchingResults,
   totalRows,
   visibleColumnIDs,
   onVisibleColumnIDsChange,
@@ -139,13 +143,37 @@ export function DataTable<Row>({
   const visibleColumns = columns.filter((column) => visibleColumnIDs.has(column.id));
   const count = selectedCount(selection, totalRows);
   const maxPage = Math.max(1, Math.ceil(totalRows / pageSize));
-  const headerChecked: boolean | "indeterminate" =
-    selection.kind === "all" ? true : selection.ids.size === 0 ? false : "indeterminate";
+  const currentPageIDs = data.map(getRowID);
+  const allVisibleRowsSelected =
+    data.length > 0 &&
+    (selection.kind === "all" || currentPageIDs.every((rowID) => selection.ids.has(rowID)));
+  const someVisibleRowsSelected =
+    selection.kind === "explicit" && currentPageIDs.some((rowID) => selection.ids.has(rowID));
+  const headerChecked: boolean | "indeterminate" = allVisibleRowsSelected
+    ? true
+    : someVisibleRowsSelected
+      ? "indeterminate"
+      : false;
+  const canSelectAllMatchingResults =
+    selection.kind === "explicit" &&
+    allVisibleRowsSelected &&
+    totalRows > data.length &&
+    onSelectAllMatchingResults !== undefined;
 
-  function toggleAll() {
-    onSelectionChange(
-      selection.kind === "all" ? { kind: "explicit", ids: new Set() } : { kind: "all" },
-    );
+  function toggleVisibleRows() {
+    if (selection.kind === "all") {
+      onSelectionChange({ kind: "explicit", ids: new Set() });
+      return;
+    }
+    const ids = new Set(selection.ids);
+    for (const rowID of currentPageIDs) {
+      if (allVisibleRowsSelected) {
+        ids.delete(rowID);
+      } else {
+        ids.add(rowID);
+      }
+    }
+    onSelectionChange({ kind: "explicit", ids });
   }
 
   function toggleSort(column: DataTableColumn<Row>) {
@@ -169,6 +197,16 @@ export function DataTable<Row>({
                   ? `${count.toLocaleString()} matching result${count === 1 ? "" : "s"} selected`
                   : `${count} selected`}
               </span>
+              {canSelectAllMatchingResults ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={onSelectAllMatchingResults}
+                >
+                  Select all {totalRows.toLocaleString()} workflows
+                </Button>
+              ) : null}
               {bulkActions.map((action) => (
                 <Button
                   key={action.label}
@@ -233,9 +271,9 @@ export function DataTable<Row>({
               <Checkbox
                 checked={headerChecked === true}
                 indeterminate={headerChecked === "indeterminate"}
-                onCheckedChange={toggleAll}
+                onCheckedChange={toggleVisibleRows}
                 disabled={totalRows === 0}
-                aria-label="Select all matching results"
+                aria-label="Select all workflows on this page"
               />
             </TableHead>
             {visibleColumns.map((column) => {
@@ -350,6 +388,16 @@ export function DataTable<Row>({
             type="button"
             variant="outline"
             size="icon-sm"
+            onClick={() => onPageChange(1)}
+            disabled={page <= 1}
+            aria-label="First page"
+          >
+            <ChevronsLeftIcon aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
             aria-label="Previous page"
@@ -366,6 +414,16 @@ export function DataTable<Row>({
             aria-label="Next page"
           >
             <ChevronRightIcon aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            onClick={() => onPageChange(maxPage)}
+            disabled={page >= maxPage}
+            aria-label="Last page"
+          >
+            <ChevronsRightIcon aria-hidden="true" />
           </Button>
         </div>
       </footer>

@@ -143,5 +143,5 @@ docker/build: ## Build Docker image
 # ------------------------------------
 
 .PHONY: wait
-wait: ## Wait for WAIT_FOR, an HTTP(S) URL or host:port
+wait: # Wait for WAIT_FOR, an HTTP(S) URL or host:port
 	@WAIT_FOR="$(WAIT_FOR)" WAIT_FOR_RETRY_SECONDS="$(WAIT_FOR_RETRY_SECONDS)" scripts/wait.sh

@@ -110,8 +110,7 @@ function newID() {
   return crypto.randomUUID();
 }
 
-// Switching a field or operator should also reset its value to the right shape.
-// For example, a boolean starts as true and BETWEEN starts as a two-item tuple.
+// New rules and field changes need a value in the selected operator's shape.
 function initialValue(field: SearchField, operator: FilterOperator): FilterValue | undefined {
   if (valuelessOperators.has(operator)) {
     return undefined;
@@ -126,6 +125,35 @@ function initialValue(field: SearchField, operator: FilterOperator): FilterValue
     return true;
   }
   return "";
+}
+
+// Keep a rule's existing input when changing operators, adapting it only when
+// the new operator needs a range or a list. Presence operators retain the
+// hidden value so switching back to a value-taking operator restores it.
+function valueForOperator(
+  value: FilterValue | undefined,
+  field: SearchField,
+  operator: FilterOperator,
+): FilterValue | undefined {
+  if (valuelessOperators.has(operator)) {
+    return value;
+  }
+  if (operator === "between") {
+    if (Array.isArray(value)) {
+      return [value[0] ?? "", value[1] ?? ""];
+    }
+    return [typeof value === "string" ? value : "", ""];
+  }
+  if (repeatedOperators.has(operator)) {
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return typeof value === "string" && value !== "" ? [value] : [];
+  }
+  if (Array.isArray(value)) {
+    return value[0] ?? initialValue(field, operator);
+  }
+  return value ?? initialValue(field, operator);
 }
 
 // A new rule starts with the first available field/operator pair. Returning
@@ -445,7 +473,7 @@ function FilterRuleEditor({ rule, schema, onChange, onRemove }: FilterRuleEditor
 
   function changeOperator(operator: FilterOperator) {
     if (field !== undefined) {
-      onChange({ ...rule, operator, value: initialValue(field, operator) });
+      onChange({ ...rule, operator, value: valueForOperator(rule.value, field, operator) });
     }
   }
 
@@ -489,11 +517,7 @@ function FilterRuleEditor({ rule, schema, onChange, onRemove }: FilterRuleEditor
         <FilterValueEditor
           field={field}
           operator={selectedOperator ?? rule.operator}
-          value={
-            selectedOperator !== undefined && selectedOperator !== rule.operator
-              ? initialValue(field!, selectedOperator)
-              : rule.value
-          }
+          value={rule.value}
           onChange={(value) => onChange({ ...rule, value })}
         />
       </div>
