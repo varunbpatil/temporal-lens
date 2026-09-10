@@ -101,6 +101,7 @@ export function RootLayout() {
       .find((cookie) => cookie.startsWith("sidebar_state="))
       ?.split("=")[1] !== "false";
   const themePreference: ThemePreference = theme === "light" || theme === "dark" ? theme : "system";
+  const themeLabel = themePreference[0].toUpperCase() + themePreference.slice(1);
   const themeIcon =
     themePreference === "light" ? (
       <SunIcon aria-hidden="true" />
@@ -165,9 +166,9 @@ export function RootLayout() {
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
-                      <SidebarMenuButton tooltip="Choose theme">
+                      <SidebarMenuButton tooltip={`Theme: ${themePreference}`}>
                         {themeIcon}
-                        <span>Theme</span>
+                        <span>{themeLabel}</span>
                       </SidebarMenuButton>
                     }
                   />

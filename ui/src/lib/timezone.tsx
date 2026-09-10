@@ -3,7 +3,19 @@ import { getTimeZones } from "@vvo/tzdb";
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 const storageKey = "temporal-lens:time-zone";
-const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const timeZoneData = getTimeZones({ includeUtc: true });
+const timeZoneAliases = new Map<string, string>();
+
+for (const timeZone of timeZoneData) {
+  const name = timeZone.name === "Etc/UTC" ? "UTC" : timeZone.name;
+  for (const alias of timeZone.group) timeZoneAliases.set(alias, name);
+}
+
+function canonicalTimeZone(timeZone: string) {
+  return timeZoneAliases.get(timeZone) ?? timeZone;
+}
+
+const browserTimeZone = canonicalTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
 export interface TimeZoneOption {
   name: string;
@@ -16,16 +28,13 @@ const regionOrder = ["Universal", "Africa", "America", "Antarctica", "Asia", "Eu
  * @vvo/tzdb also omits zones unavailable in the current browser at runtime.
  */
 export const timeZoneRegions = Object.entries(
-  getTimeZones({ includeUtc: true }).reduce<Record<string, TimeZoneOption[]>>(
-    (regions, timeZone) => {
-      const name = timeZone.name === "Etc/UTC" ? "UTC" : timeZone.name;
-      const region = timeZone.name === "Etc/UTC" ? "Universal" : timeZone.continentName || "Other";
-      const option = { name };
-      (regions[region] ??= []).push(option);
-      return regions;
-    },
-    {},
-  ),
+  timeZoneData.reduce<Record<string, TimeZoneOption[]>>((regions, timeZone) => {
+    const name = timeZone.name === "Etc/UTC" ? "UTC" : timeZone.name;
+    const region = timeZone.name === "Etc/UTC" ? "Universal" : timeZone.continentName || "Other";
+    const option = { name };
+    (regions[region] ??= []).push(option);
+    return regions;
+  }, {}),
 )
   .sort(([left], [right]) => {
     const leftOrder = regionOrder.indexOf(left);
@@ -55,7 +64,8 @@ function isTimeZone(timeZone: string) {
 
 function savedTimeZone() {
   const saved = window.localStorage.getItem(storageKey);
-  return saved !== null && isTimeZone(saved) ? saved : browserTimeZone;
+  const timeZone = saved === null ? browserTimeZone : canonicalTimeZone(saved);
+  return isTimeZone(timeZone) ? timeZone : browserTimeZone;
 }
 
 /** Keeps timestamp presentation and timestamp-filter input in the same persisted IANA time zone. */

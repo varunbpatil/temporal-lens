@@ -91,14 +91,15 @@ interface WorkflowSearchURL {
 
 type ResetTargetMode = "first" | "last" | "eventId";
 
-const defaultColumnIDs = new Set([
+const defaultColumnOrder = [
+  "status",
   "workflow",
   "type",
   "namespace",
-  "status",
   "started",
   "finished",
-]);
+] as const;
+const defaultColumnIDs = new Set(defaultColumnOrder);
 const columnPreferenceKey = "temporal-lens:workflows:columns";
 const workflowStatuses: Record<number, { label: string; className: string }> = {
   1: {
@@ -162,22 +163,37 @@ function positiveInteger(value: unknown, fallback: number) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function readColumnPreference() {
+interface ColumnPreferences {
+  visibleColumnIDs: Set<string>;
+  columnOrder: string[];
+}
+
+function readColumnPreferences(): ColumnPreferences {
   const value = window.localStorage.getItem(columnPreferenceKey);
-  if (value === null) return defaultColumnIDs;
+  if (value === null) {
+    return { visibleColumnIDs: new Set(defaultColumnIDs), columnOrder: [...defaultColumnOrder] };
+  }
   try {
     const parsed: unknown = JSON.parse(value);
     if (
-      Array.isArray(parsed) &&
-      parsed.length > 0 &&
-      parsed.every((item) => typeof item === "string")
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "visibleColumnIDs" in parsed &&
+      "columnOrder" in parsed &&
+      Array.isArray(parsed.visibleColumnIDs) &&
+      Array.isArray(parsed.columnOrder) &&
+      parsed.visibleColumnIDs.every((item) => typeof item === "string") &&
+      parsed.columnOrder.every((item) => typeof item === "string")
     ) {
-      return new Set(parsed);
+      return {
+        visibleColumnIDs: new Set(parsed.visibleColumnIDs),
+        columnOrder: parsed.columnOrder,
+      };
     }
   } catch {
     // A malformed local preference should never stop the search page rendering.
   }
-  return defaultColumnIDs;
+  return { visibleColumnIDs: new Set(defaultColumnIDs), columnOrder: [...defaultColumnOrder] };
 }
 
 function WorkflowsPage() {
@@ -206,7 +222,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
     ids: new Set(),
   });
   const [selectedWorkflows, setSelectedWorkflows] = useState(() => new Map<string, Workflow>());
-  const [storedColumnIDs, setStoredColumnIDs] = useState(readColumnPreference);
+  const [columnPreferences, setColumnPreferences] = useState(readColumnPreferences);
   const [signalOpen, setSignalOpen] = useState(false);
   const [signalName, setSignalName] = useState("");
   const [signalPayload, setSignalPayload] = useState("null");
@@ -288,6 +304,12 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
   const columns = useMemo<readonly DataTableColumn<Workflow>[]>(
     () => [
       {
+        id: "status",
+        label: "Status",
+        sortField: "metadata.status",
+        cell: (workflow) => <StatusBadge status={workflow.metadata?.status} />,
+      },
+      {
         id: "workflow",
         label: "Workflow",
         cell: (workflow) => (
@@ -322,12 +344,6 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
         cell: (workflow) => workflow.metadata?.namespace || "—",
       },
       {
-        id: "status",
-        label: "Status",
-        sortField: "metadata.status",
-        cell: (workflow) => <StatusBadge status={workflow.metadata?.status} />,
-      },
-      {
         id: "started",
         label: "Started",
         sortField: "metadata.startTime",
@@ -344,10 +360,12 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
   );
   const visibleColumnIDs = useMemo(() => {
     const selected = new Set(
-      [...storedColumnIDs].filter((id) => columns.some((column) => column.id === id)),
+      [...columnPreferences.visibleColumnIDs].filter((id) =>
+        columns.some((column) => column.id === id),
+      ),
     );
     return selected.size > 0 ? selected : defaultColumnIDs;
-  }, [columns, storedColumnIDs]);
+  }, [columns, columnPreferences.visibleColumnIDs]);
 
   const setURL = (next: Partial<WorkflowSearchURL>) => {
     void navigate({ search: (previous) => ({ ...previous, ...next }) });
@@ -499,9 +517,27 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
           totalRows={totalRows}
           visibleColumnIDs={visibleColumnIDs}
           onVisibleColumnIDsChange={(columnIDs) => {
-            const next = new Set(columnIDs);
-            window.localStorage.setItem(columnPreferenceKey, JSON.stringify([...next]));
-            setStoredColumnIDs(next);
+            const next = { ...columnPreferences, visibleColumnIDs: new Set(columnIDs) };
+            window.localStorage.setItem(
+              columnPreferenceKey,
+              JSON.stringify({
+                visibleColumnIDs: [...next.visibleColumnIDs],
+                columnOrder: next.columnOrder,
+              }),
+            );
+            setColumnPreferences(next);
+          }}
+          columnOrder={columnPreferences.columnOrder}
+          onColumnOrderChange={(columnOrder) => {
+            const next = { ...columnPreferences, columnOrder: [...columnOrder] };
+            window.localStorage.setItem(
+              columnPreferenceKey,
+              JSON.stringify({
+                visibleColumnIDs: [...next.visibleColumnIDs],
+                columnOrder: next.columnOrder,
+              }),
+            );
+            setColumnPreferences(next);
           }}
           sort={sort}
           onSortChange={(next) => setURL({ sort: next.field, order: next.order, page: 1 })}
