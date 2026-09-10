@@ -34,6 +34,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/varunbpatil/temporal-lens/config"
@@ -73,8 +74,6 @@ type clientPool struct {
 	// bulkActionsPerSecond is passed to Temporal's native batch-operation worker.
 	bulkActionsPerSecond float32
 
-	// resetLimiter is shared by every individual reset request targeting this namespace.
-	resetLimiter    *rate.Limiter
 	metadataLimiter *rate.Limiter
 	dataLimiter     *rate.Limiter
 
@@ -102,7 +101,6 @@ func NewSource(ctx context.Context, params WorkflowSourceParams) (*Source, error
 			clients:              make([]workflowservice.WorkflowServiceClient, cfg.ConnPoolSize),
 			conns:                make([]*grpc.ClientConn, cfg.ConnPoolSize),
 			bulkActionsPerSecond: float32(cfg.BulkActionsPerSecond),
-			resetLimiter:         rate.NewLimiter(rate.Limit(cfg.BulkActionsPerSecond), 1),
 			metadataLimiter:      rate.NewLimiter(rate.Limit(cfg.ListRequestsPerSecond), 1),
 			dataLimiter:          rate.NewLimiter(rate.Limit(cfg.HistoryRequestsPerSecond), 1),
 		}
@@ -371,93 +369,6 @@ func (s *Source) StreamWorkflowData(
 		data, dataErr := streamWorkflowData(ctx, pool.client(), *req.Metadata, mapper, pool.dataLimiter)
 		yield(data, dataErr)
 	}
-}
-
-// ResolveWorkflowTaskFinishEventID finds the completed workflow task that scheduled
-// the requested activity, which is the event type required by Temporal's reset API.
-func (s *Source) ResolveWorkflowTaskFinishEventID(
-	ctx context.Context,
-	metadata models.WorkflowMetadata,
-	activity ports.ResetActivity,
-) (int64, error) {
-	if metadata.Namespace == "" || metadata.WorkflowID == "" || metadata.RunID == "" {
-		return 0, errors.New("namespace, workflow ID, and run ID are required")
-	}
-	if activity.Name == "" {
-		return 0, errors.New("reset activity ID or name is required")
-	}
-	if activity.Position != "" &&
-		activity.Position != ports.ResetActivityPositionEarliest &&
-		activity.Position != ports.ResetActivityPositionLatest {
-		return 0, fmt.Errorf("unknown reset activity position %q", activity.Position)
-	}
-	pool, err := s.clientPool(metadata.Namespace)
-	if err != nil {
-		return 0, err
-	}
-	return workflowTaskFinishEventID(ctx, pool.client(), metadata, activity, pool.dataLimiter)
-}
-
-// workflowTaskFinishEventID scans every history page to find the workflow task
-// completed immediately before the selected activity was scheduled.
-func workflowTaskFinishEventID(
-	ctx context.Context,
-	client workflowservice.WorkflowServiceClient,
-	metadata models.WorkflowMetadata,
-	activity ports.ResetActivity,
-	limiter *rate.Limiter,
-) (int64, error) {
-	var token []byte
-	var latestEventID int64
-	var lastWorkflowTaskID int64
-	for {
-		response, err := workflowHistoryPage(ctx, client, metadata, token, limiter)
-		if err != nil {
-			return 0, err
-		}
-		for _, event := range response.GetHistory().GetEvents() {
-			var matched bool
-			var eventErr error
-			lastWorkflowTaskID, matched, eventErr = resetTaskForEvent(event, activity, lastWorkflowTaskID)
-			if eventErr != nil {
-				return 0, eventErr
-			}
-			if !matched {
-				continue
-			}
-			if activity.Position == ports.ResetActivityPositionEarliest {
-				return lastWorkflowTaskID, nil
-			}
-			latestEventID = lastWorkflowTaskID
-		}
-		token = response.GetNextPageToken()
-		if len(token) == 0 {
-			break
-		}
-	}
-	if latestEventID == 0 {
-		return 0, fmt.Errorf("activity ID or name %q was not found in workflow history", activity.Name)
-	}
-	return latestEventID, nil
-}
-
-// resetTaskForEvent updates the last task completion and reports matching activity schedules.
-func resetTaskForEvent(
-	event *historypb.HistoryEvent,
-	activity ports.ResetActivity,
-	lastWorkflowTaskID int64,
-) (int64, bool, error) {
-	if event.GetWorkflowTaskCompletedEventAttributes() != nil {
-		return event.GetEventId(), false, nil
-	}
-	attributes := event.GetActivityTaskScheduledEventAttributes()
-	if attributes.GetActivityId() != activity.Name && attributes.GetActivityType().GetName() != activity.Name {
-		return lastWorkflowTaskID, false, nil
-	}
-	if lastWorkflowTaskID == 0 {
-		return 0, false, fmt.Errorf("workflow task completed before activity %q was not found", activity.Name)
-	}
-	return lastWorkflowTaskID, true, nil
 }
 
 // workflowHistoryPage obtains one complete decoded history page under the namespace data limit.
@@ -1146,6 +1057,7 @@ func (s *Source) Signal(ctx context.Context, req ports.InternalSignalRequest) er
 					Namespace:              namespace,
 					TargetExecutions:       targetExecutions(executions),
 					JobId:                  uuid.NewString(),
+					Reason:                 req.Reason,
 					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
 					Operation: &workflowservice.StartBatchOperationRequest_SignalOperation{
 						SignalOperation: &batchpb.BatchOperationSignal{
@@ -1164,41 +1076,58 @@ func (s *Source) Signal(ctx context.Context, req ports.InternalSignalRequest) er
 	)
 }
 
-// Reset resets Temporal workflows.
+// Reset resets Temporal workflows using a native batch operation.
 func (s *Source) Reset(ctx context.Context, req ports.InternalResetRequest) error {
-	if req.ResetPoint.EventID == nil {
-		return errors.New("reset event ID must be resolved before calling the Temporal adapter")
+	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.
+	options, optionsErr := batchResetOptions(req.Target)
+	if optionsErr != nil {
+		return optionsErr
 	}
-	// Native batch reset supports broad reset points such as the first or last workflow task.
-	// Individual resets preserve support for an explicitly selected workflow-task event ID.
 	return s.forEachNamespace(
 		ctx,
 		req.Executions,
 		func(ctx context.Context, pool *clientPool, namespace string, executions []ports.ExecutionInfo) error {
-			for _, execution := range executions {
-				if err := pool.resetLimiter.Wait(ctx); err != nil {
-					return err
-				}
-				if _, err := pool.client().ResetWorkflowExecution(
-					ctx,
-					&workflowservice.ResetWorkflowExecutionRequest{
-						Namespace: namespace,
-						WorkflowExecution: &commonpb.WorkflowExecution{
-							WorkflowId: execution.WorkflowID,
-							RunId:      execution.RunID,
+			_, err := pool.client().StartBatchOperation(
+				ctx,
+				&workflowservice.StartBatchOperationRequest{
+					Namespace:              namespace,
+					TargetExecutions:       targetExecutions(executions),
+					JobId:                  uuid.NewString(),
+					Reason:                 req.Reason,
+					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
+					Operation: &workflowservice.StartBatchOperationRequest_ResetOperation{
+						ResetOperation: &batchpb.BatchOperationReset{
+							Identity: clientIdentity,
+							Options:  options,
 						},
-						WorkflowTaskFinishEventId: *req.ResetPoint.EventID,
-						Reason:                    req.Reason,
-						RequestId:                 uuid.NewString(),
-						Identity:                  clientIdentity,
 					},
-				); err != nil {
-					return err
-				}
-			}
-			return nil
+				},
+			)
+			return err
 		},
 	)
+}
+
+func batchResetOptions(target ports.ResetTarget) (*commonpb.ResetOptions, error) {
+	switch target.Kind {
+	case ports.ResetTargetFirstWorkflowTask:
+		return &commonpb.ResetOptions{Target: &commonpb.ResetOptions_FirstWorkflowTask{
+			FirstWorkflowTask: &emptypb.Empty{},
+		}}, nil
+	case ports.ResetTargetLastWorkflowTask:
+		return &commonpb.ResetOptions{Target: &commonpb.ResetOptions_LastWorkflowTask{
+			LastWorkflowTask: &emptypb.Empty{},
+		}}, nil
+	case ports.ResetTargetWorkflowTaskID:
+		if target.WorkflowTaskID < 1 {
+			return nil, fmt.Errorf("workflow task ID must be positive")
+		}
+		return &commonpb.ResetOptions{Target: &commonpb.ResetOptions_WorkflowTaskId{
+			WorkflowTaskId: target.WorkflowTaskID,
+		}}, nil
+	default:
+		return nil, fmt.Errorf("reset target is required")
+	}
 }
 
 // Cancel requests cancellation of Temporal workflows.
@@ -1214,6 +1143,7 @@ func (s *Source) Cancel(ctx context.Context, req ports.InternalCancelRequest) er
 					Namespace:              namespace,
 					TargetExecutions:       targetExecutions(executions),
 					JobId:                  uuid.NewString(),
+					Reason:                 req.Reason,
 					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
 					Operation: &workflowservice.StartBatchOperationRequest_CancellationOperation{
 						CancellationOperation: &batchpb.BatchOperationCancellation{Identity: clientIdentity},

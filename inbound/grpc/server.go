@@ -37,8 +37,15 @@ func (s *Server) Mux() *http.ServeMux {
 	return s.mux
 }
 
-// HandlerOptions returns the default handler options (compression, etc.)
-// that domain handlers should use when registering.
+// HandlerOptions returns the default handler options (compression, error
+// logging, etc.) that domain handlers should use when registering.
+func (s *Server) HandlerOptions() []connect.HandlerOption {
+	options := HandlerOptions()
+	return append(options, connect.WithInterceptors(loggingInterceptor(s.logger)))
+}
+
+// HandlerOptions returns handler options that do not depend on a server instance.
+// Use Server.HandlerOptions when request error logging is required.
 func HandlerOptions() []connect.HandlerOption {
 	return []connect.HandlerOption{
 		connect.WithCompression(
@@ -47,6 +54,22 @@ func HandlerOptions() []connect.HandlerOption {
 			NewBrotliCompressor,
 		),
 	}
+}
+
+func loggingInterceptor(logger *slog.Logger) connect.Interceptor {
+	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, request connect.AnyRequest) (connect.AnyResponse, error) {
+			response, err := next(ctx, request)
+			if err != nil && logger != nil {
+				logger.ErrorContext(ctx, "RPC failed",
+					"procedure", request.Spec().Procedure,
+					"code", connect.CodeOf(err),
+					"error", err,
+				)
+			}
+			return response, err
+		}
+	})
 }
 
 // Start begins listening for connections. It returns once the server is accepting connections.

@@ -5,7 +5,9 @@
 docker_compose("docker-compose.yml")
 
 dc_resource("postgresql", labels=["dependencies"])
+dc_resource("temporal-schema", labels=["dependencies"])
 dc_resource("temporal", labels=["dependencies"])
+dc_resource("temporal-create-namespace", labels=["dependencies"])
 dc_resource("temporal-ui", labels=["dependencies"])
 dc_resource("opensearch", labels=["dependencies"])
 
@@ -24,7 +26,7 @@ local_resource(
 local_resource(
     "temporal-ready",
     cmd="make wait WAIT_FOR=localhost:7233",
-    resource_deps=["temporal"],
+    resource_deps=["temporal-create-namespace"],
     allow_parallel=True,
     labels=["readiness"],
 )

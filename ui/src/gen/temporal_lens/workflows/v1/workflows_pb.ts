@@ -4,8 +4,8 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Duration, ListValue, Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_duration, file_google_protobuf_struct, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Duration, Empty, ListValue, Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_struct, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { FilterSpec, PaginationSpec, SearchSchema, SortSpec } from "../../common/v1/common_pb";
 import { file_temporal_lens_common_v1_common } from "../../common/v1/common_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file temporal_lens/workflows/v1/workflows.proto.
  */
 export const file_temporal_lens_workflows_v1_workflows: GenFile = /*@__PURE__*/
-  fileDesc("Cip0ZW1wb3JhbF9sZW5zL3dvcmtmbG93cy92MS93b3JrZmxvd3MucHJvdG8SGnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxIhgKFkdldFNlYXJjaFNjaGVtYVJlcXVlc3QiUAoXR2V0U2VhcmNoU2NoZW1hUmVzcG9uc2USNQoGc2NoZW1hGAEgASgLMiUudGVtcG9yYWxfbGVucy5jb21tb24udjEuU2VhcmNoU2NoZW1hIrIBCg1TZWFyY2hSZXF1ZXN0EjMKBmZpbHRlchgBIAEoCzIjLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclNwZWMSLwoEc29ydBgCIAEoCzIhLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLlNvcnRTcGVjEjsKCnBhZ2luYXRpb24YAyABKAsyJy50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5QYWdpbmF0aW9uU3BlYyKbAQoOU2VhcmNoUmVzcG9uc2USNwoJd29ya2Zsb3dzGAEgAygLMiQudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3cSEgoKdG90YWxfaGl0cxgCIAEoAxInCgR0b29rGAMgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhMKC25leHRfY3Vyc29yGAQgASgJIpsBCghXb3JrZmxvdxIKCgJpZBgBIAEoCRI+CghtZXRhZGF0YRgCIAEoCzIsLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93TWV0YWRhdGESNgoEZGF0YRgDIAEoCzIoLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93RGF0YRILCgN1cmwYBCABKAkiwwIKEFdvcmtmbG93TWV0YWRhdGESDgoGcnVuX2lkGAEgASgJEhMKC3dvcmtmbG93X2lkGAIgASgJEhEKCW5hbWVzcGFjZRgDIAEoCRIVCg13b3JrZmxvd190eXBlGAQgASgJEi4KCnN0YXJ0X3RpbWUYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGVuZF90aW1lGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI6CgZzdGF0dXMYByABKA4yKi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd1N0YXR1cxJGChFzZWFyY2hfYXR0cmlidXRlcxgIIAMoCzIrLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNlYXJjaEF0dHJpYnV0ZSItCg9TZWFyY2hBdHRyaWJ1dGUSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJIsEDCgxXb3JrZmxvd0RhdGESRAoGaW5wdXRzGAEgAygLMjQudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3dEYXRhLklucHV0c0VudHJ5EkYKB291dHB1dHMYAiADKAsyNS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd0RhdGEuT3V0cHV0c0VudHJ5Eg4KBmVycm9ycxgDIAMoCRI4CgphY3Rpdml0aWVzGAQgAygLMiQudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQWN0aXZpdHkSQgoPY2hpbGRfd29ya2Zsb3dzGAUgAygLMikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2hpbGRXb3JrZmxvdxpJCgtJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ARpKCgxPdXRwdXRzRW50cnkSCwoDa2V5GAEgASgJEikKBXZhbHVlGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxpc3RWYWx1ZToCOAEi0QMKCEFjdGl2aXR5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSQAoGaW5wdXRzGAMgAygLMjAudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQWN0aXZpdHkuSW5wdXRzRW50cnkSQgoHb3V0cHV0cxgEIAMoCzIxLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkFjdGl2aXR5Lk91dHB1dHNFbnRyeRIOCgZlcnJvcnMYBSADKAkSEAoIYXR0ZW1wdHMYBiABKAUSLgoKc3RhcnRfdGltZRgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLAoIZW5kX3RpbWUYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg4KBnBhdXNlZBgJIAEoCBpJCgtJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ARpKCgxPdXRwdXRzRW50cnkSCwoDa2V5GAEgASgJEikKBXZhbHVlGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxpc3RWYWx1ZToCOAEi9QMKDUNoaWxkV29ya2Zsb3cSEwoLd29ya2Zsb3dfaWQYASABKAkSEQoJbmFtZXNwYWNlGAIgASgJEhUKDXdvcmtmbG93X3R5cGUYAyABKAkSRQoGaW5wdXRzGAQgAygLMjUudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2hpbGRXb3JrZmxvdy5JbnB1dHNFbnRyeRJHCgdvdXRwdXRzGAUgAygLMjYudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2hpbGRXb3JrZmxvdy5PdXRwdXRzRW50cnkSDgoGZXJyb3JzGAYgAygJEhAKCGF0dGVtcHRzGAcgASgFEi4KCnN0YXJ0X3RpbWUYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGVuZF90aW1lGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBpJCgtJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ARpKCgxPdXRwdXRzRW50cnkSCwoDa2V5GAEgASgJEikKBXZhbHVlGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxpc3RWYWx1ZToCOAEimAEKEVdvcmtmbG93U2VsZWN0aW9uEjUKBmZpbHRlchgBIAEoCzIjLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclNwZWNIABI/CgpleGVjdXRpb25zGAIgASgLMikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuRXhlY3V0aW9uTGlzdEgAQgsKCXNlbGVjdGlvbiJSCg1FeGVjdXRpb25MaXN0EkEKCmV4ZWN1dGlvbnMYASADKAsyLS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd0V4ZWN1dGlvbiJLChFXb3JrZmxvd0V4ZWN1dGlvbhIRCgluYW1lc3BhY2UYASABKAkSEwoLd29ya2Zsb3dfaWQYAiABKAkSDgoGcnVuX2lkGAMgASgJInIKDVNpZ25hbFJlcXVlc3QSQAoJd29ya2Zsb3dzGAEgASgLMi0udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3dTZWxlY3Rpb24SDgoGc2lnbmFsGAIgASgJEg8KB3BheWxvYWQYAyABKAwiEAoOU2lnbmFsUmVzcG9uc2UinQEKDFJlc2V0UmVxdWVzdBJACgl3b3JrZmxvd3MYASABKAsyLS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd1NlbGVjdGlvbhI7CgtyZXNldF9wb2ludBgCIAEoCzImLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0UG9pbnQSDgoGcmVhc29uGAMgASgJImgKClJlc2V0UG9pbnQSEgoIZXZlbnRfaWQYASABKANIABI9CghhY3Rpdml0eRgCIAEoCzIpLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0QWN0aXZpdHlIAEIHCgVwb2ludCJiCg1SZXNldEFjdGl2aXR5EgwKBG5hbWUYASABKAkSQwoIcG9zaXRpb24YAiABKA4yMS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5SZXNldEFjdGl2aXR5UG9zaXRpb24iDwoNUmVzZXRSZXNwb25zZSJRCg1DYW5jZWxSZXF1ZXN0EkAKCXdvcmtmbG93cxgBIAEoCzItLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93U2VsZWN0aW9uIhAKDkNhbmNlbFJlc3BvbnNlImQKEFRlcm1pbmF0ZVJlcXVlc3QSQAoJd29ya2Zsb3dzGAEgASgLMi0udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3dTZWxlY3Rpb24SDgoGcmVhc29uGAIgASgJIhMKEVRlcm1pbmF0ZVJlc3BvbnNlIhQKEkxpc3RJbmRleGVzUmVxdWVzdCJNChNMaXN0SW5kZXhlc1Jlc3BvbnNlEjYKB2luZGV4ZXMYASADKAsyJS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5JbmRleEluZm8iMQoJSW5kZXhJbmZvEgwKBG5hbWUYASABKAkSFgoOZG9jdW1lbnRfY291bnQYAiABKAMiIwoSRGVsZXRlSW5kZXhSZXF1ZXN0Eg0KBWluZGV4GAEgASgJIhUKE0RlbGV0ZUluZGV4UmVzcG9uc2UqqAIKDldvcmtmbG93U3RhdHVzEh8KG1dPUktGTE9XX1NUQVRVU19VTlNQRUNJRklFRBAAEhsKF1dPUktGTE9XX1NUQVRVU19SVU5OSU5HEAESHQoZV09SS0ZMT1dfU1RBVFVTX0NPTVBMRVRFRBACEhoKFldPUktGTE9XX1NUQVRVU19GQUlMRUQQAxIdChlXT1JLRkxPV19TVEFUVVNfVElNRURfT1VUEAQSGgoWV09SS0ZMT1dfU1RBVFVTX1BBVVNFRBAFEiQKIFdPUktGTE9XX1NUQVRVU19DT05USU5VRURfQVNfTkVXEAYSHAoYV09SS0ZMT1dfU1RBVFVTX0NBTkNFTEVEEAcSHgoaV09SS0ZMT1dfU1RBVFVTX1RFUk1JTkFURUQQCCqKAQoVUmVzZXRBY3Rpdml0eVBvc2l0aW9uEicKI1JFU0VUX0FDVElWSVRZX1BPU0lUSU9OX1VOU1BFQ0lGSUVEEAASJAogUkVTRVRfQUNUSVZJVFlfUE9TSVRJT05fRUFSTElFU1QQARIiCh5SRVNFVF9BQ1RJVklUWV9QT1NJVElPTl9MQVRFU1QQAjLYBgoPV29ya2Zsb3dTZXJ2aWNlEnoKD0dldFNlYXJjaFNjaGVtYRIyLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkdldFNlYXJjaFNjaGVtYVJlcXVlc3QaMy50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5HZXRTZWFyY2hTY2hlbWFSZXNwb25zZRJfCgZTZWFyY2gSKS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5TZWFyY2hSZXF1ZXN0GioudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuU2VhcmNoUmVzcG9uc2USXwoGU2lnbmFsEikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuU2lnbmFsUmVxdWVzdBoqLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNpZ25hbFJlc3BvbnNlElwKBVJlc2V0EigudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuUmVzZXRSZXF1ZXN0GikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuUmVzZXRSZXNwb25zZRJfCgZDYW5jZWwSKS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5DYW5jZWxSZXF1ZXN0GioudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2FuY2VsUmVzcG9uc2USaAoJVGVybWluYXRlEiwudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuVGVybWluYXRlUmVxdWVzdBotLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlRlcm1pbmF0ZVJlc3BvbnNlEm4KC0xpc3RJbmRleGVzEi4udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuTGlzdEluZGV4ZXNSZXF1ZXN0Gi8udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuTGlzdEluZGV4ZXNSZXNwb25zZRJuCgtEZWxldGVJbmRleBIuLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkRlbGV0ZUluZGV4UmVxdWVzdBovLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkRlbGV0ZUluZGV4UmVzcG9uc2VCjgIKHmNvbS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MUIOV29ya2Zsb3dzUHJvdG9QAVpWZ2l0aHViLmNvbS92YXJ1bmJwYXRpbC90ZW1wb3JhbC1sZW5zL3Byb3Rvcy9nZW4vdGVtcG9yYWxfbGVucy93b3JrZmxvd3MvdjE7d29ya2Zsb3dzdjGiAgNUV1iqAhlUZW1wb3JhbExlbnMuV29ya2Zsb3dzLlYxygIZVGVtcG9yYWxMZW5zXFdvcmtmbG93c1xWMeICJVRlbXBvcmFsTGVuc1xXb3JrZmxvd3NcVjFcR1BCTWV0YWRhdGHqAhtUZW1wb3JhbExlbnM6OldvcmtmbG93czo6VjFiBnByb3RvMw", [file_google_protobuf_duration, file_google_protobuf_struct, file_google_protobuf_timestamp, file_temporal_lens_common_v1_common]);
+  fileDesc("Cip0ZW1wb3JhbF9sZW5zL3dvcmtmbG93cy92MS93b3JrZmxvd3MucHJvdG8SGnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxIhgKFkdldFNlYXJjaFNjaGVtYVJlcXVlc3QiUAoXR2V0U2VhcmNoU2NoZW1hUmVzcG9uc2USNQoGc2NoZW1hGAEgASgLMiUudGVtcG9yYWxfbGVucy5jb21tb24udjEuU2VhcmNoU2NoZW1hIrIBCg1TZWFyY2hSZXF1ZXN0EjMKBmZpbHRlchgBIAEoCzIjLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclNwZWMSLwoEc29ydBgCIAEoCzIhLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLlNvcnRTcGVjEjsKCnBhZ2luYXRpb24YAyABKAsyJy50ZW1wb3JhbF9sZW5zLmNvbW1vbi52MS5QYWdpbmF0aW9uU3BlYyKbAQoOU2VhcmNoUmVzcG9uc2USNwoJd29ya2Zsb3dzGAEgAygLMiQudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3cSEgoKdG90YWxfaGl0cxgCIAEoAxInCgR0b29rGAMgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhMKC25leHRfY3Vyc29yGAQgASgJIpsBCghXb3JrZmxvdxIKCgJpZBgBIAEoCRI+CghtZXRhZGF0YRgCIAEoCzIsLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93TWV0YWRhdGESNgoEZGF0YRgDIAEoCzIoLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93RGF0YRILCgN1cmwYBCABKAkiwwIKEFdvcmtmbG93TWV0YWRhdGESDgoGcnVuX2lkGAEgASgJEhMKC3dvcmtmbG93X2lkGAIgASgJEhEKCW5hbWVzcGFjZRgDIAEoCRIVCg13b3JrZmxvd190eXBlGAQgASgJEi4KCnN0YXJ0X3RpbWUYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGVuZF90aW1lGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI6CgZzdGF0dXMYByABKA4yKi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd1N0YXR1cxJGChFzZWFyY2hfYXR0cmlidXRlcxgIIAMoCzIrLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNlYXJjaEF0dHJpYnV0ZSItCg9TZWFyY2hBdHRyaWJ1dGUSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJIsEDCgxXb3JrZmxvd0RhdGESRAoGaW5wdXRzGAEgAygLMjQudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuV29ya2Zsb3dEYXRhLklucHV0c0VudHJ5EkYKB291dHB1dHMYAiADKAsyNS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd0RhdGEuT3V0cHV0c0VudHJ5Eg4KBmVycm9ycxgDIAMoCRI4CgphY3Rpdml0aWVzGAQgAygLMiQudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQWN0aXZpdHkSQgoPY2hpbGRfd29ya2Zsb3dzGAUgAygLMikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2hpbGRXb3JrZmxvdxpJCgtJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ARpKCgxPdXRwdXRzRW50cnkSCwoDa2V5GAEgASgJEikKBXZhbHVlGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxpc3RWYWx1ZToCOAEi0QMKCEFjdGl2aXR5EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSQAoGaW5wdXRzGAMgAygLMjAudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQWN0aXZpdHkuSW5wdXRzRW50cnkSQgoHb3V0cHV0cxgEIAMoCzIxLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkFjdGl2aXR5Lk91dHB1dHNFbnRyeRIOCgZlcnJvcnMYBSADKAkSEAoIYXR0ZW1wdHMYBiABKAUSLgoKc3RhcnRfdGltZRgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLAoIZW5kX3RpbWUYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg4KBnBhdXNlZBgJIAEoCBpJCgtJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ARpKCgxPdXRwdXRzRW50cnkSCwoDa2V5GAEgASgJEikKBXZhbHVlGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxpc3RWYWx1ZToCOAEi9QMKDUNoaWxkV29ya2Zsb3cSEwoLd29ya2Zsb3dfaWQYASABKAkSEQoJbmFtZXNwYWNlGAIgASgJEhUKDXdvcmtmbG93X3R5cGUYAyABKAkSRQoGaW5wdXRzGAQgAygLMjUudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2hpbGRXb3JrZmxvdy5JbnB1dHNFbnRyeRJHCgdvdXRwdXRzGAUgAygLMjYudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2hpbGRXb3JrZmxvdy5PdXRwdXRzRW50cnkSDgoGZXJyb3JzGAYgAygJEhAKCGF0dGVtcHRzGAcgASgFEi4KCnN0YXJ0X3RpbWUYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGVuZF90aW1lGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBpJCgtJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSKQoFdmFsdWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuTGlzdFZhbHVlOgI4ARpKCgxPdXRwdXRzRW50cnkSCwoDa2V5GAEgASgJEikKBXZhbHVlGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxpc3RWYWx1ZToCOAEimAEKEVdvcmtmbG93U2VsZWN0aW9uEjUKBmZpbHRlchgBIAEoCzIjLnRlbXBvcmFsX2xlbnMuY29tbW9uLnYxLkZpbHRlclNwZWNIABI/CgpleGVjdXRpb25zGAIgASgLMikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuRXhlY3V0aW9uTGlzdEgAQgsKCXNlbGVjdGlvbiJSCg1FeGVjdXRpb25MaXN0EkEKCmV4ZWN1dGlvbnMYASADKAsyLS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5Xb3JrZmxvd0V4ZWN1dGlvbiJLChFXb3JrZmxvd0V4ZWN1dGlvbhIRCgluYW1lc3BhY2UYASABKAkSEwoLd29ya2Zsb3dfaWQYAiABKAkSDgoGcnVuX2lkGAMgASgJIoIBCg1TaWduYWxSZXF1ZXN0EkAKCXdvcmtmbG93cxgBIAEoCzItLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93U2VsZWN0aW9uEg4KBnNpZ25hbBgCIAEoCRIPCgdwYXlsb2FkGAMgASgMEg4KBnJlYXNvbhgEIAEoCSIQCg5TaWduYWxSZXNwb25zZSKZAQoMUmVzZXRSZXF1ZXN0EkAKCXdvcmtmbG93cxgBIAEoCzItLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93U2VsZWN0aW9uEjcKBnRhcmdldBgCIAEoCzInLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0VGFyZ2V0Eg4KBnJlYXNvbhgDIAEoCSKgAQoLUmVzZXRUYXJnZXQSNQoTZmlyc3Rfd29ya2Zsb3dfdGFzaxgBIAEoCzIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUgAEjQKEmxhc3Rfd29ya2Zsb3dfdGFzaxgCIAEoCzIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eUgAEhoKEHdvcmtmbG93X3Rhc2tfaWQYAyABKANIAEIICgZ0YXJnZXQiDwoNUmVzZXRSZXNwb25zZSJhCg1DYW5jZWxSZXF1ZXN0EkAKCXdvcmtmbG93cxgBIAEoCzItLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93U2VsZWN0aW9uEg4KBnJlYXNvbhgCIAEoCSIQCg5DYW5jZWxSZXNwb25zZSJkChBUZXJtaW5hdGVSZXF1ZXN0EkAKCXdvcmtmbG93cxgBIAEoCzItLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLldvcmtmbG93U2VsZWN0aW9uEg4KBnJlYXNvbhgCIAEoCSITChFUZXJtaW5hdGVSZXNwb25zZSIUChJMaXN0SW5kZXhlc1JlcXVlc3QiTQoTTGlzdEluZGV4ZXNSZXNwb25zZRI2CgdpbmRleGVzGAEgAygLMiUudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuSW5kZXhJbmZvIjEKCUluZGV4SW5mbxIMCgRuYW1lGAEgASgJEhYKDmRvY3VtZW50X2NvdW50GAIgASgDIiMKEkRlbGV0ZUluZGV4UmVxdWVzdBINCgVpbmRleBgBIAEoCSIVChNEZWxldGVJbmRleFJlc3BvbnNlKqgCCg5Xb3JrZmxvd1N0YXR1cxIfChtXT1JLRkxPV19TVEFUVVNfVU5TUEVDSUZJRUQQABIbChdXT1JLRkxPV19TVEFUVVNfUlVOTklORxABEh0KGVdPUktGTE9XX1NUQVRVU19DT01QTEVURUQQAhIaChZXT1JLRkxPV19TVEFUVVNfRkFJTEVEEAMSHQoZV09SS0ZMT1dfU1RBVFVTX1RJTUVEX09VVBAEEhoKFldPUktGTE9XX1NUQVRVU19QQVVTRUQQBRIkCiBXT1JLRkxPV19TVEFUVVNfQ09OVElOVUVEX0FTX05FVxAGEhwKGFdPUktGTE9XX1NUQVRVU19DQU5DRUxFRBAHEh4KGldPUktGTE9XX1NUQVRVU19URVJNSU5BVEVEEAgy2AYKD1dvcmtmbG93U2VydmljZRJ6Cg9HZXRTZWFyY2hTY2hlbWESMi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5HZXRTZWFyY2hTY2hlbWFSZXF1ZXN0GjMudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuR2V0U2VhcmNoU2NoZW1hUmVzcG9uc2USXwoGU2VhcmNoEikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuU2VhcmNoUmVxdWVzdBoqLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNlYXJjaFJlc3BvbnNlEl8KBlNpZ25hbBIpLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlNpZ25hbFJlcXVlc3QaKi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5TaWduYWxSZXNwb25zZRJcCgVSZXNldBIoLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0UmVxdWVzdBopLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlJlc2V0UmVzcG9uc2USXwoGQ2FuY2VsEikudGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjEuQ2FuY2VsUmVxdWVzdBoqLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkNhbmNlbFJlc3BvbnNlEmgKCVRlcm1pbmF0ZRIsLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLlRlcm1pbmF0ZVJlcXVlc3QaLS50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5UZXJtaW5hdGVSZXNwb25zZRJuCgtMaXN0SW5kZXhlcxIuLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkxpc3RJbmRleGVzUmVxdWVzdBovLnRlbXBvcmFsX2xlbnMud29ya2Zsb3dzLnYxLkxpc3RJbmRleGVzUmVzcG9uc2USbgoLRGVsZXRlSW5kZXgSLi50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5EZWxldGVJbmRleFJlcXVlc3QaLy50ZW1wb3JhbF9sZW5zLndvcmtmbG93cy52MS5EZWxldGVJbmRleFJlc3BvbnNlQo4CCh5jb20udGVtcG9yYWxfbGVucy53b3JrZmxvd3MudjFCDldvcmtmbG93c1Byb3RvUAFaVmdpdGh1Yi5jb20vdmFydW5icGF0aWwvdGVtcG9yYWwtbGVucy9wcm90b3MvZ2VuL3RlbXBvcmFsX2xlbnMvd29ya2Zsb3dzL3YxO3dvcmtmbG93c3YxogIDVFdYqgIZVGVtcG9yYWxMZW5zLldvcmtmbG93cy5WMcoCGVRlbXBvcmFsTGVuc1xXb3JrZmxvd3NcVjHiAiVUZW1wb3JhbExlbnNcV29ya2Zsb3dzXFYxXEdQQk1ldGFkYXRh6gIbVGVtcG9yYWxMZW5zOjpXb3JrZmxvd3M6OlYxYgZwcm90bzM", [file_google_protobuf_duration, file_google_protobuf_empty, file_google_protobuf_struct, file_google_protobuf_timestamp, file_temporal_lens_common_v1_common]);
 
 /**
  * @generated from message temporal_lens.workflows.v1.GetSearchSchemaRequest
@@ -453,6 +453,11 @@ export type SignalRequest = Message<"temporal_lens.workflows.v1.SignalRequest"> 
    * @generated from field: bytes payload = 3;
    */
   payload: Uint8Array;
+
+  /**
+   * @generated from field: string reason = 4;
+   */
+  reason: string;
 };
 
 /**
@@ -485,9 +490,9 @@ export type ResetRequest = Message<"temporal_lens.workflows.v1.ResetRequest"> & 
   workflows?: WorkflowSelection | undefined;
 
   /**
-   * @generated from field: temporal_lens.workflows.v1.ResetPoint reset_point = 2;
+   * @generated from field: temporal_lens.workflows.v1.ResetTarget target = 2;
    */
-  resetPoint?: ResetPoint | undefined;
+  target?: ResetTarget | undefined;
 
   /**
    * @generated from field: string reason = 3;
@@ -503,55 +508,39 @@ export const ResetRequestSchema: GenMessage<ResetRequest> = /*@__PURE__*/
   messageDesc(file_temporal_lens_workflows_v1_workflows, 15);
 
 /**
- * @generated from message temporal_lens.workflows.v1.ResetPoint
+ * @generated from message temporal_lens.workflows.v1.ResetTarget
  */
-export type ResetPoint = Message<"temporal_lens.workflows.v1.ResetPoint"> & {
+export type ResetTarget = Message<"temporal_lens.workflows.v1.ResetTarget"> & {
   /**
-   * @generated from oneof temporal_lens.workflows.v1.ResetPoint.point
+   * @generated from oneof temporal_lens.workflows.v1.ResetTarget.target
    */
-  point: {
+  target: {
     /**
-     * @generated from field: int64 event_id = 1;
+     * @generated from field: google.protobuf.Empty first_workflow_task = 1;
      */
-    value: bigint;
-    case: "eventId";
+    value: Empty;
+    case: "firstWorkflowTask";
   } | {
     /**
-     * @generated from field: temporal_lens.workflows.v1.ResetActivity activity = 2;
+     * @generated from field: google.protobuf.Empty last_workflow_task = 2;
      */
-    value: ResetActivity;
-    case: "activity";
+    value: Empty;
+    case: "lastWorkflowTask";
+  } | {
+    /**
+     * @generated from field: int64 workflow_task_id = 3;
+     */
+    value: bigint;
+    case: "workflowTaskId";
   } | { case: undefined; value?: undefined };
 };
 
 /**
- * Describes the message temporal_lens.workflows.v1.ResetPoint.
- * Use `create(ResetPointSchema)` to create a new message.
+ * Describes the message temporal_lens.workflows.v1.ResetTarget.
+ * Use `create(ResetTargetSchema)` to create a new message.
  */
-export const ResetPointSchema: GenMessage<ResetPoint> = /*@__PURE__*/
+export const ResetTargetSchema: GenMessage<ResetTarget> = /*@__PURE__*/
   messageDesc(file_temporal_lens_workflows_v1_workflows, 16);
-
-/**
- * @generated from message temporal_lens.workflows.v1.ResetActivity
- */
-export type ResetActivity = Message<"temporal_lens.workflows.v1.ResetActivity"> & {
-  /**
-   * @generated from field: string name = 1;
-   */
-  name: string;
-
-  /**
-   * @generated from field: temporal_lens.workflows.v1.ResetActivityPosition position = 2;
-   */
-  position: ResetActivityPosition;
-};
-
-/**
- * Describes the message temporal_lens.workflows.v1.ResetActivity.
- * Use `create(ResetActivitySchema)` to create a new message.
- */
-export const ResetActivitySchema: GenMessage<ResetActivity> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 17);
 
 /**
  * @generated from message temporal_lens.workflows.v1.ResetResponse
@@ -564,7 +553,7 @@ export type ResetResponse = Message<"temporal_lens.workflows.v1.ResetResponse"> 
  * Use `create(ResetResponseSchema)` to create a new message.
  */
 export const ResetResponseSchema: GenMessage<ResetResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 18);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 17);
 
 /**
  * @generated from message temporal_lens.workflows.v1.CancelRequest
@@ -574,6 +563,11 @@ export type CancelRequest = Message<"temporal_lens.workflows.v1.CancelRequest"> 
    * @generated from field: temporal_lens.workflows.v1.WorkflowSelection workflows = 1;
    */
   workflows?: WorkflowSelection | undefined;
+
+  /**
+   * @generated from field: string reason = 2;
+   */
+  reason: string;
 };
 
 /**
@@ -581,7 +575,7 @@ export type CancelRequest = Message<"temporal_lens.workflows.v1.CancelRequest"> 
  * Use `create(CancelRequestSchema)` to create a new message.
  */
 export const CancelRequestSchema: GenMessage<CancelRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 19);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 18);
 
 /**
  * @generated from message temporal_lens.workflows.v1.CancelResponse
@@ -594,7 +588,7 @@ export type CancelResponse = Message<"temporal_lens.workflows.v1.CancelResponse"
  * Use `create(CancelResponseSchema)` to create a new message.
  */
 export const CancelResponseSchema: GenMessage<CancelResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 20);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 19);
 
 /**
  * @generated from message temporal_lens.workflows.v1.TerminateRequest
@@ -616,7 +610,7 @@ export type TerminateRequest = Message<"temporal_lens.workflows.v1.TerminateRequ
  * Use `create(TerminateRequestSchema)` to create a new message.
  */
 export const TerminateRequestSchema: GenMessage<TerminateRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 21);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 20);
 
 /**
  * @generated from message temporal_lens.workflows.v1.TerminateResponse
@@ -629,7 +623,7 @@ export type TerminateResponse = Message<"temporal_lens.workflows.v1.TerminateRes
  * Use `create(TerminateResponseSchema)` to create a new message.
  */
 export const TerminateResponseSchema: GenMessage<TerminateResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 22);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 21);
 
 /**
  * @generated from message temporal_lens.workflows.v1.ListIndexesRequest
@@ -642,7 +636,7 @@ export type ListIndexesRequest = Message<"temporal_lens.workflows.v1.ListIndexes
  * Use `create(ListIndexesRequestSchema)` to create a new message.
  */
 export const ListIndexesRequestSchema: GenMessage<ListIndexesRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 23);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 22);
 
 /**
  * @generated from message temporal_lens.workflows.v1.ListIndexesResponse
@@ -659,7 +653,7 @@ export type ListIndexesResponse = Message<"temporal_lens.workflows.v1.ListIndexe
  * Use `create(ListIndexesResponseSchema)` to create a new message.
  */
 export const ListIndexesResponseSchema: GenMessage<ListIndexesResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 24);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 23);
 
 /**
  * @generated from message temporal_lens.workflows.v1.IndexInfo
@@ -681,7 +675,7 @@ export type IndexInfo = Message<"temporal_lens.workflows.v1.IndexInfo"> & {
  * Use `create(IndexInfoSchema)` to create a new message.
  */
 export const IndexInfoSchema: GenMessage<IndexInfo> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 25);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 24);
 
 /**
  * @generated from message temporal_lens.workflows.v1.DeleteIndexRequest
@@ -698,7 +692,7 @@ export type DeleteIndexRequest = Message<"temporal_lens.workflows.v1.DeleteIndex
  * Use `create(DeleteIndexRequestSchema)` to create a new message.
  */
 export const DeleteIndexRequestSchema: GenMessage<DeleteIndexRequest> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 26);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 25);
 
 /**
  * @generated from message temporal_lens.workflows.v1.DeleteIndexResponse
@@ -711,7 +705,7 @@ export type DeleteIndexResponse = Message<"temporal_lens.workflows.v1.DeleteInde
  * Use `create(DeleteIndexResponseSchema)` to create a new message.
  */
 export const DeleteIndexResponseSchema: GenMessage<DeleteIndexResponse> = /*@__PURE__*/
-  messageDesc(file_temporal_lens_workflows_v1_workflows, 27);
+  messageDesc(file_temporal_lens_workflows_v1_workflows, 26);
 
 /**
  * @generated from enum temporal_lens.workflows.v1.WorkflowStatus
@@ -768,32 +762,6 @@ export enum WorkflowStatus {
  */
 export const WorkflowStatusSchema: GenEnum<WorkflowStatus> = /*@__PURE__*/
   enumDesc(file_temporal_lens_workflows_v1_workflows, 0);
-
-/**
- * @generated from enum temporal_lens.workflows.v1.ResetActivityPosition
- */
-export enum ResetActivityPosition {
-  /**
-   * @generated from enum value: RESET_ACTIVITY_POSITION_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: RESET_ACTIVITY_POSITION_EARLIEST = 1;
-   */
-  EARLIEST = 1,
-
-  /**
-   * @generated from enum value: RESET_ACTIVITY_POSITION_LATEST = 2;
-   */
-  LATEST = 2,
-}
-
-/**
- * Describes the enum temporal_lens.workflows.v1.ResetActivityPosition.
- */
-export const ResetActivityPositionSchema: GenEnum<ResetActivityPosition> = /*@__PURE__*/
-  enumDesc(file_temporal_lens_workflows_v1_workflows, 1);
 
 /**
  * @generated from service temporal_lens.workflows.v1.WorkflowService

@@ -121,21 +121,6 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 		data = result
 	}
 	require.NotNil(t, data)
-	resetEventID, err := source.ResolveWorkflowTaskFinishEventID(
-		context.Background(),
-		models.WorkflowMetadata{Namespace: "parent-namespace", WorkflowID: "parent-id", RunID: "parent-run"},
-		ports.ResetActivity{Name: "charge"},
-	)
-	require.NoError(t, err)
-	require.EqualValues(t, 2, resetEventID)
-	resetEventIDByName, err := source.ResolveWorkflowTaskFinishEventID(
-		context.Background(),
-		models.WorkflowMetadata{Namespace: "parent-namespace", WorkflowID: "parent-id", RunID: "parent-run"},
-		ports.ResetActivity{Name: "ChargeCard"},
-	)
-	require.NoError(t, err)
-	require.EqualValues(t, 2, resetEventIDByName)
-
 	require.Equal(t, map[string][]any{
 		"id":     {"customer-1"},
 		"nested": {"value"},
@@ -170,11 +155,11 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	}, data.ChildWorkflows[0])
 }
 
-func TestSourceCancelsWorkflowsWithNativeBatchOperation(t *testing.T) {
+func TestSourceStartsNativeBatchActions(t *testing.T) {
 	t.Parallel()
 	listener := bufconn.Listen(1 << 20)
 	server := grpc.NewServer()
-	requests := make(chan *workflowservice.StartBatchOperationRequest, 1)
+	requests := make(chan *workflowservice.StartBatchOperationRequest, 5)
 	workflowservice.RegisterWorkflowServiceServer(server, &batchOperationServer{requests: requests})
 	go func() { _ = server.Serve(listener) }()
 	t.Cleanup(func() {
@@ -202,20 +187,58 @@ func TestSourceCancelsWorkflowsWithNativeBatchOperation(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, source.Close()) })
 
+	err = source.Signal(t.Context(), ports.InternalSignalRequest{
+		Executions: []ports.ExecutionInfo{{Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1"}},
+		Signal:     "payment-received",
+		Payload:    []byte(`{"amount":42}`),
+		Reason:     "reconcile payment",
+	})
+	require.NoError(t, err)
+	request := <-requests
+	_, ok := request.GetOperation().(*workflowservice.StartBatchOperationRequest_SignalOperation)
+	require.True(t, ok)
+	require.Equal(t, "reconcile payment", request.GetReason())
+
 	err = source.Cancel(t.Context(), ports.InternalCancelRequest{Executions: []ports.ExecutionInfo{{
 		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",
-	}}})
+	}}, Reason: "duplicate invoice"})
 	require.NoError(t, err)
 
-	request := <-requests
+	request = <-requests
 	require.Equal(t, "payments", request.GetNamespace())
 	require.InEpsilon(t, 1, request.GetMaxOperationsPerSecond(), 0.001)
 	require.Len(t, request.GetTargetExecutions(), 1)
 	require.Equal(t, "invoice-1", request.GetTargetExecutions()[0].GetBusinessId())
 	require.Equal(t, "run-1", request.GetTargetExecutions()[0].GetRunId())
-	_, ok := request.GetOperation().(*workflowservice.StartBatchOperationRequest_CancellationOperation)
+	_, ok = request.GetOperation().(*workflowservice.StartBatchOperationRequest_CancellationOperation)
 	require.True(t, ok)
 	require.Equal(t, "temporal-lens", request.GetCancellationOperation().GetIdentity())
+	require.Equal(t, "duplicate invoice", request.GetReason())
+
+	err = source.Reset(t.Context(), ports.InternalResetRequest{Executions: []ports.ExecutionInfo{{
+		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",
+	}}, Target: ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask}, Reason: "replay"})
+	require.NoError(t, err)
+	request = <-requests
+	_, ok = request.GetOperation().(*workflowservice.StartBatchOperationRequest_ResetOperation)
+	require.True(t, ok)
+	require.Equal(t, "temporal-lens", request.GetResetOperation().GetIdentity())
+	require.Equal(t, "replay", request.GetReason())
+	require.NotNil(t, request.GetResetOperation().GetOptions().GetLastWorkflowTask())
+
+	err = source.Reset(t.Context(), ports.InternalResetRequest{Executions: []ports.ExecutionInfo{{
+		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",
+	}}, Target: ports.ResetTarget{Kind: ports.ResetTargetFirstWorkflowTask}})
+	require.NoError(t, err)
+	request = <-requests
+	require.NotNil(t, request.GetResetOperation().GetOptions().GetFirstWorkflowTask())
+
+	err = source.Reset(t.Context(), ports.InternalResetRequest{Executions: []ports.ExecutionInfo{{
+		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",
+	}}, Target: ports.ResetTarget{Kind: ports.ResetTargetWorkflowTaskID, WorkflowTaskID: 42}})
+	require.NoError(t, err)
+	request = <-requests
+	require.EqualValues(t, 42, request.GetResetOperation().GetOptions().GetWorkflowTaskId())
 }
 
 type workflowDataServer struct {

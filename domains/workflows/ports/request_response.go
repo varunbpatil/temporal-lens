@@ -41,6 +41,9 @@ type SignalRequest struct {
 
 	// Signal payload
 	Payload []byte
+
+	// Reason for the batch operation
+	Reason string
 }
 
 // InternalSignalRequest is the resolved, concrete counterpart to [SignalRequest].
@@ -53,16 +56,19 @@ type InternalSignalRequest struct {
 
 	// Signal payload
 	Payload []byte
+
+	// Reason for the batch operation
+	Reason string
 }
 
 type ResetRequest struct {
 	// Workflow spec
 	WorkflowSpec WorkflowSpec
 
-	// Reset point
-	ResetPoint ResetPoint
+	// Common reset target used for every selected workflow
+	Target ResetTarget
 
-	// Reset reason
+	// Reason for the batch operation
 	Reason string
 }
 
@@ -71,22 +77,45 @@ type InternalResetRequest struct {
 	// Concrete workflow executions to reset
 	Executions []ExecutionInfo
 
-	// Reset point
-	ResetPoint ResetPoint
+	// Common reset target used for every selected workflow
+	Target ResetTarget
 
-	// Reset reason
+	// Reason for the batch operation
 	Reason string
 }
 
 type CancelRequest struct {
 	// Workflow spec
 	WorkflowSpec WorkflowSpec
+
+	// Reason for the batch operation
+	Reason string
+}
+
+type ResetTargetKind string
+
+const (
+	ResetTargetFirstWorkflowTask ResetTargetKind = "first_workflow_task"
+	ResetTargetLastWorkflowTask  ResetTargetKind = "last_workflow_task"
+	ResetTargetWorkflowTaskID    ResetTargetKind = "workflow_task_id"
+)
+
+// ResetTarget describes the common Temporal reset point for a native batch reset.
+// A task ID applies uniformly to all selected workflows.
+type ResetTarget struct {
+	Kind ResetTargetKind
+
+	// WorkflowTaskID is required only when Kind is [ResetTargetWorkflowTaskID].
+	WorkflowTaskID int64
 }
 
 // InternalCancelRequest is the resolved, concrete counterpart to [CancelRequest].
 type InternalCancelRequest struct {
 	// Concrete workflow executions to request cancellation for
 	Executions []ExecutionInfo
+
+	// Reason for the batch operation
+	Reason string
 }
 
 type TerminateRequest struct {
@@ -152,38 +181,6 @@ type ExecutionInfo struct {
 	// Workflow run ID
 	RunID string
 }
-
-// ResetPoint specifies the exact point within a workflow that the workflow should be reset to.
-//
-// It can be either an event ID or an activity ID or type name.
-// Exactly one of EventID or Activity is non-nil.
-type ResetPoint struct {
-	// Event ID to reset to
-	EventID *int64
-
-	// Activity to reset to
-	Activity *ResetActivity
-}
-
-// ResetActivity specifies the activity details that the workflow should be reset to.
-//
-// Most commonly used in cases where the event ID is likely to be different for each workflow.
-// The domain service will resolve the activity ID or type name to the correct event ID per workflow.
-type ResetActivity struct {
-	// Activity ID or type name
-	Name string
-
-	// If the same activity is executed multiple times within a workflow,
-	// the exact position of the activity to reset to (default: latest).
-	Position ResetActivityPosition
-}
-
-type ResetActivityPosition string
-
-const (
-	ResetActivityPositionEarliest ResetActivityPosition = "earliest"
-	ResetActivityPositionLatest   ResetActivityPosition = "latest"
-)
 
 // IndexInfo identifies an OpenSearch index and its current live document count.
 type IndexInfo struct {

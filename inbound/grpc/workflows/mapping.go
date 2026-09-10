@@ -75,39 +75,23 @@ func workflowSpecFromProto(schema types.Schema, selection *v1.WorkflowSelection)
 	}
 }
 
-// resetPointFromProto parses a reset point without resolving its workflow history.
-func resetPointFromProto(point *v1.ResetPoint) (ports.ResetPoint, error) {
-	if point == nil {
-		return ports.ResetPoint{}, fmt.Errorf("reset point is required")
+// resetTargetFromProto maps a native batch reset target to its domain form.
+func resetTargetFromProto(target *v1.ResetTarget) (ports.ResetTarget, error) {
+	if target == nil {
+		return ports.ResetTarget{}, fmt.Errorf("reset target is required")
 	}
-	switch resetPoint := point.GetPoint().(type) {
-	case *v1.ResetPoint_EventId:
-		eventID := resetPoint.EventId
-		return ports.ResetPoint{EventID: &eventID}, nil
-	case *v1.ResetPoint_Activity:
-		position, err := resetActivityPositionFromProto(resetPoint.Activity.GetPosition())
-		if err != nil {
-			return ports.ResetPoint{}, err
+	switch resetTarget := target.GetTarget().(type) {
+	case *v1.ResetTarget_FirstWorkflowTask:
+		return ports.ResetTarget{Kind: ports.ResetTargetFirstWorkflowTask}, nil
+	case *v1.ResetTarget_LastWorkflowTask:
+		return ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask}, nil
+	case *v1.ResetTarget_WorkflowTaskId:
+		if resetTarget.WorkflowTaskId < 1 {
+			return ports.ResetTarget{}, fmt.Errorf("workflow task ID must be positive")
 		}
-		return ports.ResetPoint{Activity: &ports.ResetActivity{
-			Name:     resetPoint.Activity.GetName(),
-			Position: position,
-		}}, nil
+		return ports.ResetTarget{Kind: ports.ResetTargetWorkflowTaskID, WorkflowTaskID: resetTarget.WorkflowTaskId}, nil
 	default:
-		return ports.ResetPoint{}, fmt.Errorf("reset point is required")
-	}
-}
-
-// resetActivityPositionFromProto maps the activity occurrence selection.
-func resetActivityPositionFromProto(position v1.ResetActivityPosition) (ports.ResetActivityPosition, error) {
-	switch position {
-	case v1.ResetActivityPosition_RESET_ACTIVITY_POSITION_UNSPECIFIED,
-		v1.ResetActivityPosition_RESET_ACTIVITY_POSITION_LATEST:
-		return ports.ResetActivityPositionLatest, nil
-	case v1.ResetActivityPosition_RESET_ACTIVITY_POSITION_EARLIEST:
-		return ports.ResetActivityPositionEarliest, nil
-	default:
-		return "", fmt.Errorf("unknown reset activity position %d", position)
+		return ports.ResetTarget{}, fmt.Errorf("reset target is required")
 	}
 }
 

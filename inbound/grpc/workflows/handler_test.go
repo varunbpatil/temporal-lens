@@ -102,14 +102,15 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 		}}},
 		Signal:  "payment-received",
 		Payload: []byte(`{"amount":42}`),
+		Reason:  "reconcile payment",
 	}).Return(nil)
-	service.EXPECT().
-		Reset(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, request ports.ResetRequest) error {
-			assert.Equal(t, int64(12), *request.ResetPoint.EventID)
-			assert.Equal(t, "retry payment", request.Reason)
-			return nil
-		})
+	service.EXPECT().Reset(gomock.Any(), ports.ResetRequest{
+		WorkflowSpec: ports.WorkflowSpec{Executions: []ports.ExecutionInfo{{
+			Namespace: "payments", WorkflowID: "workflow-id", RunID: "run-id",
+		}}},
+		Target: ports.ResetTarget{Kind: ports.ResetTargetWorkflowTaskID, WorkflowTaskID: 12},
+		Reason: "retry with corrected data",
+	}).Return(nil)
 	service.EXPECT().Terminate(gomock.Any(), ports.TerminateRequest{
 		WorkflowSpec: ports.WorkflowSpec{Executions: []ports.ExecutionInfo{{
 			Namespace: "payments", WorkflowID: "workflow-id", RunID: "run-id",
@@ -120,6 +121,7 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 		WorkflowSpec: ports.WorkflowSpec{Executions: []ports.ExecutionInfo{{
 			Namespace: "payments", WorkflowID: "workflow-id", RunID: "run-id",
 		}}},
+		Reason: "customer requested cancellation",
 	}).Return(nil)
 	service.EXPECT().
 		ListIndexes(gomock.Any()).
@@ -128,20 +130,25 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 
 	handler := workflowhandler.NewHandler(service)
 	_, err := handler.Signal(t.Context(), connect.NewRequest(&v1.SignalRequest{
-		Workflows: executions, Signal: "payment-received", Payload: []byte(`{"amount":42}`),
+		Workflows: executions,
+		Signal:    "payment-received",
+		Payload:   []byte(`{"amount":42}`),
+		Reason:    "reconcile payment",
 	}))
 	require.NoError(t, err)
 	_, err = handler.Reset(t.Context(), connect.NewRequest(&v1.ResetRequest{
-		Workflows:  executions,
-		ResetPoint: &v1.ResetPoint{Point: &v1.ResetPoint_EventId{EventId: 12}},
-		Reason:     "retry payment",
+		Workflows: executions,
+		Target:    &v1.ResetTarget{Target: &v1.ResetTarget_WorkflowTaskId{WorkflowTaskId: 12}},
+		Reason:    "retry with corrected data",
 	}))
 	require.NoError(t, err)
 	_, err = handler.Terminate(t.Context(), connect.NewRequest(&v1.TerminateRequest{
 		Workflows: executions, Reason: "cancelled",
 	}))
 	require.NoError(t, err)
-	_, err = handler.Cancel(t.Context(), connect.NewRequest(&v1.CancelRequest{Workflows: executions}))
+	_, err = handler.Cancel(t.Context(), connect.NewRequest(&v1.CancelRequest{
+		Workflows: executions, Reason: "customer requested cancellation",
+	}))
 	require.NoError(t, err)
 	indexes, err := handler.ListIndexes(t.Context(), connect.NewRequest(&v1.ListIndexesRequest{}))
 	require.NoError(t, err)

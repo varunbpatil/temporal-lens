@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/varunbpatil/temporal-lens/config"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
@@ -54,12 +53,6 @@ const (
 )
 
 var _ ports.WorkflowService = (*Service)(nil)
-
-type resolvedResetGroup struct {
-	namespace  string
-	eventID    int64
-	executions []ports.ExecutionInfo
-}
 
 // Service continuously copies Temporal workflow executions into date-sharded
 // OpenSearch indexes and exposes the workflows domain API.
@@ -223,29 +216,34 @@ func (s *Service) Signal(ctx context.Context, req ports.SignalRequest) error {
 	}
 	return s.source.Signal(
 		ctx,
-		ports.InternalSignalRequest{Executions: executions, Signal: req.Signal, Payload: req.Payload},
+		ports.InternalSignalRequest{
+			Executions: executions,
+			Signal:     req.Signal,
+			Payload:    req.Payload,
+			Reason:     req.Reason,
+		},
 	)
 }
 
-// Reset resolves a workflow selection and translates activity resets into task event IDs.
+// Reset resolves a workflow selection and requests Temporal's native batch reset.
 func (s *Service) Reset(ctx context.Context, req ports.ResetRequest) error {
+	if req.Target.Kind != ports.ResetTargetFirstWorkflowTask &&
+		req.Target.Kind != ports.ResetTargetLastWorkflowTask &&
+		req.Target.Kind != ports.ResetTargetWorkflowTaskID {
+		return fmt.Errorf("reset target is required")
+	}
+	if req.Target.Kind == ports.ResetTargetWorkflowTaskID && req.Target.WorkflowTaskID < 1 {
+		return fmt.Errorf("workflow task ID must be positive")
+	}
 	executions, err := s.resolveExecutions(ctx, req.WorkflowSpec)
 	if err != nil {
 		return err
 	}
-	if req.ResetPoint.EventID != nil {
-		if req.ResetPoint.Activity != nil {
-			return errors.New("reset event ID and activity cannot both be set")
-		}
-		return s.source.Reset(
-			ctx,
-			ports.InternalResetRequest{Executions: executions, ResetPoint: req.ResetPoint, Reason: req.Reason},
-		)
-	}
-	if req.ResetPoint.Activity == nil {
-		return errors.New("reset event ID or activity is required")
-	}
-	return s.resetByActivity(ctx, executions, *req.ResetPoint.Activity, req.Reason)
+	return s.source.Reset(ctx, ports.InternalResetRequest{
+		Executions: executions,
+		Target:     req.Target,
+		Reason:     req.Reason,
+	})
 }
 
 // Cancel resolves a workflow selection and requests cancellation from Temporal.
@@ -254,62 +252,7 @@ func (s *Service) Cancel(ctx context.Context, req ports.CancelRequest) error {
 	if err != nil {
 		return err
 	}
-	return s.source.Cancel(ctx, ports.InternalCancelRequest{Executions: executions})
-}
-
-// resetByActivity resolves one reset point per execution, because matching activity
-// instances can be scheduled by different workflow tasks in different histories.
-func (s *Service) resetByActivity(
-	ctx context.Context,
-	executions []ports.ExecutionInfo,
-	activity ports.ResetActivity,
-	reason string,
-) error {
-	groups := make(map[string]map[int64][]ports.ExecutionInfo)
-	for _, execution := range executions {
-		eventID, err := s.source.ResolveWorkflowTaskFinishEventID(ctx, models.WorkflowMetadata{
-			Namespace: execution.Namespace, WorkflowID: execution.WorkflowID, RunID: execution.RunID,
-		}, activity)
-		if err != nil {
-			return fmt.Errorf("resolve reset event for workflow %q: %w", execution.WorkflowID, err)
-		}
-		if groups[execution.Namespace] == nil {
-			groups[execution.Namespace] = make(map[int64][]ports.ExecutionInfo)
-		}
-		groups[execution.Namespace][eventID] = append(groups[execution.Namespace][eventID], execution)
-	}
-	resolvedGroups := make([]resolvedResetGroup, 0, len(executions))
-	for namespace, eventGroups := range groups {
-		for eventID, groupedExecutions := range eventGroups {
-			resolvedGroups = append(resolvedGroups, resolvedResetGroup{
-				namespace: namespace, eventID: eventID, executions: groupedExecutions,
-			})
-		}
-	}
-	sort.Slice(resolvedGroups, func(left, right int) bool {
-		if resolvedGroups[left].namespace != resolvedGroups[right].namespace {
-			return resolvedGroups[left].namespace < resolvedGroups[right].namespace
-		}
-		return resolvedGroups[left].eventID < resolvedGroups[right].eventID
-	})
-	return s.resetGroups(ctx, resolvedGroups, reason)
-}
-
-// resetGroups starts independent namespace/event-ID resets together. The Temporal
-// source's namespace limiter controls the resulting RPC rate within each namespace.
-func (s *Service) resetGroups(ctx context.Context, groups []resolvedResetGroup, reason string) error {
-	group, groupContext := errgroup.WithContext(ctx)
-	for _, resetGroup := range groups {
-		group.Go(func() error {
-			resolvedEventID := resetGroup.eventID
-			return s.source.Reset(groupContext, ports.InternalResetRequest{
-				Executions: resetGroup.executions,
-				ResetPoint: ports.ResetPoint{EventID: &resolvedEventID},
-				Reason:     reason,
-			})
-		})
-	}
-	return group.Wait()
+	return s.source.Cancel(ctx, ports.InternalCancelRequest{Executions: executions, Reason: req.Reason})
 }
 
 // Terminate resolves a workflow selection and sends it to Temporal.

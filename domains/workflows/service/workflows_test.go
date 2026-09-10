@@ -188,72 +188,39 @@ func TestServiceCancelsExplicitExecutions(t *testing.T) {
 	source := mocks.NewMockWorkflowSource(controller)
 	repository := mocks.NewMockWorkflowRepository(controller)
 	executions := []ports.ExecutionInfo{{Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1"}}
-	source.EXPECT().Cancel(gomock.Any(), ports.InternalCancelRequest{Executions: executions}).Return(nil)
+	source.EXPECT().Cancel(gomock.Any(), ports.InternalCancelRequest{
+		Executions: executions,
+		Reason:     "duplicate order",
+	}).Return(nil)
 	svc := newService(t, source, repository, "workflows-")
 
 	err := svc.Cancel(t.Context(), ports.CancelRequest{
 		WorkflowSpec: ports.WorkflowSpec{Executions: executions},
+		Reason:       "duplicate order",
 	})
 
 	require.NoError(t, err)
 }
 
-func TestServiceGroupsActivityResetsByNamespaceAndEventID(t *testing.T) {
+func TestServiceResetsExplicitExecutions(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	source := mocks.NewMockWorkflowSource(controller)
 	repository := mocks.NewMockWorkflowRepository(controller)
-	resetEventIDs := map[string]int64{
-		"alpha/workflow-1": 10,
-		"alpha/workflow-2": 20,
-		"alpha/workflow-3": 10,
-		"beta/workflow-4":  10,
-	}
-	source.EXPECT().
-		ResolveWorkflowTaskFinishEventID(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, metadata models.WorkflowMetadata, _ ports.ResetActivity) (int64, error) {
-			return resetEventIDs[metadata.Namespace+"/"+metadata.WorkflowID], nil
-		}).
-		Times(len(resetEventIDs))
-	var resetCalls []resetCall
-	var mutex sync.Mutex
-	source.EXPECT().
-		Reset(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, req ports.InternalResetRequest) error {
-			workflowIDs := make([]string, 0, len(req.Executions))
-			for _, execution := range req.Executions {
-				workflowIDs = append(workflowIDs, execution.WorkflowID)
-			}
-			mutex.Lock()
-			defer mutex.Unlock()
-			resetCalls = append(resetCalls, resetCall{
-				namespace:   req.Executions[0].Namespace,
-				eventID:     *req.ResetPoint.EventID,
-				workflowIDs: workflowIDs,
-			})
-			return nil
-		}).
-		Times(3)
+	executions := []ports.ExecutionInfo{{Namespace: "alpha", WorkflowID: "workflow-1", RunID: "run-1"}}
+	source.EXPECT().Reset(gomock.Any(), ports.InternalResetRequest{
+		Executions: executions,
+		Target:     ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask},
+		Reason:     "retry with corrected data",
+	}).Return(nil)
 	svc := newService(t, source, repository, "workflows-")
 
 	err := svc.Reset(t.Context(), ports.ResetRequest{
-		WorkflowSpec: ports.WorkflowSpec{Executions: []ports.ExecutionInfo{
-			{Namespace: "alpha", WorkflowID: "workflow-1", RunID: "run-1"},
-			{Namespace: "alpha", WorkflowID: "workflow-2", RunID: "run-2"},
-			{Namespace: "alpha", WorkflowID: "workflow-3", RunID: "run-3"},
-			{Namespace: "beta", WorkflowID: "workflow-4", RunID: "run-4"},
-		}},
-		ResetPoint: ports.ResetPoint{Activity: &ports.ResetActivity{Name: "charge"}},
+		WorkflowSpec: ports.WorkflowSpec{Executions: executions},
+		Target:       ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask},
+		Reason:       "retry with corrected data",
 	})
 	require.NoError(t, err)
-
-	mutex.Lock()
-	defer mutex.Unlock()
-	require.ElementsMatch(t, []resetCall{
-		{namespace: "alpha", eventID: 10, workflowIDs: []string{"workflow-1", "workflow-3"}},
-		{namespace: "alpha", eventID: 20, workflowIDs: []string{"workflow-2"}},
-		{namespace: "beta", eventID: 10, workflowIDs: []string{"workflow-4"}},
-	}, resetCalls)
 }
 
 func newService(
@@ -340,10 +307,4 @@ func (state *repositoryState) add(_ context.Context, index string, workflows []*
 	defer state.mu.Unlock()
 	state.adds = append(state.adds, indexedBatch{index: index, workflows: workflows})
 	return nil
-}
-
-type resetCall struct {
-	namespace   string
-	eventID     int64
-	workflowIDs []string
 }

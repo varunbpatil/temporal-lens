@@ -305,21 +305,6 @@ func (mr *MockWorkflowSourceMockRecorder) Reset(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockWorkflowSource)(nil).Reset), ctx, req)
 }
 
-// ResolveWorkflowTaskFinishEventID mocks base method.
-func (m *MockWorkflowSource) ResolveWorkflowTaskFinishEventID(ctx context.Context, metadata models.WorkflowMetadata, activity ports.ResetActivity) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResolveWorkflowTaskFinishEventID", ctx, metadata, activity)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ResolveWorkflowTaskFinishEventID indicates an expected call of ResolveWorkflowTaskFinishEventID.
-func (mr *MockWorkflowSourceMockRecorder) ResolveWorkflowTaskFinishEventID(ctx, metadata, activity any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveWorkflowTaskFinishEventID", reflect.TypeOf((*MockWorkflowSource)(nil).ResolveWorkflowTaskFinishEventID), ctx, metadata, activity)
-}
-
 // Signal mocks base method.
 func (m *MockWorkflowSource) Signal(ctx context.Context, req ports.InternalSignalRequest) error {
 	m.ctrl.T.Helper()

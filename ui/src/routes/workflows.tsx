@@ -64,15 +64,12 @@ import {
 import {
   GetSearchSchemaRequestSchema,
   CancelRequestSchema,
-  ResetActivityPosition,
-  ResetActivitySchema,
-  ResetPointSchema,
   ResetRequestSchema,
+  ResetTargetSchema,
   SearchRequestSchema,
   SignalRequestSchema,
   TerminateRequestSchema,
   WorkflowExecutionSchema,
-  type ResetPoint,
   type Workflow,
 } from "@/gen/temporal_lens/workflows/v1/workflows_pb";
 import {
@@ -92,7 +89,7 @@ interface WorkflowSearchURL {
   order?: "asc" | "desc";
 }
 
-type ResetPointMode = "eventId" | "activity";
+type ResetTargetMode = "first" | "last" | "eventId";
 
 const defaultColumnIDs = new Set([
   "workflow",
@@ -213,17 +210,17 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
   const [signalOpen, setSignalOpen] = useState(false);
   const [signalName, setSignalName] = useState("");
   const [signalPayload, setSignalPayload] = useState("null");
+  const [signalReason, setSignalReason] = useState("");
   const [signalValidationError, setSignalValidationError] = useState<string>();
   const [resetOpen, setResetOpen] = useState(false);
-  const [resetPointMode, setResetPointMode] = useState<ResetPointMode>("eventId");
-  const [resetEventID, setResetEventID] = useState("");
-  const [resetActivityName, setResetActivityName] = useState("");
-  const [resetActivityPosition, setResetActivityPosition] = useState("latest");
+  const [resetTargetMode, setResetTargetMode] = useState<ResetTargetMode>("last");
+  const [resetWorkflowTaskID, setResetWorkflowTaskID] = useState("");
   const [resetReason, setResetReason] = useState("");
   const [resetValidationError, setResetValidationError] = useState<string>();
   const [terminateOpen, setTerminateOpen] = useState(false);
   const [terminationReason, setTerminationReason] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const searchInput = useMemo(() => {
     try {
@@ -257,6 +254,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
       setSignalOpen(false);
       setSignalName("");
       setSignalPayload("null");
+      setSignalReason("");
       setSignalValidationError(undefined);
       clearSelectionAfterAction();
     },
@@ -264,8 +262,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
   const resetMutation = useMutation(reset, {
     onSuccess: () => {
       setResetOpen(false);
-      setResetEventID("");
-      setResetActivityName("");
+      setResetWorkflowTaskID("");
       setResetReason("");
       setResetValidationError(undefined);
       clearSelectionAfterAction();
@@ -281,6 +278,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
   const cancelMutation = useMutation(cancel, {
     onSuccess: () => {
       setCancelOpen(false);
+      setCancelReason("");
       clearSelectionAfterAction();
     },
   });
@@ -394,7 +392,9 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
     );
   };
   const submitCancel = () => {
-    cancelMutation.mutate(create(CancelRequestSchema, { workflows: selectionForAction() }));
+    cancelMutation.mutate(
+      create(CancelRequestSchema, { workflows: selectionForAction(), reason: cancelReason }),
+    );
   };
   const submitSignal = () => {
     const name = signalName.trim();
@@ -415,46 +415,35 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
         workflows: selectionForAction(),
         signal: name,
         payload: new TextEncoder().encode(payload),
+        reason: signalReason,
       }),
     );
   };
   const submitReset = () => {
-    let resetPoint: ResetPoint;
-    if (resetPointMode === "eventId") {
-      try {
-        const eventID = BigInt(resetEventID);
-        if (eventID < 1n) throw new Error();
-        resetPoint = create(ResetPointSchema, { point: { case: "eventId", value: eventID } });
-      } catch {
-        setResetValidationError("Workflow task event ID must be a positive integer.");
-        return;
-      }
-    } else {
-      const name = resetActivityName.trim();
-      if (name === "") {
-        setResetValidationError("Activity ID or type name is required.");
-        return;
-      }
-      resetPoint = create(ResetPointSchema, {
-        point: {
-          case: "activity",
-          value: create(ResetActivitySchema, {
-            name,
-            position:
-              resetActivityPosition === "earliest"
-                ? ResetActivityPosition.EARLIEST
-                : ResetActivityPosition.LATEST,
-          }),
-        },
-      });
-    }
+    const target =
+      resetTargetMode === "eventId"
+        ? (() => {
+            try {
+              const workflowTaskID = BigInt(resetWorkflowTaskID);
+              if (workflowTaskID < 1n) throw new Error();
+              return create(ResetTargetSchema, {
+                target: { case: "workflowTaskId", value: workflowTaskID },
+              });
+            } catch {
+              setResetValidationError("Workflow task ID must be a positive integer.");
+              return undefined;
+            }
+          })()
+        : create(ResetTargetSchema, {
+            target:
+              resetTargetMode === "first"
+                ? { case: "firstWorkflowTask", value: {} }
+                : { case: "lastWorkflowTask", value: {} },
+          });
+    if (!target) return;
     setResetValidationError(undefined);
     resetMutation.mutate(
-      create(ResetRequestSchema, {
-        workflows: selectionForAction(),
-        resetPoint,
-        reason: resetReason,
-      }),
+      create(ResetRequestSchema, { workflows: selectionForAction(), target, reason: resetReason }),
     );
   };
   const sort: DataTableSort = {
@@ -604,6 +593,14 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               placeholder='{"amount": 42}'
             />
           </label>
+          <label className="grid gap-2 text-sm font-medium">
+            Reason
+            <Input
+              value={signalReason}
+              onChange={(event) => setSignalReason(event.target.value)}
+              placeholder="Signal reason (optional)"
+            />
+          </label>
           {signalValidationError || signalMutation.isError ? (
             <Alert variant="destructive">
               <AlertDescription>
@@ -627,86 +624,56 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
           <DialogHeader>
             <DialogTitle>Reset selected workflows?</DialogTitle>
             <DialogDescription>
-              Reset creates new workflow runs from the chosen workflow task. This cannot be undone.
+              This creates new workflow runs and cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <label className="grid gap-2 text-sm font-medium">
-            Reset point
+            Reset target
             <Select
-              value={resetPointMode}
+              value={resetTargetMode}
               onValueChange={(value) => {
-                setResetPointMode(value === "activity" ? "activity" : "eventId");
+                setResetTargetMode(value === "first" || value === "eventId" ? value : "last");
                 setResetValidationError(undefined);
               }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue>
-                  {resetPointMode === "activity"
-                    ? "Activity ID or type name"
-                    : "Workflow task event ID"}
+                  {resetTargetMode === "first"
+                    ? "First workflow task"
+                    : resetTargetMode === "eventId"
+                      ? "Workflow task ID"
+                      : "Last workflow task"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="eventId">Workflow task event ID</SelectItem>
-                <SelectItem value="activity">Activity ID or type name</SelectItem>
+                <SelectItem value="first">First workflow task</SelectItem>
+                <SelectItem value="last">Last workflow task</SelectItem>
+                <SelectItem value="eventId">Workflow task ID</SelectItem>
               </SelectContent>
             </Select>
           </label>
-          {resetPointMode === "eventId" ? (
+          {resetTargetMode === "eventId" ? (
             <label className="grid gap-2 text-sm font-medium">
-              Workflow task event ID
+              Workflow task ID
               <Input
                 type="number"
                 min="1"
                 step="1"
-                value={resetEventID}
+                value={resetWorkflowTaskID}
                 onChange={(event) => {
-                  setResetEventID(event.target.value);
+                  setResetWorkflowTaskID(event.target.value);
                   setResetValidationError(undefined);
                 }}
                 placeholder="42"
               />
             </label>
-          ) : (
-            <>
-              <label className="grid gap-2 text-sm font-medium">
-                Activity ID or type name
-                <Input
-                  value={resetActivityName}
-                  onChange={(event) => {
-                    setResetActivityName(event.target.value);
-                    setResetValidationError(undefined);
-                  }}
-                  placeholder="charge-card"
-                />
-              </label>
-              <label className="grid gap-2 text-sm font-medium">
-                Activity occurrence
-                <Select
-                  value={resetActivityPosition}
-                  onValueChange={(value) => setResetActivityPosition(value ?? "latest")}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue>
-                      {resetActivityPosition === "earliest"
-                        ? "Earliest matching activity"
-                        : "Latest matching activity"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="earliest">Earliest matching activity</SelectItem>
-                    <SelectItem value="latest">Latest matching activity</SelectItem>
-                  </SelectContent>
-                </Select>
-              </label>
-            </>
-          )}
+          ) : null}
           <label className="grid gap-2 text-sm font-medium">
             Reason
             <Input
               value={resetReason}
               onChange={(event) => setResetReason(event.target.value)}
-              placeholder="Reason for reset (optional)"
+              placeholder="Reset reason (optional)"
             />
           </label>
           {resetValidationError || resetMutation.isError ? (
@@ -741,6 +708,14 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               before they close.
             </DialogDescription>
           </DialogHeader>
+          <label className="grid gap-2 text-sm font-medium">
+            Reason
+            <Input
+              value={cancelReason}
+              onChange={(event) => setCancelReason(event.target.value)}
+              placeholder="Cancellation reason (optional)"
+            />
+          </label>
           {cancelMutation.isError ? (
             <Alert variant="destructive">
               <AlertDescription>Unable to cancel workflows. Please try again.</AlertDescription>

@@ -8,7 +8,6 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
-	grpcutil "github.com/varunbpatil/temporal-lens/inbound/grpc"
 	v1 "github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1"
 	"github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1/workflowsv1connect"
 	"github.com/varunbpatil/temporal-lens/types"
@@ -29,9 +28,11 @@ func NewHandler(svc ports.WorkflowService) *Handler {
 }
 
 // Register registers the WorkflowService handlers on the given mux.
-func Register(mux *http.ServeMux, handler workflowsv1connect.WorkflowServiceHandler) {
-	opts := grpcutil.HandlerOptions()
-
+func Register(
+	mux *http.ServeMux,
+	handler workflowsv1connect.WorkflowServiceHandler,
+	opts ...connect.HandlerOption,
+) {
 	path, httpHandler := workflowsv1connect.NewWorkflowServiceHandler(handler, opts...)
 	mux.Handle(path, httpHandler)
 }
@@ -90,6 +91,7 @@ func (h *Handler) Signal(
 		WorkflowSpec: workflowSpec,
 		Signal:       req.Msg.GetSignal(),
 		Payload:      req.Msg.GetPayload(),
+		Reason:       req.Msg.GetReason(),
 	}); serviceErr != nil {
 		return nil, serviceError(serviceErr)
 	}
@@ -105,15 +107,14 @@ func (h *Handler) Reset(
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
-	resetPoint, err := resetPointFromProto(req.Msg.GetResetPoint())
+	target, err := resetTargetFromProto(req.Msg.GetTarget())
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
-	if serviceErr := h.svc.Reset(ctx, ports.ResetRequest{
-		WorkflowSpec: workflowSpec,
-		ResetPoint:   resetPoint,
-		Reason:       req.Msg.GetReason(),
-	}); serviceErr != nil {
+	if serviceErr := h.svc.Reset(
+		ctx,
+		ports.ResetRequest{WorkflowSpec: workflowSpec, Target: target, Reason: req.Msg.GetReason()},
+	); serviceErr != nil {
 		return nil, serviceError(serviceErr)
 	}
 	return connect.NewResponse(&v1.ResetResponse{}), nil
@@ -128,7 +129,10 @@ func (h *Handler) Cancel(
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
-	if serviceErr := h.svc.Cancel(ctx, ports.CancelRequest{WorkflowSpec: workflowSpec}); serviceErr != nil {
+	if serviceErr := h.svc.Cancel(ctx, ports.CancelRequest{
+		WorkflowSpec: workflowSpec,
+		Reason:       req.Msg.GetReason(),
+	}); serviceErr != nil {
 		return nil, serviceError(serviceErr)
 	}
 	return connect.NewResponse(&v1.CancelResponse{}), nil

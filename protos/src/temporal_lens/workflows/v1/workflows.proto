@@ -3,6 +3,7 @@ syntax = "proto3";
 package temporal_lens.workflows.v1;
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "temporal_lens/common/v1/common.proto";
@@ -125,38 +126,30 @@ message SignalRequest {
   WorkflowSelection workflows = 1;
   string signal = 2;
   bytes payload = 3;
+  string reason = 4;
 }
 
 message SignalResponse {}
 
 message ResetRequest {
   WorkflowSelection workflows = 1;
-  ResetPoint reset_point = 2;
+  ResetTarget target = 2;
   string reason = 3;
 }
 
-message ResetPoint {
-  oneof point {
-    int64 event_id = 1;
-    ResetActivity activity = 2;
+message ResetTarget {
+  oneof target {
+    google.protobuf.Empty first_workflow_task = 1;
+    google.protobuf.Empty last_workflow_task = 2;
+    int64 workflow_task_id = 3;
   }
-}
-
-message ResetActivity {
-  string name = 1;
-  ResetActivityPosition position = 2;
-}
-
-enum ResetActivityPosition {
-  RESET_ACTIVITY_POSITION_UNSPECIFIED = 0;
-  RESET_ACTIVITY_POSITION_EARLIEST = 1;
-  RESET_ACTIVITY_POSITION_LATEST = 2;
 }
 
 message ResetResponse {}
 
 message CancelRequest {
   WorkflowSelection workflows = 1;
+  string reason = 2;
 }
 
 message CancelResponse {}

@@ -57,14 +57,6 @@ type WorkflowSource interface {
 		mapper Mapper,
 	) iter.Seq2[*models.WorkflowData, error]
 
-	// ResolveWorkflowTaskFinishEventID finds the resettable workflow-task event
-	// associated with an activity in one workflow execution.
-	ResolveWorkflowTaskFinishEventID(
-		ctx context.Context,
-		metadata models.WorkflowMetadata,
-		activity ResetActivity,
-	) (int64, error)
-
 	// Signal workflows
 	Signal(ctx context.Context, req InternalSignalRequest) error
 

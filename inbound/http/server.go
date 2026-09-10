@@ -29,7 +29,12 @@ type Server struct {
 
 // NewServer creates a new HTTP server that serves the API and embedded UI.
 func NewServer(api *http.ServeMux, address string, logger *slog.Logger, onFatal func(error)) *Server {
-	return &Server{handler: NewHandler(api), address: address, logger: logger, onFatal: onFatal}
+	return &Server{
+		handler: newLoggingHandler(NewHandler(api), logger),
+		address: address,
+		logger:  logger,
+		onFatal: onFatal,
+	}
 }
 
 // NewHandler serves API routes below /api and the embedded UI at the root.
@@ -60,6 +65,62 @@ func NewHandler(api *http.ServeMux) http.Handler {
 		entrypoint.URL.Path = "/"
 		ui.ServeHTTP(writer, entrypoint)
 	})
+}
+
+// newLoggingHandler records API request outcomes. Static UI assets are omitted
+// to keep normal browser page loads from obscuring API failures.
+func newLoggingHandler(next http.Handler, logger *slog.Logger) http.Handler {
+	if logger == nil {
+		return next
+	}
+
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		started := time.Now()
+		recorder := &responseRecorder{ResponseWriter: writer, status: http.StatusOK}
+		next.ServeHTTP(recorder, request)
+
+		if !strings.HasPrefix(request.URL.Path, apiPrefix) {
+			return
+		}
+
+		attributes := []any{
+			"method", request.Method,
+			"path", request.URL.Path,
+			"status", recorder.status,
+			"duration", time.Since(started),
+		}
+		if recorder.status >= http.StatusInternalServerError {
+			logger.ErrorContext(request.Context(), "HTTP request failed", attributes...)
+			return
+		}
+		logger.InfoContext(request.Context(), "HTTP request", attributes...)
+	})
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+
+	status      int
+	wroteHeader bool
+}
+
+func (w *responseRecorder) WriteHeader(status int) {
+	if w.wroteHeader {
+		return
+	}
+	w.status = status
+	w.wroteHeader = true
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *responseRecorder) Write(data []byte) (int, error) {
+	return w.ResponseWriter.Write(data)
+}
+
+// Unwrap lets net/http response helpers access optional interfaces implemented
+// by the original writer.
+func (w *responseRecorder) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 func embeddedUI() fs.FS {
