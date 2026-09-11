@@ -2,7 +2,7 @@
 
 # 🔭 Temporal Lens
 
-**Deep search and filtering of [Temporal.io](https://temporal.io/) workflows powered by [OpenSearch](https://github.com/opensearch-project/opensearch)**
+**Search engine for [Temporal.io](https://temporal.io/) workflows powered by [OpenSearch](https://github.com/opensearch-project/opensearch)**
 
 [![Go](https://img.shields.io/badge/Go-1.27-00ADD8?style=flat&logo=go&logoColor=white)](https://go.dev)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev)
@@ -11,9 +11,38 @@
 
 </div>
 
+## Features
+
+### 🔍 Intuitive structured search
+
+Construct complex queries with logical operators easily from the UI and search across namespaces. Queries can be constructed using:
+
+* Workflow metadata - ID, Type, Namespace, Start/End time, Status, Search Attributes and errors.
+* Activity metadata - Name/Custom activity ID, Attempts, Start/End time and errors.
+* Child workflow metadata - ID, Type, Namespace, Attempts, Start/End time and errors
+
+### 📝 Custom queries on JSON payloads
+
+Easily create custom deployments that allow queries on custom fields extracted from JSON payloads of workflows, child workflows and activities.
+
+### 🗂️ Unified view
+
+Provides a unified view across all namespaces, even for Temporal Cloud. Queries filter across all namespaces. No more switching between namespaces in the Temporal UI.
+
+### 📦 Bulk operations
+
+Select individual workflows, a page of results, or all matching results to signal, reset, cancel, or terminate workflows using Temporal batch operations. Unlike the Temporal UI, this works across namespaces.
+
+## Upcoming Features
+
+* 🔒 Authentication
+* 🔌 MCP server
+* ⌨️ CLI tool and AI agent skill
+* 🗃️ Admin dashboard to manage OpenSearch indexes and much more...
+
 ## Project Structure
 
-This project follows hexagonal architecture (ports-and-adapters pattern).
+This project follows hexagonal architecture (Ports & Adapters pattern).
 
 ```
 .
