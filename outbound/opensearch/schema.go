@@ -15,7 +15,7 @@ const (
 // BuildIndexMapping creates an explicit OpenSearch mapping from a schema.
 // No dynamic mapping is used.
 //
-// Fields are keyed by dot-separated paths (e.g. "activities.id",
+// Fields are keyed by dot-separated paths (e.g. "activities.activityId",
 // "inputs.amount") which are expanded into nested OpenSearch objects.
 // Fields without dots are top-level.
 //
@@ -77,7 +77,7 @@ func setNestedType(properties map[string]any, path string) {
 }
 
 // buildNestedProperties expands dot-separated field paths into nested maps.
-// Fields like "activities.id" become map["activities"]["id"] = fieldMapping(...).
+// Fields like "activities.activityId" become map["activities"]["activityId"] = fieldMapping(...).
 // Supports arbitrary nesting depth via recursive descent on the first dot.
 func buildNestedProperties(schema types.Schema) map[string]any {
 	props := make(map[string]any)

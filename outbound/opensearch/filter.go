@@ -49,8 +49,8 @@ func buildFilterWithNestedPaths(
 }
 
 // buildLogicalWithNestedPaths builds an AND or OR query and groups top-level
-// AND operands that address the same nested array. For example, activities.id
-// = "a" AND activities.type = "worker" must be one nested query so both
+// AND operands that address the same nested array. For example, activities.activityId
+// = "a" AND activities.activityType = "worker" must be one nested query so both
 // conditions match one activity, rather than two nested queries that could
 // each match a different activity.
 func buildLogicalWithNestedPaths(

@@ -18,7 +18,7 @@
 Construct complex queries with logical operators easily from the UI and search across namespaces. Queries can be constructed using:
 
 * Workflow metadata - ID, Type, Namespace, Start/End time, Status, Search Attributes and errors.
-* Activity metadata - Name/Custom activity ID, Attempts, Start/End time and errors.
+* Activity metadata - Type/Custom activity ID, Attempts, Start/End time and errors.
 * Child workflow metadata - ID, Type, Namespace, Attempts, Start/End time and errors
 
 ### 📝 Custom queries on JSON payloads

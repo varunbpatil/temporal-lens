@@ -325,15 +325,15 @@ func activityToProto(activity models.Activity) (*v1.Activity, error) {
 		return nil, err
 	}
 	return &v1.Activity{
-		Id:        activity.ID,
-		Name:      activity.Name,
-		Inputs:    inputs,
-		Outputs:   outputs,
-		Errors:    activity.Errors,
-		Attempts:  activity.Attempts,
-		StartTime: timestamppb.New(activity.StartTime),
-		EndTime:   timestampToProto(activity.EndTime),
-		Paused:    activity.Paused,
+		ActivityId:   activity.ActivityID,
+		ActivityType: activity.ActivityType,
+		Inputs:       inputs,
+		Outputs:      outputs,
+		Errors:       activity.Errors,
+		Attempts:     activity.Attempts,
+		StartTime:    timestamppb.New(activity.StartTime),
+		EndTime:      timestampToProto(activity.EndTime),
+		Paused:       activity.Paused,
 	}, nil
 }
 

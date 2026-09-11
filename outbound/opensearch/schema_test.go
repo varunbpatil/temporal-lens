@@ -102,8 +102,8 @@ func TestBuildIndexMapping_ActivitiesNested(t *testing.T) {
 	t.Parallel()
 
 	schema := types.Schema{
-		"activities.id":             {Type: types.FieldTypeKeyword},
-		"activities.name":           {Type: types.FieldTypeText},
+		"activities.activityId":     {Type: types.FieldTypeKeyword},
+		"activities.activityType":   {Type: types.FieldTypeText},
 		"activities.attempts":       {Type: types.FieldTypeInt},
 		"activities.paused":         {Type: types.FieldTypeBool},
 		"activities.errors":         {Type: types.FieldTypeKeyword},
@@ -118,8 +118,8 @@ func TestBuildIndexMapping_ActivitiesNested(t *testing.T) {
 	assert.Equal(t, "nested", activities["type"], "activities should use nested type")
 
 	actProps := getField(t, activities, "properties")
-	assertFieldType(t, actProps, "id", "keyword")
-	assertFieldType(t, actProps, "name", "text")
+	assertFieldType(t, actProps, "activityId", "keyword")
+	assertFieldType(t, actProps, "activityType", "text")
 	assertFieldType(t, actProps, "attempts", "long")
 	assertFieldType(t, actProps, "paused", "boolean")
 	assertFieldType(t, actProps, "errors", "keyword")
@@ -195,8 +195,8 @@ func TestBuildIndexMapping_WithoutNestedParam(t *testing.T) {
 	t.Parallel()
 
 	schema := types.Schema{
-		"activities.id":   {Type: types.FieldTypeKeyword},
-		"activities.name": {Type: types.FieldTypeText},
+		"activities.activityId":   {Type: types.FieldTypeKeyword},
+		"activities.activityType": {Type: types.FieldTypeText},
 	}
 
 	result := opensearch.BuildIndexMapping(schema, nil)
@@ -212,8 +212,8 @@ func TestBuildIndexMapping_MixedDepths(t *testing.T) {
 	schema := types.Schema{
 		"id":                       {Type: types.FieldTypeKeyword},
 		"status":                   {Type: types.FieldTypeKeyword},
-		"activities.id":            {Type: types.FieldTypeKeyword},
-		"activities.name":          {Type: types.FieldTypeText},
+		"activities.activityId":    {Type: types.FieldTypeKeyword},
+		"activities.activityType":  {Type: types.FieldTypeText},
 		"activities.inputs.amount": {Type: types.FieldTypeDouble},
 		"childWorkflows":           {Type: types.FieldTypeKeyword},
 	}
@@ -228,8 +228,8 @@ func TestBuildIndexMapping_MixedDepths(t *testing.T) {
 	activities := getField(t, props, "activities")
 	assert.Equal(t, "nested", activities["type"])
 	actProps := getField(t, activities, "properties")
-	assertFieldType(t, actProps, "id", "keyword")
-	assertFieldType(t, actProps, "name", "text")
+	assertFieldType(t, actProps, "activityId", "keyword")
+	assertFieldType(t, actProps, "activityType", "text")
 
 	actInputs := getField(t, actProps, "inputs")
 	assert.Equal(t, "object", actInputs["type"])

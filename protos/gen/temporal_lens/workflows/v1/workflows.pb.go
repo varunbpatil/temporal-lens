@@ -660,8 +660,8 @@ func (x *WorkflowData) GetChildWorkflows() []*ChildWorkflow {
 
 type Activity struct {
 	state         protoimpl.MessageState         `protogen:"open.v1"`
-	Id            string                         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                         `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ActivityId    string                         `protobuf:"bytes,1,opt,name=activity_id,json=activityId,proto3" json:"activity_id,omitempty"`
+	ActivityType  string                         `protobuf:"bytes,2,opt,name=activity_type,json=activityType,proto3" json:"activity_type,omitempty"`
 	Inputs        map[string]*structpb.ListValue `protobuf:"bytes,3,rep,name=inputs,proto3" json:"inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Outputs       map[string]*structpb.ListValue `protobuf:"bytes,4,rep,name=outputs,proto3" json:"outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Errors        []string                       `protobuf:"bytes,5,rep,name=errors,proto3" json:"errors,omitempty"`
@@ -703,16 +703,16 @@ func (*Activity) Descriptor() ([]byte, []int) {
 	return file_temporal_lens_workflows_v1_workflows_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *Activity) GetId() string {
+func (x *Activity) GetActivityId() string {
 	if x != nil {
-		return x.Id
+		return x.ActivityId
 	}
 	return ""
 }
 
-func (x *Activity) GetName() string {
+func (x *Activity) GetActivityType() string {
 	if x != nil {
-		return x.Name
+		return x.ActivityType
 	}
 	return ""
 }
@@ -1808,10 +1808,11 @@ const file_temporal_lens_workflows_v1_workflows_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x1a.google.protobuf.ListValueR\x05value:\x028\x01\x1aV\n" +
 	"\fOutputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x120\n" +
-	"\x05value\x18\x02 \x01(\v2\x1a.google.protobuf.ListValueR\x05value:\x028\x01\"\xb2\x04\n" +
-	"\bActivity\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12H\n" +
+	"\x05value\x18\x02 \x01(\v2\x1a.google.protobuf.ListValueR\x05value:\x028\x01\"\xd4\x04\n" +
+	"\bActivity\x12\x1f\n" +
+	"\vactivity_id\x18\x01 \x01(\tR\n" +
+	"activityId\x12#\n" +
+	"\ractivity_type\x18\x02 \x01(\tR\factivityType\x12H\n" +
 	"\x06inputs\x18\x03 \x03(\v20.temporal_lens.workflows.v1.Activity.InputsEntryR\x06inputs\x12K\n" +
 	"\aoutputs\x18\x04 \x03(\v21.temporal_lens.workflows.v1.Activity.OutputsEntryR\aoutputs\x12\x16\n" +
 	"\x06errors\x18\x05 \x03(\tR\x06errors\x12\x1a\n" +

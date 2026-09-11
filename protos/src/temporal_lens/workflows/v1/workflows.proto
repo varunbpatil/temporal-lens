@@ -83,8 +83,8 @@ message WorkflowData {
 }
 
 message Activity {
-  string id = 1;
-  string name = 2;
+  string activity_id = 1;
+  string activity_type = 2;
   map<string, google.protobuf.ListValue> inputs = 3;
   map<string, google.protobuf.ListValue> outputs = 4;
   repeated string errors = 5;

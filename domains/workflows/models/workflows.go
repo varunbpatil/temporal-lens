@@ -97,10 +97,10 @@ type Activity struct {
 	//
 	// Temporal usually auto-generates an integer activity ID. Those implementation
 	// details are omitted; client-provided string IDs are retained.
-	ID string `json:"id,omitempty"`
+	ActivityID string `json:"activityId,omitempty"`
 
-	// Activity name
-	Name string `json:"name"`
+	// Activity type
+	ActivityType string `json:"activityType"`
 
 	// Activity inputs
 	//
@@ -201,6 +201,7 @@ func WorkflowSchema() types.Schema {
 	return schema
 }
 
+//nolint:goconst // Schema labels intentionally mirror the user-facing field names.
 func workflowMetadataSchema() types.Schema {
 	return types.Schema{
 		"id": {
@@ -225,13 +226,13 @@ func workflowMetadataSchema() types.Schema {
 		},
 		"metadata.startTime": {
 			Type:     types.FieldTypeTimestamp,
-			Label:    "Started", //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
+			Label:    "Started",
 			Group:    workflowFieldGroup,
 			Sortable: true,
 		},
 		"metadata.endTime": {
 			Type:     types.FieldTypeTimestamp,
-			Label:    "Finished", //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
+			Label:    "Finished",
 			Group:    workflowFieldGroup,
 			Sortable: true,
 		},
@@ -264,21 +265,22 @@ func workflowMetadataSchema() types.Schema {
 	}
 }
 
+//nolint:goconst // Schema labels intentionally mirror the user-facing field names.
 func workflowDataSchema() types.Schema {
 	return types.Schema{
 		"data.errors": {
 			Type:  types.FieldTypeText,
-			Label: "Errors", //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
+			Label: "Errors",
 			Group: workflowFieldGroup,
 		},
-		"data.activities.id": {
+		"data.activities.activityId": {
 			Type:  types.FieldTypeText,
 			Label: "ID",
 			Group: activityFieldGroup,
 		},
-		"data.activities.name": {
+		"data.activities.activityType": {
 			Type:  types.FieldTypeText,
-			Label: "Name",
+			Label: "Type",
 			Group: activityFieldGroup,
 		},
 		"data.activities.errors": {

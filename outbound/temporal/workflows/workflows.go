@@ -573,9 +573,9 @@ func (b *workflowDataBuilder) addScheduledActivity(
 	}
 	rawActivityID := attributes.GetActivityId()
 	b.data.Activities = append(b.data.Activities, models.Activity{
-		ID:     customActivityID(rawActivityID),
-		Name:   attributes.GetActivityType().GetName(),
-		Inputs: inputs,
+		ActivityID:   customActivityID(rawActivityID),
+		ActivityType: attributes.GetActivityType().GetName(),
+		Inputs:       inputs,
 	})
 	index := len(b.data.Activities) - 1
 	b.activityByEvent[eventID] = index
@@ -786,12 +786,12 @@ func (b *workflowDataBuilder) mergePending(description *workflowservice.Describe
 			continue
 		}
 		b.data.Activities = append(b.data.Activities, models.Activity{
-			ID:        customActivityID(activity.GetActivityId()),
-			Name:      activity.GetActivityType().GetName(),
-			Errors:    failureMessages(activity.GetLastFailure()),
-			Attempts:  activity.GetAttempt(),
-			StartTime: timeFromProto(activity.GetLastStartedTime()),
-			Paused:    activity.GetPaused(),
+			ActivityID:   customActivityID(activity.GetActivityId()),
+			ActivityType: activity.GetActivityType().GetName(),
+			Errors:       failureMessages(activity.GetLastFailure()),
+			Attempts:     activity.GetAttempt(),
+			StartTime:    timeFromProto(activity.GetLastStartedTime()),
+			Paused:       activity.GetPaused(),
 		})
 	}
 	for _, child := range description.GetPendingChildren() {

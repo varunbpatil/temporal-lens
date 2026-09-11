@@ -129,19 +129,19 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	require.Len(t, data.Activities, 3)
 	activityEnd := start.Add(5 * time.Minute)
 	require.Equal(t, models.Activity{
-		ID:        "charge",
-		Name:      "ChargeCard",
-		Inputs:    map[string][]any{"amount": {float64(42)}},
-		Outputs:   map[string][]any{"receipt": {"receipt-1"}},
-		Errors:    []string{"payment declined", "retry is pending"},
-		Attempts:  2,
-		StartTime: start.Add(4 * time.Minute),
-		EndTime:   &activityEnd,
+		ActivityID:   "charge",
+		ActivityType: "ChargeCard",
+		Inputs:       map[string][]any{"amount": {float64(42)}},
+		Outputs:      map[string][]any{"receipt": {"receipt-1"}},
+		Errors:       []string{"payment declined", "retry is pending"},
+		Attempts:     2,
+		StartTime:    start.Add(4 * time.Minute),
+		EndTime:      &activityEnd,
 	}, data.Activities[0])
-	require.Empty(t, data.Activities[1].ID)
-	require.Equal(t, "GeneratedActivity", data.Activities[1].Name)
-	require.Empty(t, data.Activities[2].ID)
-	require.Equal(t, "PendingGeneratedActivity", data.Activities[2].Name)
+	require.Empty(t, data.Activities[1].ActivityID)
+	require.Equal(t, "GeneratedActivity", data.Activities[1].ActivityType)
+	require.Empty(t, data.Activities[2].ActivityID)
+	require.Equal(t, "PendingGeneratedActivity", data.Activities[2].ActivityType)
 	require.Len(t, data.ChildWorkflows, 1)
 	childEnd := start.Add(9 * time.Minute)
 	require.Equal(t, models.ChildWorkflow{
