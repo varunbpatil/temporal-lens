@@ -1091,7 +1091,7 @@ func (s *Source) Signal(ctx context.Context, req ports.InternalSignalRequest) er
 //nolint:staticcheck // Temporal Server 1.31 validates the deprecated Executions field.
 func (s *Source) Reset(ctx context.Context, req ports.InternalResetRequest) error {
 	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.
-	options, optionsErr := batchResetOptions(req.Target)
+	options, optionsErr := batchResetOptions(req.Target, req.ExcludeTypes)
 	if optionsErr != nil {
 		return optionsErr
 	}
@@ -1121,26 +1121,54 @@ func (s *Source) Reset(ctx context.Context, req ports.InternalResetRequest) erro
 	)
 }
 
-func batchResetOptions(target ports.ResetTarget) (*commonpb.ResetOptions, error) {
+func batchResetOptions(
+	target ports.ResetTarget,
+	excludeTypes []ports.ResetReapplyExcludeType,
+) (*commonpb.ResetOptions, error) {
+	options := &commonpb.ResetOptions{
+		ResetReapplyExcludeTypes: make([]enumspb.ResetReapplyExcludeType, 0, len(excludeTypes)),
+	}
+	for _, excludeType := range excludeTypes {
+		switch excludeType {
+		case ports.ResetReapplyExcludeTypeSignal:
+			options.ResetReapplyExcludeTypes = append(
+				options.ResetReapplyExcludeTypes,
+				enumspb.RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL,
+			)
+		case ports.ResetReapplyExcludeTypeUpdate:
+			options.ResetReapplyExcludeTypes = append(
+				options.ResetReapplyExcludeTypes,
+				enumspb.RESET_REAPPLY_EXCLUDE_TYPE_UPDATE,
+			)
+		case ports.ResetReapplyExcludeTypeNexus:
+			options.ResetReapplyExcludeTypes = append(
+				options.ResetReapplyExcludeTypes,
+				enumspb.RESET_REAPPLY_EXCLUDE_TYPE_NEXUS,
+			)
+		default:
+			return nil, fmt.Errorf("unknown reset exclude type %q", excludeType)
+		}
+	}
 	switch target.Kind {
 	case ports.ResetTargetFirstWorkflowTask:
-		return &commonpb.ResetOptions{Target: &commonpb.ResetOptions_FirstWorkflowTask{
+		options.Target = &commonpb.ResetOptions_FirstWorkflowTask{
 			FirstWorkflowTask: &emptypb.Empty{},
-		}}, nil
+		}
 	case ports.ResetTargetLastWorkflowTask:
-		return &commonpb.ResetOptions{Target: &commonpb.ResetOptions_LastWorkflowTask{
+		options.Target = &commonpb.ResetOptions_LastWorkflowTask{
 			LastWorkflowTask: &emptypb.Empty{},
-		}}, nil
+		}
 	case ports.ResetTargetWorkflowTaskID:
 		if target.WorkflowTaskID < 1 {
 			return nil, fmt.Errorf("workflow task ID must be positive")
 		}
-		return &commonpb.ResetOptions{Target: &commonpb.ResetOptions_WorkflowTaskId{
+		options.Target = &commonpb.ResetOptions_WorkflowTaskId{
 			WorkflowTaskId: target.WorkflowTaskID,
-		}}, nil
+		}
 	default:
 		return nil, fmt.Errorf("reset target is required")
 	}
+	return options, nil
 }
 
 // Cancel requests cancellation of Temporal workflows.

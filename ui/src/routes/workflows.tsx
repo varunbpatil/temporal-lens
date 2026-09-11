@@ -32,6 +32,7 @@ import {
 import { searchFieldsFromSchema } from "@/components/search/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -65,6 +66,7 @@ import {
   GetSearchSchemaRequestSchema,
   CancelRequestSchema,
   ResetRequestSchema,
+  ResetReapplyExcludeType,
   ResetTargetSchema,
   SearchRequestSchema,
   SignalRequestSchema,
@@ -101,6 +103,11 @@ const defaultColumnOrder = [
 ] as const;
 const defaultColumnIDs = new Set(defaultColumnOrder);
 const columnPreferenceKey = "temporal-lens:workflows:columns";
+const resetExcludeTypeOptions = [
+  { value: ResetReapplyExcludeType.SIGNAL, label: "Signals" },
+  { value: ResetReapplyExcludeType.UPDATE, label: "Updates" },
+  { value: ResetReapplyExcludeType.NEXUS, label: "Nexus operations" },
+] as const;
 const workflowStatuses: Record<number, { label: string; className: string }> = {
   1: {
     label: "Running",
@@ -232,6 +239,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
   const [resetOpen, setResetOpen] = useState(false);
   const [resetTargetMode, setResetTargetMode] = useState<ResetTargetMode>("last");
   const [resetWorkflowTaskID, setResetWorkflowTaskID] = useState("");
+  const [resetExcludeTypes, setResetExcludeTypes] = useState<ResetReapplyExcludeType[]>([]);
   const [resetReason, setResetReason] = useState("");
   const [resetValidationError, setResetValidationError] = useState<string>();
   const [terminateOpen, setTerminateOpen] = useState(false);
@@ -462,7 +470,12 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
     if (!target) return;
     setResetValidationError(undefined);
     resetMutation.mutate(
-      create(ResetRequestSchema, { workflows: selectionForAction(), target, reason: resetReason }),
+      create(ResetRequestSchema, {
+        workflows: selectionForAction(),
+        target,
+        reason: resetReason,
+        excludeTypes: resetExcludeTypes,
+      }),
     );
   };
   const sort: DataTableSort = {
@@ -710,6 +723,26 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               />
             </label>
           ) : null}
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium">Do not reapply after reset</legend>
+            <div className="grid gap-2">
+              {resetExcludeTypeOptions.map((option) => (
+                <label key={option.value} className="flex items-center gap-2 text-sm font-normal">
+                  <Checkbox
+                    checked={resetExcludeTypes.includes(option.value)}
+                    onCheckedChange={(checked) => {
+                      setResetExcludeTypes((excludeTypes) =>
+                        checked === true
+                          ? [...excludeTypes, option.value]
+                          : excludeTypes.filter((excludeType) => excludeType !== option.value),
+                      );
+                    }}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label className="grid gap-2 text-sm font-medium">
             Reason
             <Input

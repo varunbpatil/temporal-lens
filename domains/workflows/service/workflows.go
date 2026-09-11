@@ -268,9 +268,10 @@ func (s *Service) Reset(ctx context.Context, req ports.ResetRequest) error {
 		return err
 	}
 	return s.source.Reset(ctx, ports.InternalResetRequest{
-		Executions: executions,
-		Target:     req.Target,
-		Reason:     req.Reason,
+		Executions:   executions,
+		Target:       req.Target,
+		ExcludeTypes: req.ExcludeTypes,
+		Reason:       req.Reason,
 	})
 }
 

@@ -216,14 +216,22 @@ func TestServiceResetsExplicitExecutions(t *testing.T) {
 	source.EXPECT().Reset(gomock.Any(), ports.InternalResetRequest{
 		Executions: executions,
 		Target:     ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask},
-		Reason:     "retry with corrected data",
+		ExcludeTypes: []ports.ResetReapplyExcludeType{
+			ports.ResetReapplyExcludeTypeSignal,
+			ports.ResetReapplyExcludeTypeNexus,
+		},
+		Reason: "retry with corrected data",
 	}).Return(nil)
 	svc := newService(t, source, repository, "workflows-")
 
 	err := svc.Reset(t.Context(), ports.ResetRequest{
 		WorkflowSpec: ports.WorkflowSpec{Executions: executions},
 		Target:       ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask},
-		Reason:       "retry with corrected data",
+		ExcludeTypes: []ports.ResetReapplyExcludeType{
+			ports.ResetReapplyExcludeTypeSignal,
+			ports.ResetReapplyExcludeTypeNexus,
+		},
+		Reason: "retry with corrected data",
 	})
 	require.NoError(t, err)
 }

@@ -93,6 +93,59 @@ func (WorkflowStatus) EnumDescriptor() ([]byte, []int) {
 	return file_temporal_lens_workflows_v1_workflows_proto_rawDescGZIP(), []int{0}
 }
 
+// Event types not to reapply after the reset point.
+type ResetReapplyExcludeType int32
+
+const (
+	ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_UNSPECIFIED ResetReapplyExcludeType = 0
+	ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL      ResetReapplyExcludeType = 1
+	ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_UPDATE      ResetReapplyExcludeType = 2
+	ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_NEXUS       ResetReapplyExcludeType = 3
+)
+
+// Enum value maps for ResetReapplyExcludeType.
+var (
+	ResetReapplyExcludeType_name = map[int32]string{
+		0: "RESET_REAPPLY_EXCLUDE_TYPE_UNSPECIFIED",
+		1: "RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL",
+		2: "RESET_REAPPLY_EXCLUDE_TYPE_UPDATE",
+		3: "RESET_REAPPLY_EXCLUDE_TYPE_NEXUS",
+	}
+	ResetReapplyExcludeType_value = map[string]int32{
+		"RESET_REAPPLY_EXCLUDE_TYPE_UNSPECIFIED": 0,
+		"RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL":      1,
+		"RESET_REAPPLY_EXCLUDE_TYPE_UPDATE":      2,
+		"RESET_REAPPLY_EXCLUDE_TYPE_NEXUS":       3,
+	}
+)
+
+func (x ResetReapplyExcludeType) Enum() *ResetReapplyExcludeType {
+	p := new(ResetReapplyExcludeType)
+	*p = x
+	return p
+}
+
+func (x ResetReapplyExcludeType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ResetReapplyExcludeType) Descriptor() protoreflect.EnumDescriptor {
+	return file_temporal_lens_workflows_v1_workflows_proto_enumTypes[1].Descriptor()
+}
+
+func (ResetReapplyExcludeType) Type() protoreflect.EnumType {
+	return &file_temporal_lens_workflows_v1_workflows_proto_enumTypes[1]
+}
+
+func (x ResetReapplyExcludeType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ResetReapplyExcludeType.Descriptor instead.
+func (ResetReapplyExcludeType) EnumDescriptor() ([]byte, []int) {
+	return file_temporal_lens_workflows_v1_workflows_proto_rawDescGZIP(), []int{1}
+}
+
 type GetSearchSchemaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1112,10 +1165,11 @@ func (*SignalResponse) Descriptor() ([]byte, []int) {
 }
 
 type ResetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Workflows     *WorkflowSelection     `protobuf:"bytes,1,opt,name=workflows,proto3" json:"workflows,omitempty"`
-	Target        *ResetTarget           `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
-	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Workflows     *WorkflowSelection        `protobuf:"bytes,1,opt,name=workflows,proto3" json:"workflows,omitempty"`
+	Target        *ResetTarget              `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
+	Reason        string                    `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	ExcludeTypes  []ResetReapplyExcludeType `protobuf:"varint,4,rep,packed,name=exclude_types,json=excludeTypes,proto3,enum=temporal_lens.workflows.v1.ResetReapplyExcludeType" json:"exclude_types,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1169,6 +1223,13 @@ func (x *ResetRequest) GetReason() string {
 		return x.Reason
 	}
 	return ""
+}
+
+func (x *ResetRequest) GetExcludeTypes() []ResetReapplyExcludeType {
+	if x != nil {
+		return x.ExcludeTypes
+	}
+	return nil
 }
 
 type ResetTarget struct {
@@ -1803,11 +1864,12 @@ const file_temporal_lens_workflows_v1_workflows_proto_rawDesc = "" +
 	"\x06signal\x18\x02 \x01(\tR\x06signal\x12\x18\n" +
 	"\apayload\x18\x03 \x01(\fR\apayload\x12\x16\n" +
 	"\x06reason\x18\x04 \x01(\tR\x06reason\"\x10\n" +
-	"\x0eSignalResponse\"\xb4\x01\n" +
+	"\x0eSignalResponse\"\x8e\x02\n" +
 	"\fResetRequest\x12K\n" +
 	"\tworkflows\x18\x01 \x01(\v2-.temporal_lens.workflows.v1.WorkflowSelectionR\tworkflows\x12?\n" +
 	"\x06target\x18\x02 \x01(\v2'.temporal_lens.workflows.v1.ResetTargetR\x06target\x12\x16\n" +
-	"\x06reason\x18\x03 \x01(\tR\x06reason\"\xd5\x01\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\x12X\n" +
+	"\rexclude_types\x18\x04 \x03(\x0e23.temporal_lens.workflows.v1.ResetReapplyExcludeTypeR\fexcludeTypes\"\xd5\x01\n" +
 	"\vResetTarget\x12H\n" +
 	"\x13first_workflow_task\x18\x01 \x01(\v2\x16.google.protobuf.EmptyH\x00R\x11firstWorkflowTask\x12F\n" +
 	"\x12last_workflow_task\x18\x02 \x01(\v2\x16.google.protobuf.EmptyH\x00R\x10lastWorkflowTask\x12*\n" +
@@ -1840,7 +1902,12 @@ const file_temporal_lens_workflows_v1_workflows_proto_rawDesc = "" +
 	"\x16WORKFLOW_STATUS_PAUSED\x10\x05\x12$\n" +
 	" WORKFLOW_STATUS_CONTINUED_AS_NEW\x10\x06\x12\x1c\n" +
 	"\x18WORKFLOW_STATUS_CANCELED\x10\a\x12\x1e\n" +
-	"\x1aWORKFLOW_STATUS_TERMINATED\x10\b2\xd8\x06\n" +
+	"\x1aWORKFLOW_STATUS_TERMINATED\x10\b*\xb9\x01\n" +
+	"\x17ResetReapplyExcludeType\x12*\n" +
+	"&RESET_REAPPLY_EXCLUDE_TYPE_UNSPECIFIED\x10\x00\x12%\n" +
+	"!RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL\x10\x01\x12%\n" +
+	"!RESET_REAPPLY_EXCLUDE_TYPE_UPDATE\x10\x02\x12$\n" +
+	" RESET_REAPPLY_EXCLUDE_TYPE_NEXUS\x10\x032\xd8\x06\n" +
 	"\x0fWorkflowService\x12z\n" +
 	"\x0fGetSearchSchema\x122.temporal_lens.workflows.v1.GetSearchSchemaRequest\x1a3.temporal_lens.workflows.v1.GetSearchSchemaResponse\x12_\n" +
 	"\x06Search\x12).temporal_lens.workflows.v1.SearchRequest\x1a*.temporal_lens.workflows.v1.SearchResponse\x12_\n" +
@@ -1864,115 +1931,117 @@ func file_temporal_lens_workflows_v1_workflows_proto_rawDescGZIP() []byte {
 	return file_temporal_lens_workflows_v1_workflows_proto_rawDescData
 }
 
-var file_temporal_lens_workflows_v1_workflows_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_temporal_lens_workflows_v1_workflows_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_temporal_lens_workflows_v1_workflows_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_temporal_lens_workflows_v1_workflows_proto_goTypes = []any{
 	(WorkflowStatus)(0),             // 0: temporal_lens.workflows.v1.WorkflowStatus
-	(*GetSearchSchemaRequest)(nil),  // 1: temporal_lens.workflows.v1.GetSearchSchemaRequest
-	(*GetSearchSchemaResponse)(nil), // 2: temporal_lens.workflows.v1.GetSearchSchemaResponse
-	(*SearchRequest)(nil),           // 3: temporal_lens.workflows.v1.SearchRequest
-	(*SearchResponse)(nil),          // 4: temporal_lens.workflows.v1.SearchResponse
-	(*Workflow)(nil),                // 5: temporal_lens.workflows.v1.Workflow
-	(*WorkflowMetadata)(nil),        // 6: temporal_lens.workflows.v1.WorkflowMetadata
-	(*SearchAttribute)(nil),         // 7: temporal_lens.workflows.v1.SearchAttribute
-	(*WorkflowData)(nil),            // 8: temporal_lens.workflows.v1.WorkflowData
-	(*Activity)(nil),                // 9: temporal_lens.workflows.v1.Activity
-	(*ChildWorkflow)(nil),           // 10: temporal_lens.workflows.v1.ChildWorkflow
-	(*WorkflowSelection)(nil),       // 11: temporal_lens.workflows.v1.WorkflowSelection
-	(*ExecutionList)(nil),           // 12: temporal_lens.workflows.v1.ExecutionList
-	(*WorkflowExecution)(nil),       // 13: temporal_lens.workflows.v1.WorkflowExecution
-	(*SignalRequest)(nil),           // 14: temporal_lens.workflows.v1.SignalRequest
-	(*SignalResponse)(nil),          // 15: temporal_lens.workflows.v1.SignalResponse
-	(*ResetRequest)(nil),            // 16: temporal_lens.workflows.v1.ResetRequest
-	(*ResetTarget)(nil),             // 17: temporal_lens.workflows.v1.ResetTarget
-	(*ResetResponse)(nil),           // 18: temporal_lens.workflows.v1.ResetResponse
-	(*CancelRequest)(nil),           // 19: temporal_lens.workflows.v1.CancelRequest
-	(*CancelResponse)(nil),          // 20: temporal_lens.workflows.v1.CancelResponse
-	(*TerminateRequest)(nil),        // 21: temporal_lens.workflows.v1.TerminateRequest
-	(*TerminateResponse)(nil),       // 22: temporal_lens.workflows.v1.TerminateResponse
-	(*ListIndexesRequest)(nil),      // 23: temporal_lens.workflows.v1.ListIndexesRequest
-	(*ListIndexesResponse)(nil),     // 24: temporal_lens.workflows.v1.ListIndexesResponse
-	(*IndexInfo)(nil),               // 25: temporal_lens.workflows.v1.IndexInfo
-	(*DeleteIndexRequest)(nil),      // 26: temporal_lens.workflows.v1.DeleteIndexRequest
-	(*DeleteIndexResponse)(nil),     // 27: temporal_lens.workflows.v1.DeleteIndexResponse
-	nil,                             // 28: temporal_lens.workflows.v1.WorkflowData.InputsEntry
-	nil,                             // 29: temporal_lens.workflows.v1.WorkflowData.OutputsEntry
-	nil,                             // 30: temporal_lens.workflows.v1.Activity.InputsEntry
-	nil,                             // 31: temporal_lens.workflows.v1.Activity.OutputsEntry
-	nil,                             // 32: temporal_lens.workflows.v1.ChildWorkflow.InputsEntry
-	nil,                             // 33: temporal_lens.workflows.v1.ChildWorkflow.OutputsEntry
-	(*v1.SearchSchema)(nil),         // 34: temporal_lens.common.v1.SearchSchema
-	(*v1.FilterSpec)(nil),           // 35: temporal_lens.common.v1.FilterSpec
-	(*v1.SortSpec)(nil),             // 36: temporal_lens.common.v1.SortSpec
-	(*v1.PaginationSpec)(nil),       // 37: temporal_lens.common.v1.PaginationSpec
-	(*durationpb.Duration)(nil),     // 38: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),   // 39: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),           // 40: google.protobuf.Empty
-	(*structpb.ListValue)(nil),      // 41: google.protobuf.ListValue
+	(ResetReapplyExcludeType)(0),    // 1: temporal_lens.workflows.v1.ResetReapplyExcludeType
+	(*GetSearchSchemaRequest)(nil),  // 2: temporal_lens.workflows.v1.GetSearchSchemaRequest
+	(*GetSearchSchemaResponse)(nil), // 3: temporal_lens.workflows.v1.GetSearchSchemaResponse
+	(*SearchRequest)(nil),           // 4: temporal_lens.workflows.v1.SearchRequest
+	(*SearchResponse)(nil),          // 5: temporal_lens.workflows.v1.SearchResponse
+	(*Workflow)(nil),                // 6: temporal_lens.workflows.v1.Workflow
+	(*WorkflowMetadata)(nil),        // 7: temporal_lens.workflows.v1.WorkflowMetadata
+	(*SearchAttribute)(nil),         // 8: temporal_lens.workflows.v1.SearchAttribute
+	(*WorkflowData)(nil),            // 9: temporal_lens.workflows.v1.WorkflowData
+	(*Activity)(nil),                // 10: temporal_lens.workflows.v1.Activity
+	(*ChildWorkflow)(nil),           // 11: temporal_lens.workflows.v1.ChildWorkflow
+	(*WorkflowSelection)(nil),       // 12: temporal_lens.workflows.v1.WorkflowSelection
+	(*ExecutionList)(nil),           // 13: temporal_lens.workflows.v1.ExecutionList
+	(*WorkflowExecution)(nil),       // 14: temporal_lens.workflows.v1.WorkflowExecution
+	(*SignalRequest)(nil),           // 15: temporal_lens.workflows.v1.SignalRequest
+	(*SignalResponse)(nil),          // 16: temporal_lens.workflows.v1.SignalResponse
+	(*ResetRequest)(nil),            // 17: temporal_lens.workflows.v1.ResetRequest
+	(*ResetTarget)(nil),             // 18: temporal_lens.workflows.v1.ResetTarget
+	(*ResetResponse)(nil),           // 19: temporal_lens.workflows.v1.ResetResponse
+	(*CancelRequest)(nil),           // 20: temporal_lens.workflows.v1.CancelRequest
+	(*CancelResponse)(nil),          // 21: temporal_lens.workflows.v1.CancelResponse
+	(*TerminateRequest)(nil),        // 22: temporal_lens.workflows.v1.TerminateRequest
+	(*TerminateResponse)(nil),       // 23: temporal_lens.workflows.v1.TerminateResponse
+	(*ListIndexesRequest)(nil),      // 24: temporal_lens.workflows.v1.ListIndexesRequest
+	(*ListIndexesResponse)(nil),     // 25: temporal_lens.workflows.v1.ListIndexesResponse
+	(*IndexInfo)(nil),               // 26: temporal_lens.workflows.v1.IndexInfo
+	(*DeleteIndexRequest)(nil),      // 27: temporal_lens.workflows.v1.DeleteIndexRequest
+	(*DeleteIndexResponse)(nil),     // 28: temporal_lens.workflows.v1.DeleteIndexResponse
+	nil,                             // 29: temporal_lens.workflows.v1.WorkflowData.InputsEntry
+	nil,                             // 30: temporal_lens.workflows.v1.WorkflowData.OutputsEntry
+	nil,                             // 31: temporal_lens.workflows.v1.Activity.InputsEntry
+	nil,                             // 32: temporal_lens.workflows.v1.Activity.OutputsEntry
+	nil,                             // 33: temporal_lens.workflows.v1.ChildWorkflow.InputsEntry
+	nil,                             // 34: temporal_lens.workflows.v1.ChildWorkflow.OutputsEntry
+	(*v1.SearchSchema)(nil),         // 35: temporal_lens.common.v1.SearchSchema
+	(*v1.FilterSpec)(nil),           // 36: temporal_lens.common.v1.FilterSpec
+	(*v1.SortSpec)(nil),             // 37: temporal_lens.common.v1.SortSpec
+	(*v1.PaginationSpec)(nil),       // 38: temporal_lens.common.v1.PaginationSpec
+	(*durationpb.Duration)(nil),     // 39: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),   // 40: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),           // 41: google.protobuf.Empty
+	(*structpb.ListValue)(nil),      // 42: google.protobuf.ListValue
 }
 var file_temporal_lens_workflows_v1_workflows_proto_depIdxs = []int32{
-	34, // 0: temporal_lens.workflows.v1.GetSearchSchemaResponse.schema:type_name -> temporal_lens.common.v1.SearchSchema
-	35, // 1: temporal_lens.workflows.v1.SearchRequest.filter:type_name -> temporal_lens.common.v1.FilterSpec
-	36, // 2: temporal_lens.workflows.v1.SearchRequest.sort:type_name -> temporal_lens.common.v1.SortSpec
-	37, // 3: temporal_lens.workflows.v1.SearchRequest.pagination:type_name -> temporal_lens.common.v1.PaginationSpec
-	5,  // 4: temporal_lens.workflows.v1.SearchResponse.workflows:type_name -> temporal_lens.workflows.v1.Workflow
-	38, // 5: temporal_lens.workflows.v1.SearchResponse.took:type_name -> google.protobuf.Duration
-	6,  // 6: temporal_lens.workflows.v1.Workflow.metadata:type_name -> temporal_lens.workflows.v1.WorkflowMetadata
-	8,  // 7: temporal_lens.workflows.v1.Workflow.data:type_name -> temporal_lens.workflows.v1.WorkflowData
-	39, // 8: temporal_lens.workflows.v1.WorkflowMetadata.start_time:type_name -> google.protobuf.Timestamp
-	39, // 9: temporal_lens.workflows.v1.WorkflowMetadata.end_time:type_name -> google.protobuf.Timestamp
+	35, // 0: temporal_lens.workflows.v1.GetSearchSchemaResponse.schema:type_name -> temporal_lens.common.v1.SearchSchema
+	36, // 1: temporal_lens.workflows.v1.SearchRequest.filter:type_name -> temporal_lens.common.v1.FilterSpec
+	37, // 2: temporal_lens.workflows.v1.SearchRequest.sort:type_name -> temporal_lens.common.v1.SortSpec
+	38, // 3: temporal_lens.workflows.v1.SearchRequest.pagination:type_name -> temporal_lens.common.v1.PaginationSpec
+	6,  // 4: temporal_lens.workflows.v1.SearchResponse.workflows:type_name -> temporal_lens.workflows.v1.Workflow
+	39, // 5: temporal_lens.workflows.v1.SearchResponse.took:type_name -> google.protobuf.Duration
+	7,  // 6: temporal_lens.workflows.v1.Workflow.metadata:type_name -> temporal_lens.workflows.v1.WorkflowMetadata
+	9,  // 7: temporal_lens.workflows.v1.Workflow.data:type_name -> temporal_lens.workflows.v1.WorkflowData
+	40, // 8: temporal_lens.workflows.v1.WorkflowMetadata.start_time:type_name -> google.protobuf.Timestamp
+	40, // 9: temporal_lens.workflows.v1.WorkflowMetadata.end_time:type_name -> google.protobuf.Timestamp
 	0,  // 10: temporal_lens.workflows.v1.WorkflowMetadata.status:type_name -> temporal_lens.workflows.v1.WorkflowStatus
-	7,  // 11: temporal_lens.workflows.v1.WorkflowMetadata.search_attributes:type_name -> temporal_lens.workflows.v1.SearchAttribute
-	28, // 12: temporal_lens.workflows.v1.WorkflowData.inputs:type_name -> temporal_lens.workflows.v1.WorkflowData.InputsEntry
-	29, // 13: temporal_lens.workflows.v1.WorkflowData.outputs:type_name -> temporal_lens.workflows.v1.WorkflowData.OutputsEntry
-	9,  // 14: temporal_lens.workflows.v1.WorkflowData.activities:type_name -> temporal_lens.workflows.v1.Activity
-	10, // 15: temporal_lens.workflows.v1.WorkflowData.child_workflows:type_name -> temporal_lens.workflows.v1.ChildWorkflow
-	30, // 16: temporal_lens.workflows.v1.Activity.inputs:type_name -> temporal_lens.workflows.v1.Activity.InputsEntry
-	31, // 17: temporal_lens.workflows.v1.Activity.outputs:type_name -> temporal_lens.workflows.v1.Activity.OutputsEntry
-	39, // 18: temporal_lens.workflows.v1.Activity.start_time:type_name -> google.protobuf.Timestamp
-	39, // 19: temporal_lens.workflows.v1.Activity.end_time:type_name -> google.protobuf.Timestamp
-	32, // 20: temporal_lens.workflows.v1.ChildWorkflow.inputs:type_name -> temporal_lens.workflows.v1.ChildWorkflow.InputsEntry
-	33, // 21: temporal_lens.workflows.v1.ChildWorkflow.outputs:type_name -> temporal_lens.workflows.v1.ChildWorkflow.OutputsEntry
-	39, // 22: temporal_lens.workflows.v1.ChildWorkflow.start_time:type_name -> google.protobuf.Timestamp
-	39, // 23: temporal_lens.workflows.v1.ChildWorkflow.end_time:type_name -> google.protobuf.Timestamp
-	35, // 24: temporal_lens.workflows.v1.WorkflowSelection.filter:type_name -> temporal_lens.common.v1.FilterSpec
-	12, // 25: temporal_lens.workflows.v1.WorkflowSelection.executions:type_name -> temporal_lens.workflows.v1.ExecutionList
-	13, // 26: temporal_lens.workflows.v1.ExecutionList.executions:type_name -> temporal_lens.workflows.v1.WorkflowExecution
-	11, // 27: temporal_lens.workflows.v1.SignalRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
-	11, // 28: temporal_lens.workflows.v1.ResetRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
-	17, // 29: temporal_lens.workflows.v1.ResetRequest.target:type_name -> temporal_lens.workflows.v1.ResetTarget
-	40, // 30: temporal_lens.workflows.v1.ResetTarget.first_workflow_task:type_name -> google.protobuf.Empty
-	40, // 31: temporal_lens.workflows.v1.ResetTarget.last_workflow_task:type_name -> google.protobuf.Empty
-	11, // 32: temporal_lens.workflows.v1.CancelRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
-	11, // 33: temporal_lens.workflows.v1.TerminateRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
-	25, // 34: temporal_lens.workflows.v1.ListIndexesResponse.indexes:type_name -> temporal_lens.workflows.v1.IndexInfo
-	41, // 35: temporal_lens.workflows.v1.WorkflowData.InputsEntry.value:type_name -> google.protobuf.ListValue
-	41, // 36: temporal_lens.workflows.v1.WorkflowData.OutputsEntry.value:type_name -> google.protobuf.ListValue
-	41, // 37: temporal_lens.workflows.v1.Activity.InputsEntry.value:type_name -> google.protobuf.ListValue
-	41, // 38: temporal_lens.workflows.v1.Activity.OutputsEntry.value:type_name -> google.protobuf.ListValue
-	41, // 39: temporal_lens.workflows.v1.ChildWorkflow.InputsEntry.value:type_name -> google.protobuf.ListValue
-	41, // 40: temporal_lens.workflows.v1.ChildWorkflow.OutputsEntry.value:type_name -> google.protobuf.ListValue
-	1,  // 41: temporal_lens.workflows.v1.WorkflowService.GetSearchSchema:input_type -> temporal_lens.workflows.v1.GetSearchSchemaRequest
-	3,  // 42: temporal_lens.workflows.v1.WorkflowService.Search:input_type -> temporal_lens.workflows.v1.SearchRequest
-	14, // 43: temporal_lens.workflows.v1.WorkflowService.Signal:input_type -> temporal_lens.workflows.v1.SignalRequest
-	16, // 44: temporal_lens.workflows.v1.WorkflowService.Reset:input_type -> temporal_lens.workflows.v1.ResetRequest
-	19, // 45: temporal_lens.workflows.v1.WorkflowService.Cancel:input_type -> temporal_lens.workflows.v1.CancelRequest
-	21, // 46: temporal_lens.workflows.v1.WorkflowService.Terminate:input_type -> temporal_lens.workflows.v1.TerminateRequest
-	23, // 47: temporal_lens.workflows.v1.WorkflowService.ListIndexes:input_type -> temporal_lens.workflows.v1.ListIndexesRequest
-	26, // 48: temporal_lens.workflows.v1.WorkflowService.DeleteIndex:input_type -> temporal_lens.workflows.v1.DeleteIndexRequest
-	2,  // 49: temporal_lens.workflows.v1.WorkflowService.GetSearchSchema:output_type -> temporal_lens.workflows.v1.GetSearchSchemaResponse
-	4,  // 50: temporal_lens.workflows.v1.WorkflowService.Search:output_type -> temporal_lens.workflows.v1.SearchResponse
-	15, // 51: temporal_lens.workflows.v1.WorkflowService.Signal:output_type -> temporal_lens.workflows.v1.SignalResponse
-	18, // 52: temporal_lens.workflows.v1.WorkflowService.Reset:output_type -> temporal_lens.workflows.v1.ResetResponse
-	20, // 53: temporal_lens.workflows.v1.WorkflowService.Cancel:output_type -> temporal_lens.workflows.v1.CancelResponse
-	22, // 54: temporal_lens.workflows.v1.WorkflowService.Terminate:output_type -> temporal_lens.workflows.v1.TerminateResponse
-	24, // 55: temporal_lens.workflows.v1.WorkflowService.ListIndexes:output_type -> temporal_lens.workflows.v1.ListIndexesResponse
-	27, // 56: temporal_lens.workflows.v1.WorkflowService.DeleteIndex:output_type -> temporal_lens.workflows.v1.DeleteIndexResponse
-	49, // [49:57] is the sub-list for method output_type
-	41, // [41:49] is the sub-list for method input_type
-	41, // [41:41] is the sub-list for extension type_name
-	41, // [41:41] is the sub-list for extension extendee
-	0,  // [0:41] is the sub-list for field type_name
+	8,  // 11: temporal_lens.workflows.v1.WorkflowMetadata.search_attributes:type_name -> temporal_lens.workflows.v1.SearchAttribute
+	29, // 12: temporal_lens.workflows.v1.WorkflowData.inputs:type_name -> temporal_lens.workflows.v1.WorkflowData.InputsEntry
+	30, // 13: temporal_lens.workflows.v1.WorkflowData.outputs:type_name -> temporal_lens.workflows.v1.WorkflowData.OutputsEntry
+	10, // 14: temporal_lens.workflows.v1.WorkflowData.activities:type_name -> temporal_lens.workflows.v1.Activity
+	11, // 15: temporal_lens.workflows.v1.WorkflowData.child_workflows:type_name -> temporal_lens.workflows.v1.ChildWorkflow
+	31, // 16: temporal_lens.workflows.v1.Activity.inputs:type_name -> temporal_lens.workflows.v1.Activity.InputsEntry
+	32, // 17: temporal_lens.workflows.v1.Activity.outputs:type_name -> temporal_lens.workflows.v1.Activity.OutputsEntry
+	40, // 18: temporal_lens.workflows.v1.Activity.start_time:type_name -> google.protobuf.Timestamp
+	40, // 19: temporal_lens.workflows.v1.Activity.end_time:type_name -> google.protobuf.Timestamp
+	33, // 20: temporal_lens.workflows.v1.ChildWorkflow.inputs:type_name -> temporal_lens.workflows.v1.ChildWorkflow.InputsEntry
+	34, // 21: temporal_lens.workflows.v1.ChildWorkflow.outputs:type_name -> temporal_lens.workflows.v1.ChildWorkflow.OutputsEntry
+	40, // 22: temporal_lens.workflows.v1.ChildWorkflow.start_time:type_name -> google.protobuf.Timestamp
+	40, // 23: temporal_lens.workflows.v1.ChildWorkflow.end_time:type_name -> google.protobuf.Timestamp
+	36, // 24: temporal_lens.workflows.v1.WorkflowSelection.filter:type_name -> temporal_lens.common.v1.FilterSpec
+	13, // 25: temporal_lens.workflows.v1.WorkflowSelection.executions:type_name -> temporal_lens.workflows.v1.ExecutionList
+	14, // 26: temporal_lens.workflows.v1.ExecutionList.executions:type_name -> temporal_lens.workflows.v1.WorkflowExecution
+	12, // 27: temporal_lens.workflows.v1.SignalRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
+	12, // 28: temporal_lens.workflows.v1.ResetRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
+	18, // 29: temporal_lens.workflows.v1.ResetRequest.target:type_name -> temporal_lens.workflows.v1.ResetTarget
+	1,  // 30: temporal_lens.workflows.v1.ResetRequest.exclude_types:type_name -> temporal_lens.workflows.v1.ResetReapplyExcludeType
+	41, // 31: temporal_lens.workflows.v1.ResetTarget.first_workflow_task:type_name -> google.protobuf.Empty
+	41, // 32: temporal_lens.workflows.v1.ResetTarget.last_workflow_task:type_name -> google.protobuf.Empty
+	12, // 33: temporal_lens.workflows.v1.CancelRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
+	12, // 34: temporal_lens.workflows.v1.TerminateRequest.workflows:type_name -> temporal_lens.workflows.v1.WorkflowSelection
+	26, // 35: temporal_lens.workflows.v1.ListIndexesResponse.indexes:type_name -> temporal_lens.workflows.v1.IndexInfo
+	42, // 36: temporal_lens.workflows.v1.WorkflowData.InputsEntry.value:type_name -> google.protobuf.ListValue
+	42, // 37: temporal_lens.workflows.v1.WorkflowData.OutputsEntry.value:type_name -> google.protobuf.ListValue
+	42, // 38: temporal_lens.workflows.v1.Activity.InputsEntry.value:type_name -> google.protobuf.ListValue
+	42, // 39: temporal_lens.workflows.v1.Activity.OutputsEntry.value:type_name -> google.protobuf.ListValue
+	42, // 40: temporal_lens.workflows.v1.ChildWorkflow.InputsEntry.value:type_name -> google.protobuf.ListValue
+	42, // 41: temporal_lens.workflows.v1.ChildWorkflow.OutputsEntry.value:type_name -> google.protobuf.ListValue
+	2,  // 42: temporal_lens.workflows.v1.WorkflowService.GetSearchSchema:input_type -> temporal_lens.workflows.v1.GetSearchSchemaRequest
+	4,  // 43: temporal_lens.workflows.v1.WorkflowService.Search:input_type -> temporal_lens.workflows.v1.SearchRequest
+	15, // 44: temporal_lens.workflows.v1.WorkflowService.Signal:input_type -> temporal_lens.workflows.v1.SignalRequest
+	17, // 45: temporal_lens.workflows.v1.WorkflowService.Reset:input_type -> temporal_lens.workflows.v1.ResetRequest
+	20, // 46: temporal_lens.workflows.v1.WorkflowService.Cancel:input_type -> temporal_lens.workflows.v1.CancelRequest
+	22, // 47: temporal_lens.workflows.v1.WorkflowService.Terminate:input_type -> temporal_lens.workflows.v1.TerminateRequest
+	24, // 48: temporal_lens.workflows.v1.WorkflowService.ListIndexes:input_type -> temporal_lens.workflows.v1.ListIndexesRequest
+	27, // 49: temporal_lens.workflows.v1.WorkflowService.DeleteIndex:input_type -> temporal_lens.workflows.v1.DeleteIndexRequest
+	3,  // 50: temporal_lens.workflows.v1.WorkflowService.GetSearchSchema:output_type -> temporal_lens.workflows.v1.GetSearchSchemaResponse
+	5,  // 51: temporal_lens.workflows.v1.WorkflowService.Search:output_type -> temporal_lens.workflows.v1.SearchResponse
+	16, // 52: temporal_lens.workflows.v1.WorkflowService.Signal:output_type -> temporal_lens.workflows.v1.SignalResponse
+	19, // 53: temporal_lens.workflows.v1.WorkflowService.Reset:output_type -> temporal_lens.workflows.v1.ResetResponse
+	21, // 54: temporal_lens.workflows.v1.WorkflowService.Cancel:output_type -> temporal_lens.workflows.v1.CancelResponse
+	23, // 55: temporal_lens.workflows.v1.WorkflowService.Terminate:output_type -> temporal_lens.workflows.v1.TerminateResponse
+	25, // 56: temporal_lens.workflows.v1.WorkflowService.ListIndexes:output_type -> temporal_lens.workflows.v1.ListIndexesResponse
+	28, // 57: temporal_lens.workflows.v1.WorkflowService.DeleteIndex:output_type -> temporal_lens.workflows.v1.DeleteIndexResponse
+	50, // [50:58] is the sub-list for method output_type
+	42, // [42:50] is the sub-list for method input_type
+	42, // [42:42] is the sub-list for extension type_name
+	42, // [42:42] is the sub-list for extension extendee
+	0,  // [0:42] is the sub-list for field type_name
 }
 
 func init() { file_temporal_lens_workflows_v1_workflows_proto_init() }
@@ -1994,7 +2063,7 @@ func file_temporal_lens_workflows_v1_workflows_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_temporal_lens_workflows_v1_workflows_proto_rawDesc), len(file_temporal_lens_workflows_v1_workflows_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,

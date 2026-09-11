@@ -68,6 +68,9 @@ type ResetRequest struct {
 	// Common reset target used for every selected workflow
 	Target ResetTarget
 
+	// Event types not to reapply after the reset point.
+	ExcludeTypes []ResetReapplyExcludeType
+
 	// Reason for the batch operation
 	Reason string
 }
@@ -79,6 +82,9 @@ type InternalResetRequest struct {
 
 	// Common reset target used for every selected workflow
 	Target ResetTarget
+
+	// Event types not to reapply after the reset point.
+	ExcludeTypes []ResetReapplyExcludeType
 
 	// Reason for the batch operation
 	Reason string
@@ -94,10 +100,17 @@ type CancelRequest struct {
 
 type ResetTargetKind string
 
+// ResetReapplyExcludeType identifies an event category that Temporal must not reapply after reset.
+type ResetReapplyExcludeType string
+
 const (
 	ResetTargetFirstWorkflowTask ResetTargetKind = "first_workflow_task"
 	ResetTargetLastWorkflowTask  ResetTargetKind = "last_workflow_task"
 	ResetTargetWorkflowTaskID    ResetTargetKind = "workflow_task_id"
+
+	ResetReapplyExcludeTypeSignal ResetReapplyExcludeType = "signal"
+	ResetReapplyExcludeTypeUpdate ResetReapplyExcludeType = "update"
+	ResetReapplyExcludeTypeNexus  ResetReapplyExcludeType = "nexus"
 )
 
 // ResetTarget describes the common Temporal reset point for a native batch reset.

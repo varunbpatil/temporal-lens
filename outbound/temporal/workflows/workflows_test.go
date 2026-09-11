@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	commonpb "go.temporal.io/api/common/v1"
+	enumspb "go.temporal.io/api/enums/v1"
 	failurepb "go.temporal.io/api/failure/v1"
 	historypb "go.temporal.io/api/history/v1"
 	workflowpb "go.temporal.io/api/workflow/v1"
@@ -220,7 +221,10 @@ func TestSourceStartsNativeBatchActions(t *testing.T) {
 
 	err = source.Reset(t.Context(), ports.InternalResetRequest{Executions: []ports.ExecutionInfo{{
 		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",
-	}}, Target: ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask}, Reason: "replay"})
+	}}, Target: ports.ResetTarget{Kind: ports.ResetTargetLastWorkflowTask}, ExcludeTypes: []ports.ResetReapplyExcludeType{
+		ports.ResetReapplyExcludeTypeSignal,
+		ports.ResetReapplyExcludeTypeUpdate,
+	}, Reason: "replay"})
 	require.NoError(t, err)
 	request = <-requests
 	_, ok = request.GetOperation().(*workflowservice.StartBatchOperationRequest_ResetOperation)
@@ -228,6 +232,10 @@ func TestSourceStartsNativeBatchActions(t *testing.T) {
 	require.Equal(t, "temporal-lens", request.GetResetOperation().GetIdentity())
 	require.Equal(t, "replay", request.GetReason())
 	require.NotNil(t, request.GetResetOperation().GetOptions().GetLastWorkflowTask())
+	require.Equal(t, []enumspb.ResetReapplyExcludeType{
+		enumspb.RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL,
+		enumspb.RESET_REAPPLY_EXCLUDE_TYPE_UPDATE,
+	}, request.GetResetOperation().GetOptions().GetResetReapplyExcludeTypes())
 
 	err = source.Reset(t.Context(), ports.InternalResetRequest{Executions: []ports.ExecutionInfo{{
 		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",

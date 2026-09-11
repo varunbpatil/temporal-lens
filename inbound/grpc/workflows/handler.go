@@ -119,9 +119,18 @@ func (h *Handler) Reset(
 	if err != nil {
 		return nil, invalidArgument(err)
 	}
+	excludeTypes, err := resetExcludeTypesFromProto(req.Msg.GetExcludeTypes())
+	if err != nil {
+		return nil, invalidArgument(err)
+	}
 	if serviceErr := h.svc.Reset(
 		ctx,
-		ports.ResetRequest{WorkflowSpec: workflowSpec, Target: target, Reason: req.Msg.GetReason()},
+		ports.ResetRequest{
+			WorkflowSpec: workflowSpec,
+			Target:       target,
+			ExcludeTypes: excludeTypes,
+			Reason:       req.Msg.GetReason(),
+		},
 	); serviceErr != nil {
 		return nil, serviceError(serviceErr)
 	}

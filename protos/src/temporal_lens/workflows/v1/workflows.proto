@@ -136,6 +136,15 @@ message ResetRequest {
   WorkflowSelection workflows = 1;
   ResetTarget target = 2;
   string reason = 3;
+  repeated ResetReapplyExcludeType exclude_types = 4;
+}
+
+// Event types not to reapply after the reset point.
+enum ResetReapplyExcludeType {
+  RESET_REAPPLY_EXCLUDE_TYPE_UNSPECIFIED = 0;
+  RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL = 1;
+  RESET_REAPPLY_EXCLUDE_TYPE_UPDATE = 2;
+  RESET_REAPPLY_EXCLUDE_TYPE_NEXUS = 3;
 }
 
 message ResetTarget {

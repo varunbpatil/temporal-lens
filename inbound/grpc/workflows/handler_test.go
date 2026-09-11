@@ -109,6 +109,10 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 			Namespace: "payments", WorkflowID: "workflow-id", RunID: "run-id",
 		}}},
 		Target: ports.ResetTarget{Kind: ports.ResetTargetWorkflowTaskID, WorkflowTaskID: 12},
+		ExcludeTypes: []ports.ResetReapplyExcludeType{
+			ports.ResetReapplyExcludeTypeSignal,
+			ports.ResetReapplyExcludeTypeUpdate,
+		},
 		Reason: "retry with corrected data",
 	}).Return(nil)
 	service.EXPECT().Terminate(gomock.Any(), ports.TerminateRequest{
@@ -140,6 +144,10 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 		Workflows: executions,
 		Target:    &v1.ResetTarget{Target: &v1.ResetTarget_WorkflowTaskId{WorkflowTaskId: 12}},
 		Reason:    "retry with corrected data",
+		ExcludeTypes: []v1.ResetReapplyExcludeType{
+			v1.ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL,
+			v1.ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_UPDATE,
+		},
 	}))
 	require.NoError(t, err)
 	_, err = handler.Terminate(t.Context(), connect.NewRequest(&v1.TerminateRequest{

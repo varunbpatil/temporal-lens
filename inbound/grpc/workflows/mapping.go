@@ -95,6 +95,34 @@ func resetTargetFromProto(target *v1.ResetTarget) (ports.ResetTarget, error) {
 	}
 }
 
+func resetExcludeTypesFromProto(
+	excludeTypes []v1.ResetReapplyExcludeType,
+) ([]ports.ResetReapplyExcludeType, error) {
+	result := make([]ports.ResetReapplyExcludeType, 0, len(excludeTypes))
+	seen := make(map[ports.ResetReapplyExcludeType]struct{}, len(excludeTypes))
+	for _, excludeType := range excludeTypes {
+		var resultType ports.ResetReapplyExcludeType
+		switch excludeType {
+		case v1.ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_SIGNAL:
+			resultType = ports.ResetReapplyExcludeTypeSignal
+		case v1.ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_UPDATE:
+			resultType = ports.ResetReapplyExcludeTypeUpdate
+		case v1.ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_NEXUS:
+			resultType = ports.ResetReapplyExcludeTypeNexus
+		case v1.ResetReapplyExcludeType_RESET_REAPPLY_EXCLUDE_TYPE_UNSPECIFIED:
+			return nil, fmt.Errorf("reset exclude type is required")
+		default:
+			return nil, fmt.Errorf("unknown reset exclude type %d", excludeType)
+		}
+		if _, ok := seen[resultType]; ok {
+			continue
+		}
+		seen[resultType] = struct{}{}
+		result = append(result, resultType)
+	}
+	return result, nil
+}
+
 // searchResponseToProto converts domain search results into their API representation.
 func searchResponseToProto(response ports.SearchResponse) (*v1.SearchResponse, error) {
 	workflows := make([]*v1.Workflow, 0, len(response.Workflows))
