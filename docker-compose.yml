@@ -4,15 +4,31 @@ services:
     environment:
       POSTGRES_USER: temporal
       POSTGRES_PASSWORD: temporal
-      POSTGRES_DB: temporal
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U temporal -d temporal"]
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
       interval: 5s
       timeout: 5s
       retries: 12
       start_period: 5s
+
+  temporal-schema:
+    image: temporalio/admin-tools:1.31.2
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: temporal
+      POSTGRES_SEEDS: postgresql
+      SQL_PASSWORD: temporal
+    volumes:
+      - ./scripts/temporal/scripts:/scripts:ro
+    entrypoint: ["/bin/sh"]
+    command: /scripts/setup-postgres.sh
 
   temporal:
     image: temporalio/server:1.31.2
@@ -37,23 +53,6 @@ services:
       timeout: 3s
       retries: 60
       start_period: 30s
-
-  temporal-schema:
-    image: temporalio/admin-tools:1.31.2
-    depends_on:
-      postgresql:
-        condition: service_healthy
-    environment:
-      DB: postgres12
-      DB_PORT: 5432
-      POSTGRES_USER: temporal
-      POSTGRES_PWD: temporal
-      POSTGRES_SEEDS: postgresql
-      SQL_PASSWORD: temporal
-    volumes:
-      - ./scripts/temporal/scripts:/scripts:ro
-    entrypoint: ["/bin/sh"]
-    command: /scripts/setup-postgres.sh
 
   temporal-create-namespace:
     image: temporalio/admin-tools:1.31.2
