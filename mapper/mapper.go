@@ -41,7 +41,8 @@ func (Mapper) Schema() types.Schema {
 	}
 }
 
-// Map converts a flattened JSON path into its shared relative field name.
+// Map converts a flattened JSON path, such as "$.order.customerId" or
+// "$.items.0.sku", into an indexed field and its value.
 func (Mapper) Map(path string, value any) ports.Field {
 	name := strings.TrimPrefix(path, "$.")
 	if index := strings.LastIndexByte(name, '.'); index >= 0 {

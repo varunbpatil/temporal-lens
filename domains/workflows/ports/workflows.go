@@ -92,9 +92,9 @@ type WorkflowRepository interface {
 }
 
 // Mapper transforms flattened Temporal JSON payload key-value pairs into
-// reusable searchable fields. Field names are relative to a payload (for
-// example, "amount"); the workflow service places the same field schema in
-// every workflow, activity, and child-workflow input and output context.
+// searchable fields. Field names are relative to a payload (for example,
+// "amount"); the workflow service places the same field schema in every
+// workflow, activity, and child-workflow input and output context.
 type Mapper interface {
 	// Schema returns the relative fields this mapper produces. The workflow
 	// service expands them into their indexed paths for mappings and filters.
@@ -102,6 +102,6 @@ type Mapper interface {
 
 	// Map takes a flattened JSON path (for example, "$.foo.bar.0.baz") and its
 	// value, returning a field name and value to index. Multiple calls returning
-	// the same Name are aggregated into a list by the caller.
+	// the same Name are aggregated into a list.
 	Map(key string, value any) Field
 }

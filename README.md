@@ -25,6 +25,9 @@ Construct complex queries with logical operators easily from the UI and search a
 
 Easily create custom deployments that allow queries on custom fields extracted from JSON payloads of workflows, child workflows and activities.
 
+Simply implement the [Mapper](https://github.com/varunbpatil/temporal-lens/blob/main/domains/workflows/ports/workflows.go#L94-L107) interface in
+[mapper.go](mapper/mapper.go) and wire it in as a depdendency in [main.go](https://github.com/varunbpatil/temporal-lens/blob/main/cmd/workflows/main.go#L89).
+
 ### 🗂️ Unified view
 
 Provides a unified view across all namespaces, even for Temporal Cloud. Queries filter across all namespaces. No more switching between namespaces in the Temporal UI.
