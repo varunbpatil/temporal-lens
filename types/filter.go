@@ -140,6 +140,9 @@ type SortOrder int
 const (
 	SortOrderAsc SortOrder = iota + 1
 	SortOrderDesc
+
+	// maxPaginationPageSize bounds result payloads and search work for API pagination.
+	maxPaginationPageSize int32 = 100
 )
 
 // Pagination defines either offset-based or cursor-based pagination.
@@ -437,16 +440,31 @@ func ParsePaginationSpec(spec *commonv1.PaginationSpec) (*Pagination, error) {
 	}
 	switch p := spec.GetPagination().(type) {
 	case *commonv1.PaginationSpec_Offset:
+		pageSize, err := parsePaginationPageSize(p.Offset.GetPageSize())
+		if err != nil {
+			return nil, err
+		}
 		return &Pagination{Offset: &OffsetPagination{
-			PageSize:   p.Offset.GetPageSize(),
+			PageSize:   pageSize,
 			PageNumber: p.Offset.GetPageNumber(),
 		}}, nil
 	case *commonv1.PaginationSpec_Cursor:
+		pageSize, err := parsePaginationPageSize(p.Cursor.GetPageSize())
+		if err != nil {
+			return nil, err
+		}
 		return &Pagination{Cursor: &CursorPagination{
-			PageSize: p.Cursor.GetPageSize(),
+			PageSize: pageSize,
 			Cursor:   p.Cursor.GetCursor(),
 		}}, nil
 	default:
 		return nil, fmt.Errorf("pagination: unknown type %T", spec.GetPagination())
 	}
+}
+
+func parsePaginationPageSize(pageSize int32) (int32, error) {
+	if pageSize > maxPaginationPageSize {
+		return 0, fmt.Errorf("pagination: page size must not exceed %d", maxPaginationPageSize)
+	}
+	return pageSize, nil
 }

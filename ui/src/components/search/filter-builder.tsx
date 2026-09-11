@@ -770,7 +770,7 @@ function DateTimePicker({ value, onChange, ariaLabel }: DateTimePickerProps) {
       : calendarDateFromZonedDateTime(zonedDateTimeValue(validInstant, timeZone), timeZone);
   const today = calendarDateFromZonedDateTime(zonedDateTimeValue(new Date(), timeZone), timeZone)!;
   const timeValue =
-    validInstant === undefined ? "00:00" : zonedDateTimeValue(validInstant, timeZone).slice(-5);
+    validInstant === undefined ? "00:00:00" : zonedDateTimeValue(validInstant, timeZone).slice(-8);
   const timeZoneOffset = timeZoneOffsetLabel(validInstant ?? new Date(), timeZone);
 
   function updateWallClock(date: Date, time: string) {
@@ -820,6 +820,7 @@ function DateTimePicker({ value, onChange, ariaLabel }: DateTimePickerProps) {
           <p className="mb-1 text-xs text-muted-foreground">Time ({timeZoneOffset})</p>
           <Input
             type="time"
+            step="1"
             value={timeValue}
             onChange={(event) => updateTime(event.target.value)}
             aria-label={`${ariaLabel} time`}

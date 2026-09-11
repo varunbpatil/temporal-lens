@@ -194,6 +194,9 @@ func (h *Handler) DeleteIndex(
 	ctx context.Context,
 	req *connect.Request[v1.DeleteIndexRequest],
 ) (*connect.Response[v1.DeleteIndexResponse], error) {
+	if h.readOnly {
+		return nil, readOnlyError()
+	}
 	if err := h.svc.DeleteIndex(ctx, req.Msg.GetIndex()); err != nil {
 		return nil, serviceError(err)
 	}
@@ -214,7 +217,7 @@ func invalidArgument(err error) error {
 func readOnlyError() error {
 	return connect.NewError(
 		connect.CodeFailedPrecondition,
-		fmt.Errorf("workflow bulk actions are disabled in read-only mode"),
+		fmt.Errorf("workflow mutations are disabled in read-only mode"),
 	)
 }
 

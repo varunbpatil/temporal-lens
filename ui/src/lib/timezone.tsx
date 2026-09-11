@@ -111,19 +111,20 @@ function pad(value: number) {
 /** Formats an instant as the wall-clock value used by the timestamp filter editor. */
 export function zonedDateTimeValue(date: Date, timeZone: string) {
   const parts = zonedParts(date, timeZone);
-  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}`;
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}:${pad(parts.second)}`;
 }
 
 /** Converts an editor wall-clock value in `timeZone` into the instant sent to the API. */
 export function dateFromZonedDateTime(value: string, timeZone: string): Date | undefined {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/.exec(value);
   if (match === null) return undefined;
-  const [year, month, day, hour, minute] = match.slice(1).map(Number);
-  const wallClock = Date.UTC(year, month - 1, day, hour, minute);
+  const [year, month, day, hour, minute, second] = match.slice(1).map(Number);
+  const wallClock = Date.UTC(year, month - 1, day, hour, minute, second);
   const offsetAt = (instant: Date) => {
     const parts = zonedParts(instant, timeZone);
     return (
-      Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute) - instant.getTime()
+      Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) -
+      instant.getTime()
     );
   };
   let result = new Date(wallClock - offsetAt(new Date(wallClock)));
@@ -142,15 +143,15 @@ export function calendarDateFromZonedDateTime(value: string, timeZone: string): 
 
 /** Combines a Calendar day and time input into the timezone-independent editor representation. */
 export function zonedDateTimeFromCalendarDate(date: Date, time: string) {
-  const [hour, minute] = time.split(":").map(Number);
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(hour || 0)}:${pad(minute || 0)}`;
+  const [hour, minute, second] = time.split(":").map(Number);
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(hour || 0)}:${pad(minute || 0)}:${pad(second || 0)}`;
 }
 
 export function formatZonedDateTime(date: Date, timeZone: string) {
   return new Intl.DateTimeFormat(undefined, {
     timeZone,
     dateStyle: "medium",
-    timeStyle: "short",
+    timeStyle: "medium",
   }).format(date);
 }
 

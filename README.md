@@ -72,7 +72,7 @@ docker run --env-file .env temporal-lens
 
 | Variable                               | Description                                                           | Required    | Default      |
 | -------------------------------------- | --------------------------------------------------------------------- | ----------- | --------     |
-| `READ_ONLY`                            | Disable workflow bulk actions                                         | No          | `false`      |
+| `READ_ONLY`                            | Disable workflow mutations, including bulk actions and index deletion | No          | `false`      |
 | `LOG_LEVEL`                            | Log level (`debug`, `info`, `warn`, `error`)                          | No          | `info`       |
 | `LOG_FORMAT`                           | Log format (`text`, `json`)                                           | No          | `text`       |
 | `GRPC_ADDRESS`                         | gRPC server listen address                                            | No          | `:50051`     |

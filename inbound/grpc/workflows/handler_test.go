@@ -180,6 +180,30 @@ func TestHandlerSearchRejectsFilterOutsideSchema(t *testing.T) {
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }
 
+func TestHandlerSearchRejectsPageSizesAboveLimit(t *testing.T) {
+	t.Parallel()
+	for name, pagination := range map[string]*commonv1.PaginationSpec{
+		"offset": {Pagination: &commonv1.PaginationSpec_Offset{
+			Offset: &commonv1.OffsetPagination{PageNumber: 1, PageSize: 101},
+		}},
+		"cursor": {Pagination: &commonv1.PaginationSpec_Cursor{
+			Cursor: &commonv1.CursorPagination{PageSize: 101},
+		}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			controller := gomock.NewController(t)
+			service := mocks.NewMockWorkflowService(controller)
+			service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{})
+			handler := workflowhandler.NewHandler(service, false)
+
+			_, err := handler.Search(t.Context(), connect.NewRequest(&v1.SearchRequest{Pagination: pagination}))
+			require.Error(t, err)
+			assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+		})
+	}
+}
+
 func TestHandlerSignalRejectsFilterOutsideSchema(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
@@ -263,6 +287,10 @@ func TestHandlerReadOnlyAdvertisesAndRejectsBulkActions(t *testing.T) {
 		},
 		func() error {
 			_, actionErr := handler.Terminate(t.Context(), connect.NewRequest(&v1.TerminateRequest{}))
+			return actionErr
+		},
+		func() error {
+			_, actionErr := handler.DeleteIndex(t.Context(), connect.NewRequest(&v1.DeleteIndexRequest{}))
 			return actionErr
 		},
 	}

@@ -433,6 +433,25 @@ func TestParsePaginationSpec_Cursor(t *testing.T) {
 	assert.Equal(t, "abc123", p.Cursor.Cursor)
 }
 
+func TestParsePaginationSpec_RejectsPageSizeAboveLimit(t *testing.T) {
+	t.Parallel()
+	for name, spec := range map[string]*commonv1.PaginationSpec{
+		"offset": {Pagination: &commonv1.PaginationSpec_Offset{
+			Offset: &commonv1.OffsetPagination{PageSize: 101},
+		}},
+		"cursor": {Pagination: &commonv1.PaginationSpec_Cursor{
+			Cursor: &commonv1.CursorPagination{PageSize: 101},
+		}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			_, err := types.ParsePaginationSpec(spec)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "page size must not exceed 100")
+		})
+	}
+}
+
 func TestParseFilterSpec_TextContains(t *testing.T) {
 	t.Parallel()
 	schema := types.Schema{
