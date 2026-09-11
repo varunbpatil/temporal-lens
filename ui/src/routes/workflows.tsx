@@ -212,6 +212,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
     () => searchFieldsFromSchema(schemaQuery.data?.schema),
     [schemaQuery.data?.schema],
   );
+  const readOnly = schemaQuery.data?.readOnly ?? false;
   const appliedFilter = useMemo(() => {
     const decoded = decodeFilterFromURL(searchURL.filter) ?? createFilterGroup();
     return fields.length > 0 ? normalizeFilterGroup(decoded, fields) : decoded;
@@ -570,6 +571,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               icon: <SendIcon aria-hidden="true" />,
               className:
                 "border-blue-500/50 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 dark:text-blue-300",
+              disabled: readOnly,
               onSelect: () => setSignalOpen(true),
             },
             {
@@ -578,6 +580,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               variant: "outline",
               className:
                 "border-amber-500/50 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300",
+              disabled: readOnly,
               onSelect: () => setResetOpen(true),
             },
             {
@@ -586,6 +589,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               variant: "outline",
               className:
                 "border-orange-500/50 bg-orange-500/10 text-orange-700 hover:bg-orange-500/20 dark:text-orange-300",
+              disabled: readOnly,
               onSelect: () => setCancelOpen(true),
             },
             {
@@ -594,6 +598,7 @@ function WorkflowSearchPage({ searchURL }: { searchURL: WorkflowSearchURL }) {
               variant: "destructive",
               className:
                 "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-800",
+              disabled: readOnly,
               onSelect: () => setTerminateOpen(true),
             },
           ]}

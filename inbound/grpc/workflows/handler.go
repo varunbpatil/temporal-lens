@@ -19,12 +19,13 @@ var _ workflowsv1connect.WorkflowServiceHandler = (*Handler)(nil)
 type Handler struct {
 	workflowsv1connect.UnimplementedWorkflowServiceHandler
 
-	svc ports.WorkflowService
+	svc      ports.WorkflowService
+	readOnly bool
 }
 
 // NewHandler creates a new Connect handler backed by the given domain service.
-func NewHandler(svc ports.WorkflowService) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc ports.WorkflowService, readOnly bool) *Handler {
+	return &Handler{svc: svc, readOnly: readOnly}
 }
 
 // Register registers the WorkflowService handlers on the given mux.
@@ -44,7 +45,8 @@ func (h *Handler) GetSearchSchema(
 	_ *connect.Request[v1.GetSearchSchemaRequest],
 ) (*connect.Response[v1.GetSearchSchemaResponse], error) {
 	return connect.NewResponse(&v1.GetSearchSchemaResponse{
-		Schema: searchSchemaToProto(h.searchSchema(ctx)),
+		Schema:   searchSchemaToProto(h.searchSchema(ctx)),
+		ReadOnly: h.readOnly,
 	}), nil
 }
 
@@ -83,6 +85,9 @@ func (h *Handler) Signal(
 	ctx context.Context,
 	req *connect.Request[v1.SignalRequest],
 ) (*connect.Response[v1.SignalResponse], error) {
+	if h.readOnly {
+		return nil, readOnlyError()
+	}
 	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
@@ -103,6 +108,9 @@ func (h *Handler) Reset(
 	ctx context.Context,
 	req *connect.Request[v1.ResetRequest],
 ) (*connect.Response[v1.ResetResponse], error) {
+	if h.readOnly {
+		return nil, readOnlyError()
+	}
 	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
@@ -125,6 +133,9 @@ func (h *Handler) Cancel(
 	ctx context.Context,
 	req *connect.Request[v1.CancelRequest],
 ) (*connect.Response[v1.CancelResponse], error) {
+	if h.readOnly {
+		return nil, readOnlyError()
+	}
 	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
@@ -143,6 +154,9 @@ func (h *Handler) Terminate(
 	ctx context.Context,
 	req *connect.Request[v1.TerminateRequest],
 ) (*connect.Response[v1.TerminateResponse], error) {
+	if h.readOnly {
+		return nil, readOnlyError()
+	}
 	workflowSpec, err := workflowSpecFromProto(h.searchSchema(ctx), req.Msg.GetWorkflows())
 	if err != nil {
 		return nil, invalidArgument(err)
@@ -195,6 +209,13 @@ func (h *Handler) searchSchema(ctx context.Context) types.Schema {
 // invalidArgument reports an input that cannot be parsed into the domain request.
 func invalidArgument(err error) error {
 	return connect.NewError(connect.CodeInvalidArgument, err)
+}
+
+func readOnlyError() error {
+	return connect.NewError(
+		connect.CodeFailedPrecondition,
+		fmt.Errorf("workflow bulk actions are disabled in read-only mode"),
+	)
 }
 
 // serviceError reports a domain or adapter failure without conflating it with a malformed request.

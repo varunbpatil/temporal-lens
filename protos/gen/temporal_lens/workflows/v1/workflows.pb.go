@@ -132,6 +132,7 @@ func (*GetSearchSchemaRequest) Descriptor() ([]byte, []int) {
 type GetSearchSchemaResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Schema        *v1.SearchSchema       `protobuf:"bytes,1,opt,name=schema,proto3" json:"schema,omitempty"`
+	ReadOnly      bool                   `protobuf:"varint,2,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -171,6 +172,13 @@ func (x *GetSearchSchemaResponse) GetSchema() *v1.SearchSchema {
 		return x.Schema
 	}
 	return nil
+}
+
+func (x *GetSearchSchemaResponse) GetReadOnly() bool {
+	if x != nil {
+		return x.ReadOnly
+	}
+	return false
 }
 
 type SearchRequest struct {
@@ -1690,9 +1698,10 @@ var File_temporal_lens_workflows_v1_workflows_proto protoreflect.FileDescriptor
 const file_temporal_lens_workflows_v1_workflows_proto_rawDesc = "" +
 	"\n" +
 	"*temporal_lens/workflows/v1/workflows.proto\x12\x1atemporal_lens.workflows.v1\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$temporal_lens/common/v1/common.proto\"\x18\n" +
-	"\x16GetSearchSchemaRequest\"X\n" +
+	"\x16GetSearchSchemaRequest\"u\n" +
 	"\x17GetSearchSchemaResponse\x12=\n" +
-	"\x06schema\x18\x01 \x01(\v2%.temporal_lens.common.v1.SearchSchemaR\x06schema\"\xcc\x01\n" +
+	"\x06schema\x18\x01 \x01(\v2%.temporal_lens.common.v1.SearchSchemaR\x06schema\x12\x1b\n" +
+	"\tread_only\x18\x02 \x01(\bR\breadOnly\"\xcc\x01\n" +
 	"\rSearchRequest\x12;\n" +
 	"\x06filter\x18\x01 \x01(\v2#.temporal_lens.common.v1.FilterSpecR\x06filter\x125\n" +
 	"\x04sort\x18\x02 \x01(\v2!.temporal_lens.common.v1.SortSpecR\x04sort\x12G\n" +

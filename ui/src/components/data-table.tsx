@@ -80,6 +80,7 @@ export interface DataTableBulkAction {
   icon?: ReactNode;
   variant?: "default" | "outline" | "destructive";
   className?: string;
+  disabled?: boolean;
   onSelect: (selection: DataTableSelection) => void;
 }
 
@@ -371,6 +372,7 @@ export function DataTable<Row>({
                   variant={action.variant ?? "outline"}
                   className={action.className}
                   onClick={() => action.onSelect(selection)}
+                  disabled={action.disabled}
                 >
                   {action.icon}
                   {action.label}

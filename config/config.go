@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	Log        LogConfig        `envPrefix:"LOG_"`
-	GRPC       GRPCConfig       `envPrefix:"GRPC_"`
-	HTTP       HTTPConfig       `envPrefix:"HTTP_"`
-	OpenSearch OpenSearchConfig `envPrefix:"OPENSEARCH_"`
-	Temporal   TemporalConfig   `envPrefix:"TEMPORAL_"`
+	ReadOnly   bool             `env:"READ_ONLY"`
+	Log        LogConfig        `                envPrefix:"LOG_"`
+	GRPC       GRPCConfig       `                envPrefix:"GRPC_"`
+	HTTP       HTTPConfig       `                envPrefix:"HTTP_"`
+	OpenSearch OpenSearchConfig `                envPrefix:"OPENSEARCH_"`
+	Temporal   TemporalConfig   `                envPrefix:"TEMPORAL_"`
 }
 
 type TemporalConfig struct {

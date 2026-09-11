@@ -30,7 +30,7 @@ services:
       BIND_ON_IP: 0.0.0.0
       DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
     volumes:
-      - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig:ro
+      - ./scripts/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig:ro
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "7233"]
       interval: 5s
@@ -51,7 +51,7 @@ services:
       POSTGRES_SEEDS: postgresql
       SQL_PASSWORD: temporal
     volumes:
-      - ./temporal/scripts:/scripts:ro
+      - ./scripts/temporal/scripts:/scripts:ro
     entrypoint: ["/bin/sh"]
     command: /scripts/setup-postgres.sh
 
@@ -64,7 +64,7 @@ services:
       TEMPORAL_ADDRESS: temporal:7233
       DEFAULT_NAMESPACE: default
     volumes:
-      - ./temporal/scripts:/scripts:ro
+      - ./scripts/temporal/scripts:/scripts:ro
     entrypoint: ["/bin/sh"]
     command: /scripts/create-namespace.sh
 

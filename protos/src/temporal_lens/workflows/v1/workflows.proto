@@ -23,6 +23,7 @@ message GetSearchSchemaRequest {}
 
 message GetSearchSchemaResponse {
   temporal_lens.common.v1.SearchSchema schema = 1;
+  bool read_only = 2;
 }
 
 message SearchRequest {

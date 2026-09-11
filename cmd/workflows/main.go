@@ -96,7 +96,11 @@ func run() int {
 
 	// gRPC adapter
 	grpcSrv := grpcserver.NewServer(cfg.GRPC.Address, logger, onFatal)
-	grpcworkflows.Register(grpcSrv.Mux(), grpcworkflows.NewHandler(workflowSvc), grpcSrv.HandlerOptions()...)
+	grpcworkflows.Register(
+		grpcSrv.Mux(),
+		grpcworkflows.NewHandler(workflowSvc, cfg.ReadOnly),
+		grpcSrv.HandlerOptions()...,
+	)
 	lm.Add("gRPC", grpcSrv)
 
 	// HTTP adapter
