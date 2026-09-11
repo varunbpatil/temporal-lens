@@ -119,11 +119,7 @@ export function RootLayout() {
           <SidebarHeader className="h-16 justify-center">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={<Link to="/workflows" />}
-                  size="lg"
-                  tooltip="Temporal Lens"
-                >
+                <SidebarMenuButton render={<Link to="/workflows" />} size="lg">
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                     <TelescopeIcon />
                   </div>

@@ -67,26 +67,19 @@ var (
 	KeywordOps = []Operator{
 		OpEQ, OpNEQ,
 		OpIn, OpNotIn,
-		OpExists, OpNotExists, OpIsEmpty, OpIsNotEmpty,
 	}
 	TextOps = []Operator{
 		OpContains, OpNotContains,
 		OpStartsWith, OpEndsWith,
-		OpExists, OpNotExists,
 	}
 	NumericOps = []Operator{
-		OpEQ, OpNEQ, OpLT, OpGT, OpLTE, OpGTE,
-		OpBetween, OpIn, OpNotIn,
-		OpExists, OpNotExists,
+		OpEQ, OpNEQ, OpLT, OpGT, OpLTE, OpGTE, OpBetween,
 	}
 	BoolOps = []Operator{
 		OpEQ, OpNEQ,
-		OpExists, OpNotExists,
 	}
 	TimeOps = []Operator{
-		OpEQ, OpNEQ, OpLT, OpGT, OpLTE, OpGTE,
-		OpBetween,
-		OpExists, OpNotExists,
+		OpEQ, OpNEQ, OpLT, OpGT, OpLTE, OpGTE, OpBetween,
 	}
 )
 

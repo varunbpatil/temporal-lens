@@ -79,6 +79,10 @@ export interface SearchField {
   options?: readonly FilterFieldOption[];
 }
 
+export function searchFieldDisplayName(field: SearchField): string {
+  return `${field.group ?? "Fields"} — ${field.label}`;
+}
+
 // SearchFilterBuilder is controlled: its parent owns `value` and receives every
 // edit through `onChange`. That makes the same state easy to save in a URL or
 // use as a TanStack Query key later.

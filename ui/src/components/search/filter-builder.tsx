@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandGroup,
@@ -31,9 +32,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   createFilterGroup,
+  searchFieldDisplayName,
   type FilterGroup,
   type FilterNode,
   type FilterOperator,
@@ -98,8 +99,7 @@ const valuelessOperators = new Set<FilterOperator>([
   "isNotEmpty",
 ]);
 
-// IN and NOT_IN accept several values; the editor represents them as one value
-// per line before a later protobuf converter makes a repeated value.
+// IN and NOT_IN accept several values, represented as a repeated filter value.
 const repeatedOperators = new Set<FilterOperator>(["in", "notIn"]);
 
 const mathematicalOperators = new Set<FilterOperator>(["eq", "neq", "lt", "gt", "lte", "gte"]);
@@ -573,7 +573,7 @@ function FieldPicker({ fields, value, onChange }: FieldPickerProps) {
         render={
           <Button type="button" variant="outline" className="w-full justify-between font-normal">
             <span className="truncate">
-              {selected === undefined ? value : `${selected.group ?? "Fields"} — ${selected.label}`}
+              {selected === undefined ? value : searchFieldDisplayName(selected)}
             </span>
             <ChevronDownIcon className="text-muted-foreground" aria-hidden="true" />
           </Button>
@@ -600,9 +600,7 @@ function FieldPicker({ fields, value, onChange }: FieldPickerProps) {
                     }}
                   >
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span>
-                        {group} — {field.label}
-                      </span>
+                      <span>{searchFieldDisplayName(field)}</span>
                     </span>
                   </CommandItem>
                 ))}
@@ -682,14 +680,29 @@ function FilterValueEditor({ field, operator, value, onChange }: FilterValueEdit
     );
   }
   if (repeatedOperators.has(operator)) {
-    // A textarea keeps multi-value entry compact; blank lines are discarded.
     const values = Array.isArray(value) ? value : [];
+    if (field.options !== undefined && field.options.length > 0) {
+      return (
+        <EnumMultiSelect
+          options={field.options}
+          value={values}
+          onChange={onChange}
+          ariaLabel={`${field.label} values`}
+        />
+      );
+    }
     return (
-      <Textarea
-        className="min-h-8 py-1.5"
-        value={values.join("\n")}
-        placeholder="One value per line"
-        onChange={(event) => onChange(event.target.value.split("\n").filter(Boolean))}
+      <Input
+        value={values.join(", ")}
+        placeholder="Comma-separated values"
+        onChange={(event) =>
+          onChange(
+            event.target.value
+              .split(",")
+              .map((entry) => entry.trim())
+              .filter(Boolean),
+          )
+        }
         aria-label={`${field.label} values`}
       />
     );
@@ -749,6 +762,86 @@ function FilterValueEditor({ field, operator, value, onChange }: FilterValueEdit
       placeholder={`Enter ${field.label.toLowerCase()}`}
       aria-label={`${field.label} value`}
     />
+  );
+}
+
+interface EnumMultiSelectProps {
+  options: NonNullable<SearchField["options"]>;
+  value: readonly string[];
+  onChange: (value: string[]) => void;
+  ariaLabel: string;
+}
+
+function EnumMultiSelect({ options, value, onChange, ariaLabel }: EnumMultiSelectProps) {
+  const [open, setOpen] = useState(false);
+  const selected = new Set(value);
+  const selectedLabels = options
+    .filter((option) => selected.has(option.value))
+    .map((option) => option.label);
+  const allSelected = options.every((option) => selected.has(option.value));
+
+  function toggle(optionValue: string, checked: boolean) {
+    if (checked) {
+      onChange(selected.has(optionValue) ? [...value] : [...value, optionValue]);
+      return;
+    }
+    onChange(value.filter((selectedValue) => selectedValue !== optionValue));
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-between font-normal"
+            aria-label={ariaLabel}
+          >
+            <span className="truncate">
+              {selectedLabels.length === 0 ? "Select values" : selectedLabels.join(", ")}
+            </span>
+            <ChevronDownIcon className="text-muted-foreground" aria-hidden="true" />
+          </Button>
+        }
+      />
+      <PopoverContent className="w-(--anchor-width) p-1" align="start">
+        <div className="grid gap-1">
+          <div className="flex items-center justify-end gap-1 px-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange(options.map((option) => option.value))}
+              disabled={allSelected}
+            >
+              Select all
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange([])}
+              disabled={value.length === 0}
+            >
+              Clear
+            </Button>
+          </div>
+          {options.map((option) => (
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
+            >
+              <Checkbox
+                checked={selected.has(option.value)}
+                onCheckedChange={(checked) => toggle(option.value, checked === true)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

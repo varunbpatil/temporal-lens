@@ -252,23 +252,6 @@ func TestParseFilterSpec_InRequiresRepeatedOp(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestParseFilterSpec_ExistsNoValue(t *testing.T) {
-	t.Parallel()
-	spec := &commonv1.FilterSpec{
-		Filter: &commonv1.FilterSpec_Leaf{
-			Leaf: &commonv1.LeafFilter{
-				Field:    "status",
-				Operator: commonv1.FilterOperator_FILTER_OPERATOR_EXISTS,
-				Value:    nil,
-			},
-		},
-	}
-	f, err := types.ParseFilterSpec(testSchema(), spec)
-	require.NoError(t, err)
-	require.NotNil(t, f.Cond)
-	assert.Equal(t, types.OpExists, f.Cond.Operator)
-}
-
 func TestParseFilterSpec_DefaultOperatorsRejectUnsupported(t *testing.T) {
 	t.Parallel()
 	schema := types.Schema{

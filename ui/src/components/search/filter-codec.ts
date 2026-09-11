@@ -12,6 +12,7 @@ import {
   RepeatedValueSchema,
   type FilterSpec,
 } from "@/gen/temporal_lens/common/v1/common_pb";
+import { searchFieldDisplayName } from "@/components/search/filter-builder.model";
 import type {
   FilterGroup,
   FilterNode,
@@ -69,11 +70,11 @@ function nodeToProto(node: FilterNode, fields: readonly SearchField[]): FilterSp
 
 function valueToProto(rule: FilterRule, field: SearchField) {
   if (rule.value === undefined) {
-    throw new Error(`Enter a value for ${field.label}.`);
+    throw new Error(`Enter a value for ${searchFieldDisplayName(field)}.`);
   }
   if (rule.operator === "between") {
     if (!Array.isArray(rule.value) || rule.value.length !== 2) {
-      throw new Error(`${field.label} needs a start and end value.`);
+      throw new Error(`${searchFieldDisplayName(field)} needs a start and end value.`);
     }
     return create(FilterValueSchema, {
       value: {
@@ -87,7 +88,7 @@ function valueToProto(rule: FilterRule, field: SearchField) {
   }
   if (rule.operator === "in" || rule.operator === "notIn") {
     if (!Array.isArray(rule.value) || rule.value.length === 0) {
-      throw new Error(`Enter at least one value for ${field.label}.`);
+      throw new Error(`Enter at least one value for ${searchFieldDisplayName(field)}.`);
     }
     return create(FilterValueSchema, {
       value: {
@@ -103,32 +104,32 @@ function valueToProto(rule: FilterRule, field: SearchField) {
 
 function scalarValueToProto(value: FilterValue, field: SearchField) {
   if (typeof value !== "string" && typeof value !== "boolean") {
-    throw new Error(`Enter a valid ${field.label} value.`);
+    throw new Error(`Enter a valid ${searchFieldDisplayName(field)} value.`);
   }
   if (field.type === "bool") {
     return create(FilterValueSchema, { value: { case: "boolValue", value: Boolean(value) } });
   }
   if (typeof value !== "string" || value.trim() === "") {
-    throw new Error(`Enter a value for ${field.label}.`);
+    throw new Error(`Enter a value for ${searchFieldDisplayName(field)}.`);
   }
   switch (field.type) {
     case "int":
       try {
         return create(FilterValueSchema, { value: { case: "intValue", value: BigInt(value) } });
       } catch {
-        throw new Error(`${field.label} must be an integer.`);
+        throw new Error(`${searchFieldDisplayName(field)} must be an integer.`);
       }
     case "double": {
       const numericValue = Number(value);
       if (!Number.isFinite(numericValue)) {
-        throw new Error(`${field.label} must be a number.`);
+        throw new Error(`${searchFieldDisplayName(field)} must be a number.`);
       }
       return create(FilterValueSchema, { value: { case: "doubleValue", value: numericValue } });
     }
     case "timestamp": {
       const date = new Date(value);
       if (Number.isNaN(date.valueOf())) {
-        throw new Error(`${field.label} must be a date and time.`);
+        throw new Error(`${searchFieldDisplayName(field)} must be a date and time.`);
       }
       return create(FilterValueSchema, {
         value: { case: "timestampValue", value: timestampFromDate(date) },
