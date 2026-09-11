@@ -16,6 +16,8 @@ import (
 	workflowservice "go.temporal.io/api/workflowservice/v1"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -152,6 +154,7 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	}, data.ChildWorkflows[0])
 }
 
+//nolint:staticcheck // The test verifies Temporal Server 1.31's deprecated execution requirement.
 func TestSourceStartsNativeBatchActions(t *testing.T) {
 	t.Parallel()
 	listener := bufconn.Listen(1 << 20)
@@ -188,13 +191,13 @@ func TestSourceStartsNativeBatchActions(t *testing.T) {
 		Executions: []ports.ExecutionInfo{{Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1"}},
 		Signal:     "payment-received",
 		Payload:    []byte(`{"amount":42}`),
-		Reason:     "reconcile payment",
+		Reason:     " ",
 	})
 	require.NoError(t, err)
 	request := <-requests
 	_, ok := request.GetOperation().(*workflowservice.StartBatchOperationRequest_SignalOperation)
 	require.True(t, ok)
-	require.Equal(t, "reconcile payment", request.GetReason())
+	require.Equal(t, "Requested from Temporal Lens", request.GetReason())
 
 	err = source.Cancel(t.Context(), ports.InternalCancelRequest{Executions: []ports.ExecutionInfo{{
 		Namespace: "payments", WorkflowID: "invoice-1", RunID: "run-1",
@@ -207,6 +210,9 @@ func TestSourceStartsNativeBatchActions(t *testing.T) {
 	require.Len(t, request.GetTargetExecutions(), 1)
 	require.Equal(t, "invoice-1", request.GetTargetExecutions()[0].GetBusinessId())
 	require.Equal(t, "run-1", request.GetTargetExecutions()[0].GetRunId())
+	require.Len(t, request.GetExecutions(), 1)
+	require.Equal(t, "invoice-1", request.GetExecutions()[0].GetWorkflowId())
+	require.Equal(t, "run-1", request.GetExecutions()[0].GetRunId())
 	_, ok = request.GetOperation().(*workflowservice.StartBatchOperationRequest_CancellationOperation)
 	require.True(t, ok)
 	require.Equal(t, "temporal-lens", request.GetCancellationOperation().GetIdentity())
@@ -251,10 +257,14 @@ type batchOperationServer struct {
 	requests chan<- *workflowservice.StartBatchOperationRequest
 }
 
+//nolint:staticcheck // The fake server emulates Temporal Server 1.31's deprecated execution requirement.
 func (server *batchOperationServer) StartBatchOperation(
 	_ context.Context,
 	request *workflowservice.StartBatchOperationRequest,
 ) (*workflowservice.StartBatchOperationResponse, error) {
+	if len(request.GetExecutions()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "legacy executions are required")
+	}
 	server.requests <- request
 	return &workflowservice.StartBatchOperationResponse{}, nil
 }

@@ -16,6 +16,7 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -970,6 +971,16 @@ func terminationMessage(reason string) string {
 	return reason
 }
 
+const defaultBatchOperationReason = "Requested from Temporal Lens"
+
+// batchOperationReason satisfies Temporal's required batch-operation reason while keeping it optional for callers.
+func batchOperationReason(reason string) string {
+	if reason = strings.TrimSpace(reason); reason != "" {
+		return reason
+	}
+	return defaultBatchOperationReason
+}
+
 // timePtr converts an optional protobuf timestamp to an optional Go timestamp.
 func timePtr(timestamp *timestamppb.Timestamp) *time.Time {
 	value := timeFromProto(timestamp)
@@ -1041,6 +1052,8 @@ func statusFromTemporal(status enumspb.WorkflowExecutionStatus) models.Status {
 }
 
 // Signal signals Temporal workflows.
+//
+//nolint:staticcheck // Temporal Server 1.31 validates the deprecated Executions field.
 func (s *Source) Signal(ctx context.Context, req ports.InternalSignalRequest) error {
 	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.
 	return s.forEachNamespace(
@@ -1051,9 +1064,10 @@ func (s *Source) Signal(ctx context.Context, req ports.InternalSignalRequest) er
 				ctx,
 				&workflowservice.StartBatchOperationRequest{
 					Namespace:              namespace,
+					Executions:             workflowExecutions(executions),
 					TargetExecutions:       targetExecutions(executions),
 					JobId:                  uuid.NewString(),
-					Reason:                 req.Reason,
+					Reason:                 batchOperationReason(req.Reason),
 					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
 					Operation: &workflowservice.StartBatchOperationRequest_SignalOperation{
 						SignalOperation: &batchpb.BatchOperationSignal{
@@ -1073,6 +1087,8 @@ func (s *Source) Signal(ctx context.Context, req ports.InternalSignalRequest) er
 }
 
 // Reset resets Temporal workflows using a native batch operation.
+//
+//nolint:staticcheck // Temporal Server 1.31 validates the deprecated Executions field.
 func (s *Source) Reset(ctx context.Context, req ports.InternalResetRequest) error {
 	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.
 	options, optionsErr := batchResetOptions(req.Target)
@@ -1087,9 +1103,10 @@ func (s *Source) Reset(ctx context.Context, req ports.InternalResetRequest) erro
 				ctx,
 				&workflowservice.StartBatchOperationRequest{
 					Namespace:              namespace,
+					Executions:             workflowExecutions(executions),
 					TargetExecutions:       targetExecutions(executions),
 					JobId:                  uuid.NewString(),
-					Reason:                 req.Reason,
+					Reason:                 batchOperationReason(req.Reason),
 					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
 					Operation: &workflowservice.StartBatchOperationRequest_ResetOperation{
 						ResetOperation: &batchpb.BatchOperationReset{
@@ -1127,6 +1144,8 @@ func batchResetOptions(target ports.ResetTarget) (*commonpb.ResetOptions, error)
 }
 
 // Cancel requests cancellation of Temporal workflows.
+//
+//nolint:staticcheck // Temporal Server 1.31 validates the deprecated Executions field.
 func (s *Source) Cancel(ctx context.Context, req ports.InternalCancelRequest) error {
 	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.
 	return s.forEachNamespace(
@@ -1137,9 +1156,10 @@ func (s *Source) Cancel(ctx context.Context, req ports.InternalCancelRequest) er
 				ctx,
 				&workflowservice.StartBatchOperationRequest{
 					Namespace:              namespace,
+					Executions:             workflowExecutions(executions),
 					TargetExecutions:       targetExecutions(executions),
 					JobId:                  uuid.NewString(),
-					Reason:                 req.Reason,
+					Reason:                 batchOperationReason(req.Reason),
 					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
 					Operation: &workflowservice.StartBatchOperationRequest_CancellationOperation{
 						CancellationOperation: &batchpb.BatchOperationCancellation{Identity: clientIdentity},
@@ -1152,6 +1172,8 @@ func (s *Source) Cancel(ctx context.Context, req ports.InternalCancelRequest) er
 }
 
 // Terminate terminates Temporal workflows.
+//
+//nolint:staticcheck // Temporal Server 1.31 validates the deprecated Executions field.
 func (s *Source) Terminate(ctx context.Context, req ports.InternalTerminateRequest) error {
 	// Batch operations are namespace-scoped and asynchronous: success means Temporal accepted each job.
 	return s.forEachNamespace(
@@ -1162,9 +1184,10 @@ func (s *Source) Terminate(ctx context.Context, req ports.InternalTerminateReque
 				ctx,
 				&workflowservice.StartBatchOperationRequest{
 					Namespace:              namespace,
+					Executions:             workflowExecutions(executions),
 					TargetExecutions:       targetExecutions(executions),
 					JobId:                  uuid.NewString(),
-					Reason:                 req.Reason,
+					Reason:                 batchOperationReason(req.Reason),
 					MaxOperationsPerSecond: pool.bulkActionsPerSecond,
 					Operation: &workflowservice.StartBatchOperationRequest_TerminationOperation{
 						TerminationOperation: &batchpb.BatchOperationTermination{
@@ -1212,6 +1235,19 @@ func targetExecutions(executions []ports.ExecutionInfo) []*commonpb.Execution {
 	targets := make([]*commonpb.Execution, 0, len(executions))
 	for _, execution := range executions {
 		targets = append(targets, &commonpb.Execution{BusinessId: execution.WorkflowID, RunId: execution.RunID})
+	}
+	return targets
+}
+
+// workflowExecutions provides the legacy target representation required by Temporal Server 1.31.
+// Newer servers use targetExecutions, so both representations are sent during the API transition.
+func workflowExecutions(executions []ports.ExecutionInfo) []*commonpb.WorkflowExecution {
+	targets := make([]*commonpb.WorkflowExecution, 0, len(executions))
+	for _, execution := range executions {
+		targets = append(targets, &commonpb.WorkflowExecution{
+			WorkflowId: execution.WorkflowID,
+			RunId:      execution.RunID,
+		})
 	}
 	return targets
 }
