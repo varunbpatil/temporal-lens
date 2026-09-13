@@ -17,18 +17,25 @@ type StartStopper interface {
 	Stop(ctx context.Context) error
 }
 
-// CloseOnly adapts a resource that is opened during application construction to
-// a lifecycle-managed resource. It has no startup work and closes when stopped.
-type CloseOnly func() error
+// Closer is a resource that must be released to free underlying resources.
+type Closer interface {
+	Close() error
+}
+
+// closerStopper adapts a resource opened during application construction to a
+// lifecycle-managed resource. It has no startup work and closes when stopped.
+type closerStopper struct {
+	closer Closer
+}
 
 // Start implements StartStopper.
-func (CloseOnly) Start(context.Context) error {
+func (closerStopper) Start(context.Context) error {
 	return nil
 }
 
 // Stop implements StartStopper.
-func (closer CloseOnly) Stop(context.Context) error {
-	return closer()
+func (cs closerStopper) Stop(context.Context) error {
+	return cs.closer.Close()
 }
 
 // Manager manages the lifecycle of multiple services.
@@ -52,6 +59,12 @@ func NewManager(logger *slog.Logger) *Manager {
 // Services are started in the order they are added.
 func (m *Manager) Add(name string, svc StartStopper) {
 	m.services = append(m.services, serviceEntry{name: name, service: svc})
+}
+
+// AddCloser registers a resource opened during construction.
+// It has no startup work and is closed during shutdown.
+func (m *Manager) AddCloser(name string, closer Closer) {
+	m.services = append(m.services, serviceEntry{name: name, service: closerStopper{closer: closer}})
 }
 
 // StartAll starts all registered services in order.

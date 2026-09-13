@@ -291,6 +291,20 @@ func (mr *MockWorkflowSourceMockRecorder) Cancel(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cancel", reflect.TypeOf((*MockWorkflowSource)(nil).Cancel), ctx, req)
 }
 
+// Close mocks base method.
+func (m *MockWorkflowSource) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockWorkflowSourceMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockWorkflowSource)(nil).Close))
+}
+
 // FetchWorkflowData mocks base method.
 func (m *MockWorkflowSource) FetchWorkflowData(ctx context.Context, req ports.FetchWorkflowDataRequest, mapper ports.Mapper) (*models.WorkflowData, error) {
 	m.ctrl.T.Helper()
@@ -413,6 +427,20 @@ func (m *MockWorkflowRepository) Add(ctx context.Context, index string, workflow
 func (mr *MockWorkflowRepositoryMockRecorder) Add(ctx, index, workflows any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockWorkflowRepository)(nil).Add), ctx, index, workflows)
+}
+
+// Close mocks base method.
+func (m *MockWorkflowRepository) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockWorkflowRepositoryMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockWorkflowRepository)(nil).Close))
 }
 
 // CreateIndex mocks base method.

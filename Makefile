@@ -74,6 +74,10 @@ go/tidy: ## Tidy and verify go.mod
 go/mocks: ## Generate Go interface mocks
 	mockgen -destination=mocks/workflows.go -package=mocks github.com/varunbpatil/temporal-lens/domains/workflows/ports Mapper,WorkflowService,WorkflowSource,WorkflowRepository
 
+.PHONY: go/vulncheck
+go/vulncheck: ## Check for vulnerabilities
+	govulncheck ./...
+
 # ------------------------------------
 #  Protobuf
 # ------------------------------------
@@ -100,7 +104,7 @@ proto/breaking: ## Check for breaking changes
 
 .PHONY: ui/install
 ui/install: ## Install UI dependencies
-	cd ui && npm ci
+	cd ui && sfw npm ci
 
 .PHONY: ui/dev
 ui/dev: ## Start UI dev server

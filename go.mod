@@ -7,12 +7,14 @@ require (
 	github.com/andybalholm/brotli v1.2.4
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/go-chi/chi/v5 v5.3.2
+	github.com/go-chi/httplog/v3 v3.5.0
 	github.com/google/uuid v1.6.0
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/opensearch-project/opensearch-go/v5 v5.0.0-rc7
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
+	github.com/vearutop/statigz v1.5.0
 	go.temporal.io/api v1.63.5
 	go.temporal.io/sdk v1.48.0
 	go.uber.org/mock v0.6.0

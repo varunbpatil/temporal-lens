@@ -87,8 +87,8 @@ type WorkflowSourceParams struct {
 	DialOptions []grpc.DialOption
 }
 
-// NewSource creates all namespace clients concurrently.
-func NewSource(ctx context.Context, params WorkflowSourceParams) (*Source, error) {
+// New creates all namespace clients concurrently.
+func New(ctx context.Context, params WorkflowSourceParams) (*Source, error) {
 	cfg := params.Config
 	if err := validateConfig(cfg); err != nil {
 		return nil, err

@@ -9,9 +9,9 @@ import (
 	"github.com/varunbpatil/temporal-lens/version"
 )
 
-// NewServer creates a Temporal Lens MCP server. Domain packages register their
+// New creates a Temporal Lens MCP server. Domain packages register their
 // tools with the returned server.
-func NewServer() *gomcp.Server {
+func New() *gomcp.Server {
 	return gomcp.NewServer(&gomcp.Implementation{
 		Name:        "temporal-lens",
 		Title:       "Temporal Lens",

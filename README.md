@@ -87,9 +87,9 @@ This project follows hexagonal architecture (Ports & Adapters pattern).
 
 This project uses:
 
-* [mise](https://mise.jdx.dev) to manage the development environment.
+* [Mise](https://mise.jdx.dev) to manage the development environment.
 * [Makefile](./Makefile) as the task runner.
-* [tilt](https://tilt.dev/) as the process runner.
+* [Tilt](https://tilt.dev/) as the process runner.
 
 ## Usage
 

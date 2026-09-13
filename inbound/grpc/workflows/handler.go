@@ -3,11 +3,11 @@ package workflows
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"connectrpc.com/connect"
 
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
+	grpc "github.com/varunbpatil/temporal-lens/inbound/grpc"
 	v1 "github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1"
 	"github.com/varunbpatil/temporal-lens/protos/gen/temporal_lens/workflows/v1/workflowsv1connect"
 	"github.com/varunbpatil/temporal-lens/types"
@@ -23,19 +23,18 @@ type Handler struct {
 	readOnly bool
 }
 
-// NewHandler creates a new Connect handler backed by the given domain service.
-func NewHandler(svc ports.WorkflowService, readOnly bool) *Handler {
+// New creates a new Connect handler backed by the given domain service.
+func New(svc ports.WorkflowService, readOnly bool) *Handler {
 	return &Handler{svc: svc, readOnly: readOnly}
 }
 
 // Register registers the WorkflowService handlers on the given mux.
 func Register(
-	mux *http.ServeMux,
+	server grpc.Registrar,
 	handler workflowsv1connect.WorkflowServiceHandler,
-	opts ...connect.HandlerOption,
 ) {
-	path, httpHandler := workflowsv1connect.NewWorkflowServiceHandler(handler, opts...)
-	mux.Handle(path, httpHandler)
+	path, httpHandler := workflowsv1connect.NewWorkflowServiceHandler(handler, server.HandlerOptions()...)
+	server.Handle(path, httpHandler)
 }
 
 // GetSearchSchema returns every indexed workflow field so clients can build

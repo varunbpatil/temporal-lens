@@ -96,8 +96,8 @@ type WorkflowServiceParams struct {
 	Logger     *slog.Logger
 }
 
-// NewService validates dependencies and builds a workflow indexing service.
-func NewService(_ context.Context, params WorkflowServiceParams) (*Service, error) {
+// New validates dependencies and builds a workflow indexing service.
+func New(_ context.Context, params WorkflowServiceParams) (*Service, error) {
 	if params.Source == nil || params.Repository == nil || params.Logger == nil {
 		return nil, errors.New("workflow source, repository, and logger are required")
 	}

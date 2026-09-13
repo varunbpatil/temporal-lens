@@ -61,7 +61,7 @@ func TestHandlerSearchParsesCommonSpecsAndMapsResponse(t *testing.T) {
 		WorkflowURL(gomock.Any(), gomock.Any()).
 		Return("https://temporal.example/namespaces/payments/workflows/workflow-id/run-id", nil)
 
-	handler := workflowhandler.NewHandler(service, false)
+	handler := workflowhandler.New(service, false)
 	response, err := handler.Search(t.Context(), connect.NewRequest(&v1.SearchRequest{
 		Filter: &commonv1.FilterSpec{Filter: &commonv1.FilterSpec_Leaf{Leaf: &commonv1.LeafFilter{
 			Field:    "data.custom",
@@ -132,7 +132,7 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 		Return([]ports.IndexInfo{{Name: "workflows-2026-01-02", DocumentCount: 4}}, nil)
 	service.EXPECT().DeleteIndex(gomock.Any(), "workflows-2026-01-02").Return(nil)
 
-	handler := workflowhandler.NewHandler(service, false)
+	handler := workflowhandler.New(service, false)
 	_, err := handler.Signal(t.Context(), connect.NewRequest(&v1.SignalRequest{
 		Workflows: executions,
 		Signal:    "payment-received",
@@ -176,7 +176,7 @@ func TestHandlerSearchRejectsFilterOutsideSchema(t *testing.T) {
 		},
 	})
 
-	handler := workflowhandler.NewHandler(service, false)
+	handler := workflowhandler.New(service, false)
 	_, err := handler.Search(t.Context(), connect.NewRequest(&v1.SearchRequest{
 		Filter: &commonv1.FilterSpec{Filter: &commonv1.FilterSpec_Leaf{Leaf: &commonv1.LeafFilter{
 			Field:    "data.notIndexed",
@@ -203,7 +203,7 @@ func TestHandlerSearchRejectsPageSizesAboveLimit(t *testing.T) {
 			controller := gomock.NewController(t)
 			service := mocks.NewMockWorkflowService(controller)
 			service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{})
-			handler := workflowhandler.NewHandler(service, false)
+			handler := workflowhandler.New(service, false)
 
 			_, err := handler.Search(t.Context(), connect.NewRequest(&v1.SearchRequest{Pagination: pagination}))
 			require.Error(t, err)
@@ -222,7 +222,7 @@ func TestHandlerSignalRejectsFilterOutsideSchema(t *testing.T) {
 		},
 	})
 
-	handler := workflowhandler.NewHandler(service, false)
+	handler := workflowhandler.New(service, false)
 	_, err := handler.Signal(t.Context(), connect.NewRequest(&v1.SignalRequest{
 		Workflows: &v1.WorkflowSelection{Selection: &v1.WorkflowSelection_Filter{
 			Filter: &commonv1.FilterSpec{Filter: &commonv1.FilterSpec_Leaf{Leaf: &commonv1.LeafFilter{
@@ -255,7 +255,7 @@ func TestHandlerSignalAcceptsMapperFieldFromCombinedSchema(t *testing.T) {
 		},
 	)
 
-	handler := workflowhandler.NewHandler(service, false)
+	handler := workflowhandler.New(service, false)
 	_, err := handler.Signal(t.Context(), connect.NewRequest(&v1.SignalRequest{
 		Workflows: &v1.WorkflowSelection{Selection: &v1.WorkflowSelection_Filter{
 			Filter: &commonv1.FilterSpec{Filter: &commonv1.FilterSpec_Leaf{Leaf: &commonv1.LeafFilter{
@@ -274,7 +274,7 @@ func TestHandlerReadOnlyAdvertisesAndRejectsBulkActions(t *testing.T) {
 	controller := gomock.NewController(t)
 	service := mocks.NewMockWorkflowService(controller)
 	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{})
-	handler := workflowhandler.NewHandler(service, true)
+	handler := workflowhandler.New(service, true)
 
 	response, err := handler.GetSearchSchema(t.Context(), connect.NewRequest(&v1.GetSearchSchemaRequest{}))
 	require.NoError(t, err)

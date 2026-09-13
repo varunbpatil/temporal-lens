@@ -253,7 +253,7 @@ func newServiceWithMapper(
 	mapper ports.Mapper,
 ) *service.Service {
 	t.Helper()
-	svc, err := service.NewService(t.Context(), service.WorkflowServiceParams{
+	svc, err := service.New(t.Context(), service.WorkflowServiceParams{
 		Config: config.TemporalConfig{
 			Namespaces:      []string{"payments"},
 			IndexPrefix:     indexPrefix,

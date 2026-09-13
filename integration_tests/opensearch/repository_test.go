@@ -18,7 +18,7 @@ import (
 
 func newTestRepository(t *testing.T, schema types.Schema) *workflows.Repository {
 	t.Helper()
-	repo, err := workflows.NewRepository(t.Context(), workflows.WorkflowRepositoryParams{
+	repo, err := workflows.New(t.Context(), workflows.WorkflowRepositoryParams{
 		Config: config.OpenSearchConfig{
 			Addresses: []string{sharedAddr},
 		},

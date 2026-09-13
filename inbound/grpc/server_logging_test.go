@@ -17,7 +17,7 @@ func TestLoggingInterceptorLogsHandlerErrors(t *testing.T) {
 
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, nil))
-	interceptor := loggingInterceptor(logger)
+	interceptor := newLoggingInterceptor(logger)
 	next := interceptor.WrapUnary(func(context.Context, connect.AnyRequest) (connect.AnyResponse, error) {
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Temporal rejected reset"))
 	})

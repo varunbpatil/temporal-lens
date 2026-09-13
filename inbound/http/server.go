@@ -9,18 +9,23 @@ import (
 	"mime"
 	"net"
 	"net/http"
-	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v3"
+	"github.com/vearutop/statigz"
+	"github.com/vearutop/statigz/brotli"
 
 	web "github.com/varunbpatil/temporal-lens"
+	"github.com/varunbpatil/temporal-lens/inbound/observability"
 )
 
-const apiPrefix = "/api"
+const (
+	apiPrefix = "/api"
+	mcpPrefix = "/mcp"
+)
 
 // Server is the HTTP server that serves all domains.
 type Server struct {
@@ -32,37 +37,54 @@ type Server struct {
 	onFatal  func(error)
 }
 
-// NewServer creates a new HTTP server that serves the API, MCP and embedded UI.
-func NewServer(api, mcp http.Handler, address string, logger *slog.Logger, onFatal func(error)) *Server {
+// New creates a new HTTP server that serves the API, MCP and embedded UI.
+func New(api, mcp http.Handler, address string, logger *slog.Logger, onFatal func(error)) *Server {
 	return &Server{
-		handler: NewHandler(api, mcp, logger),
+		handler: newHandler(api, mcp, logger),
 		address: address,
 		logger:  logger,
 		onFatal: onFatal,
 	}
 }
 
-// NewHandler serves Connect API routes below /api, MCP at /mcp, and the
+// newHandler serves Connect API routes below /api, MCP at /mcp, and the
 // embedded UI at the root. Browser navigation falls back to the UI entrypoint;
-// missing static assets return 404.
-func NewHandler(api, mcp http.Handler, logger *slog.Logger) http.Handler {
+// missing static assets return 404. Connect RPCs own their completion logs,
+// MCP access is logged via httplog, and the UI stays quiet.
+func newHandler(api, mcp http.Handler, logger *slog.Logger) http.Handler {
 	ui := newUIHandler(embeddedUI())
 	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(requestLogger(logger))
-	router.Use(middleware.Recoverer)
 
-	router.Handle("/mcp", mcp)
+	// Global middleware
+	router.Use(observability.RequestID)
+	router.Use(observability.Recoverer(logger))
+
+	// MCP: the endpoint for AI agents. Access-logged via httplog.
+	router.With(httplog.RequestLogger(logger, &httplog.Options{
+		LogExtraAttrs: requestLogAttrs,
+	})).Handle(mcpPrefix, mcp)
+
+	// API: Connect RPCs below /api. Brotli is put first in Accept-Encoding
+	// because Connect picks the first mutually-supported encoding.
 	router.Route(apiPrefix, func(router chi.Router) {
 		router.Use(preferBrotli)
 		router.Handle("/", http.NotFoundHandler())
 		router.Handle("/*", http.StripPrefix(apiPrefix, api))
 	})
+
+	// UI: embedded SPA at the root. Missing static assets return 404;
+	// extensionless paths fall back to the entrypoint.
 	router.Get("/*", ui.ServeHTTP)
 	router.Head("/*", ui.ServeHTTP)
-	router.NotFound(http.NotFound)
 
 	return router
+}
+
+func requestLogAttrs(request *http.Request, _ string, _ int) []slog.Attr {
+	if requestID := observability.RequestIDFromContext(request.Context()); requestID != "" {
+		return []slog.Attr{slog.String("request_id", requestID)}
+	}
+	return nil
 }
 
 // preferBrotli moves Brotli to the front of Accept-Encoding for Connect API
@@ -92,197 +114,65 @@ func brotliFirst(acceptEncoding string) string {
 }
 
 // newUIHandler serves embedded static assets, negotiating Vite's build-time
-// Brotli variants. Extensionless paths serve the SPA entrypoint.
-func newUIHandler(assets fs.FS) http.Handler {
-	files := http.FileServer(http.FS(assets))
+// Brotli/Gzip variants via statigz. Requests that accept HTML are browser
+// navigations and fall back to the SPA entrypoint; other missing resources
+// return 404.
+func newUIHandler(assets fs.ReadDirFS) http.Handler {
+	fileServer := statigz.FileServer(assets, brotli.AddEncoding)
 
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		assetPath := strings.TrimPrefix(path.Clean(request.URL.Path), "/")
-		info, err := fs.Stat(assets, assetPath)
-		if err != nil || info.IsDir() {
-			if path.Ext(request.URL.Path) != "" {
-				http.NotFound(writer, request)
-				return
-			}
-			assetPath = "index.html"
+		if fileServer.Found(request) {
+			fileServer.ServeHTTP(writer, request)
+			return
 		}
-
-		assetRequest := request.Clone(request.Context())
-		assetRequest.URL.Path = "/" + assetPath
-		// http.FileServer redirects /index.html to /. Serve the entrypoint at the
-		// filesystem root so SPA fallbacks do not loop through that redirect.
-		if assetPath == "index.html" {
-			assetRequest.URL.Path = "/"
+		if !acceptsHTML(request.Header.Get("Accept")) {
+			http.NotFound(writer, request)
+			return
 		}
-		serveAsset(files, assets, writer, assetRequest, assetPath)
+		// statigz serves index.html at "/" (http.FileServer would redirect
+		// /index.html to /, so serve the entrypoint at the root directly).
+		indexRequest := request.Clone(request.Context())
+		indexRequest.URL.Path = "/"
+		fileServer.ServeHTTP(writer, indexRequest)
 	})
 }
 
-func serveAsset(files http.Handler, assets fs.FS, writer http.ResponseWriter, request *http.Request, assetPath string) {
-	variant, hasCompressedAsset := preferredCompression(request, assets, assetPath)
-	if !hasCompressedAsset {
-		files.ServeHTTP(writer, request)
-		return
-	}
-
-	writer.Header().Add("Vary", "Accept-Encoding")
-	if variant == nil {
-		files.ServeHTTP(writer, request)
-		return
-	}
-
-	compressedRequest := request.Clone(request.Context())
-	compressedRequest.URL.Path = "/" + assetPath + variant.extension
-	writer.Header().Set("Content-Encoding", variant.encoding)
-	if contentType := mime.TypeByExtension(path.Ext(assetPath)); contentType != "" {
-		writer.Header().Set("Content-Type", contentType)
-	}
-	files.ServeHTTP(writer, compressedRequest)
-}
-
-type compressionVariant struct {
-	encoding  string
-	extension string
-}
-
-func compressionVariants() [2]compressionVariant {
-	return [2]compressionVariant{
-		{encoding: "br", extension: ".br"},
-		{encoding: "gzip", extension: ".gz"},
-	}
-}
-
-// preferredCompression selects the supported encoding with the highest client
-// preference. Brotli wins ties because it generally produces smaller assets.
-// The second return value reports whether any pre-compressed variant exists,
-// so callers can set Vary for the uncompressed fallback too.
-func preferredCompression(request *http.Request, assets fs.FS, assetPath string) (*compressionVariant, bool) {
-	var selected *compressionVariant
-	selectedQuality := 0.0
-	hasCompressedAsset := false
-	variants := compressionVariants()
-	for index := range variants {
-		variant := &variants[index]
-		if _, err := fs.Stat(assets, assetPath+variant.extension); err != nil {
+func acceptsHTML(accept string) bool {
+	for value := range strings.SplitSeq(accept, ",") {
+		mediaType, params, err := mime.ParseMediaType(strings.TrimSpace(value))
+		if err != nil || !strings.EqualFold(mediaType, "text/html") {
 			continue
 		}
-		hasCompressedAsset = true
-		if quality := encodingQuality(request, variant.encoding); quality > selectedQuality {
-			selected = variant
-			selectedQuality = quality
-		}
-	}
-	return selected, hasCompressedAsset
-}
-
-func encodingQuality(request *http.Request, wanted string) float64 {
-	wildcardQuality := -1.0
-	for encoding := range strings.SplitSeq(request.Header.Get("Accept-Encoding"), ",") {
-		parts := strings.Split(encoding, ";")
-		name := strings.TrimSpace(parts[0])
-		if !strings.EqualFold(name, wanted) && name != "*" {
+		if quality, qualityErr := strconv.ParseFloat(params["q"], 64); qualityErr == nil && quality == 0 {
 			continue
 		}
-		quality := 1.0
-		for _, parameter := range parts[1:] {
-			key, value, ok := strings.Cut(strings.TrimSpace(parameter), "=")
-			if !ok || !strings.EqualFold(key, "q") {
-				continue
-			}
-			parsed, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				quality = 0
-				break
-			}
-			quality = parsed
-		}
-		if strings.EqualFold(name, wanted) {
-			return quality
-		}
-		wildcardQuality = quality
+		return true
 	}
-	return max(wildcardQuality, 0)
+	return false
 }
 
-// requestLogger uses Chi's request logging middleware with the application's
-// structured logger. Static UI assets are omitted to keep page loads quiet.
-func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
-	if logger == nil {
-		return func(next http.Handler) http.Handler { return next }
-	}
-	return middleware.RequestLogger(slogLogFormatter{logger: logger})
-}
-
-type slogLogFormatter struct {
-	logger *slog.Logger
-}
-
-func (formatter slogLogFormatter) NewLogEntry(request *http.Request) middleware.LogEntry {
-	return slogLogEntry{
-		logger:  formatter.logger,
-		request: request,
-		log:     strings.HasPrefix(request.URL.Path, apiPrefix) || request.URL.Path == "/mcp",
-	}
-}
-
-type slogLogEntry struct {
-	logger  *slog.Logger
-	request *http.Request
-	log     bool
-}
-
-func (entry slogLogEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration, _ any) {
-	if !entry.log {
-		return
-	}
-	if status == 0 {
-		status = http.StatusOK
-	}
-
-	attributes := []any{
-		"request_id", middleware.GetReqID(entry.request.Context()),
-		"method", entry.request.Method,
-		"path", entry.request.URL.Path,
-		"status", status,
-		"bytes", bytes,
-		"duration", elapsed,
-	}
-	if status >= http.StatusInternalServerError {
-		entry.logger.ErrorContext(entry.request.Context(), "HTTP request failed", attributes...)
-		return
-	}
-	entry.logger.InfoContext(entry.request.Context(), "HTTP request", attributes...)
-}
-
-func (entry slogLogEntry) Panic(value any, stack []byte) {
-	entry.logger.ErrorContext(entry.request.Context(), "HTTP panic recovered",
-		"request_id", middleware.GetReqID(entry.request.Context()),
-		"method", entry.request.Method,
-		"path", entry.request.URL.Path,
-		"panic", value,
-		"stack", string(stack),
-	)
-}
-
-func embeddedUI() fs.FS {
+// embeddedUI returns the embedded frontend assets. UI builds place them under
+// ui/dist; non-UI builds embed the placeholder index.html at the root.
+func embeddedUI() fs.ReadDirFS {
 	assets, err := fs.Sub(web.Dist, "ui/dist")
-	if err == nil {
-		_, err = fs.Stat(assets, "index.html")
+	if err != nil {
+		return web.Dist
 	}
-	if err == nil {
-		return assets
+	if _, err = fs.Stat(assets, "index.html"); err != nil {
+		return web.Dist
 	}
-
-	// Non-UI builds embed the placeholder index.html at the root of Dist.
-	return web.Dist
+	embedded, ok := assets.(fs.ReadDirFS)
+	if !ok {
+		return web.Dist
+	}
+	return embedded
 }
 
-// Start begins listening for connections. It returns once the server is accepting connections.
-// The server runs in a background goroutine and is shut down when Stop is called.
+// Start begins listening for connections. The server runs in a background goroutine and is shut down when Stop is called.
 func (s *Server) Start(ctx context.Context) error {
 	var lc net.ListenConfig
 	var err error
-	s.listener, err = lc.Listen(context.Background(), "tcp", s.address)
+	s.listener, err = lc.Listen(ctx, "tcp", s.address)
 	if err != nil {
 		return fmt.Errorf("http: listen: %w", err)
 	}

@@ -44,6 +44,8 @@ type WorkflowService interface {
 
 // WorkflowSource is the interface implemented by the workflow source, in this case Temporal.
 type WorkflowSource interface {
+	types.Closer
+
 	// Stream workflow metadata
 	StreamWorkflowMetadata(
 		ctx context.Context,
@@ -75,6 +77,8 @@ type WorkflowSource interface {
 
 // WorkflowRepository is the interface implemented by the workflow repository.
 type WorkflowRepository interface {
+	types.Closer
+
 	// Create a new index
 	CreateIndex(ctx context.Context, index string) error
 

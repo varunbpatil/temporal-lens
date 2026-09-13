@@ -63,7 +63,7 @@ func newCompressionTestHandler() http.Handler {
 		) (*connect.Response[emptypb.Empty], error) {
 			return connect.NewResponse(&emptypb.Empty{}), nil
 		},
-		connect.WithHandlerOptions(grpcutil.HandlerOptions()...),
+		connect.WithHandlerOptions(grpcutil.New("", nil, nil).HandlerOptions()...),
 	)
 	mux.Handle(compressionTestProcedure, handler)
 	return mux

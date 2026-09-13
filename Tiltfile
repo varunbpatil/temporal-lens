@@ -1,4 +1,62 @@
 # ------------------------------------------------------------------------------
+# DOCKER COMPOSE SERVICES
+# ------------------------------------------------------------------------------
+
+docker_compose("docker-compose.yml")
+
+dc_resource(
+    "postgresql",
+    labels=["dependencies"],
+)
+dc_resource(
+    "temporal-schema",
+    labels=["dependencies"],
+    resource_deps=["postgresql-ready"],
+)
+dc_resource(
+    "temporal",
+    labels=["dependencies"],
+    resource_deps=["temporal-schema-ready"],
+)
+dc_resource(
+    "temporal-create-namespace",
+    labels=["dependencies"],
+    resource_deps=["temporal-ready"],
+)
+dc_resource(
+    "temporal-ui",
+    labels=["dependencies"],
+    resource_deps=["temporal-ready"],
+)
+dc_resource(
+    "opensearch",
+    labels=["dependencies"],
+)
+
+# ------------------------------------------------------------------------------
+# LOCAL SERVICES
+# ------------------------------------------------------------------------------
+
+# Workflows service
+local_resource(
+    "workflows",
+    serve_cmd="make go/run",
+    resource_deps=["opensearch-ready", "temporal-namespace-ready"],
+    allow_parallel=True,
+    labels=["services"],
+)
+
+# React frontend
+local_resource(
+    "ui",
+    serve_cmd="make ui/dev",
+    links=["http://localhost:5173"],
+    resource_deps=["workflows-ready"],
+    allow_parallel=True,
+    labels=["services"],
+)
+
+# ------------------------------------------------------------------------------
 # READINESS CHECKS
 # ------------------------------------------------------------------------------
 
@@ -49,62 +107,4 @@ local_resource(
     resource_deps=["workflows"],
     allow_parallel=True,
     labels=["readiness"],
-)
-
-# ------------------------------------------------------------------------------
-# DOCKER COMPOSE SERVICES
-# ------------------------------------------------------------------------------
-
-docker_compose("docker-compose.yml")
-
-dc_resource(
-    "postgresql",
-    labels=["dependencies"],
-)
-dc_resource(
-    "temporal-schema",
-    labels=["dependencies"],
-    resource_deps=["postgresql-ready"],
-)
-dc_resource(
-    "temporal",
-    labels=["dependencies"],
-    resource_deps=["temporal-schema-ready"],
-)
-dc_resource(
-    "temporal-create-namespace",
-    labels=["dependencies"],
-    resource_deps=["temporal-ready"],
-)
-dc_resource(
-    "temporal-ui",
-    labels=["dependencies"],
-    resource_deps=["temporal-ready"],
-)
-dc_resource(
-    "opensearch",
-    labels=["dependencies"],
-)
-
-# ------------------------------------------------------------------------------
-# SERVICES
-# ------------------------------------------------------------------------------
-
-# Workflows service
-local_resource(
-    "workflows",
-    serve_cmd="go run ./cmd/workflows",
-    resource_deps=["opensearch-ready", "temporal-namespace-ready"],
-    allow_parallel=True,
-    labels=["services"],
-)
-
-# React frontend
-local_resource(
-    "ui",
-    serve_cmd="make ui/dev",
-    links=["http://localhost:5173"],
-    resource_deps=["workflows-ready"],
-    allow_parallel=True,
-    labels=["services"],
 )

@@ -33,7 +33,7 @@ type WorkflowRepositoryParams struct {
 	SearchSchema func() types.Schema
 }
 
-func NewRepository(_ context.Context, params WorkflowRepositoryParams) (*Repository, error) {
+func New(_ context.Context, params WorkflowRepositoryParams) (*Repository, error) {
 	if params.SearchSchema == nil {
 		return nil, errors.New("OpenSearch workflow search schema provider is required")
 	}

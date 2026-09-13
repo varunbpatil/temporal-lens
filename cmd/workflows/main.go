@@ -11,15 +11,15 @@ import (
 	"time"
 
 	"github.com/varunbpatil/temporal-lens/config"
-	workflowservice "github.com/varunbpatil/temporal-lens/domains/workflows/service"
+	workflowsService "github.com/varunbpatil/temporal-lens/domains/workflows/service"
 	grpcserver "github.com/varunbpatil/temporal-lens/inbound/grpc"
 	grpcworkflows "github.com/varunbpatil/temporal-lens/inbound/grpc/workflows"
 	httpserver "github.com/varunbpatil/temporal-lens/inbound/http"
 	mcpserver "github.com/varunbpatil/temporal-lens/inbound/mcp"
 	mcpworkflows "github.com/varunbpatil/temporal-lens/inbound/mcp/workflows"
 	"github.com/varunbpatil/temporal-lens/mapper"
-	opensearchworkflows "github.com/varunbpatil/temporal-lens/outbound/opensearch/workflows"
-	temporalworkflows "github.com/varunbpatil/temporal-lens/outbound/temporal/workflows"
+	workflowsRepository "github.com/varunbpatil/temporal-lens/outbound/opensearch/workflows"
+	workflowsSource "github.com/varunbpatil/temporal-lens/outbound/temporal/workflows"
 	"github.com/varunbpatil/temporal-lens/types"
 	"github.com/varunbpatil/temporal-lens/version"
 )
@@ -39,7 +39,7 @@ func run() int {
 	}
 
 	// Logging
-	logger := slog.New(newHandler(cfg.Log))
+	logger := slog.New(newLogHandler(cfg.Log))
 	slog.SetDefault(logger)
 
 	// Version info
@@ -58,17 +58,17 @@ func run() int {
 	defer func() { cancel(); lm.StopAll(shutdownTimeout) }()
 
 	// Temporal workflow source
-	source, err := temporalworkflows.NewSource(ctx, temporalworkflows.WorkflowSourceParams{Config: cfg.Temporal})
+	source, err := workflowsSource.New(ctx, workflowsSource.WorkflowSourceParams{Config: cfg.Temporal})
 	if err != nil {
 		logger.Error("create Temporal workflow source", "error", err)
 		return 1
 	}
-	lm.Add("Temporal workflow source", types.CloseOnly(source.Close))
+	lm.AddCloser("Temporal workflow source", source)
 
-	var workflowSvc *workflowservice.Service
+	var workflowSvc *workflowsService.Service
 
 	// Temporal workflow repository
-	repository, err := opensearchworkflows.NewRepository(ctx, opensearchworkflows.WorkflowRepositoryParams{
+	repository, err := workflowsRepository.New(ctx, workflowsRepository.WorkflowRepositoryParams{
 		Config: cfg.OpenSearch,
 
 		// Repository needs the schema from the workflow service,
@@ -80,10 +80,10 @@ func run() int {
 		logger.Error("create OpenSearch workflow repository", "error", err)
 		return 1
 	}
-	lm.Add("OpenSearch workflow repository", types.CloseOnly(repository.Close))
+	lm.AddCloser("OpenSearch workflow repository", repository)
 
 	// Workflow service
-	workflowSvc, err = workflowservice.NewService(ctx, workflowservice.WorkflowServiceParams{
+	workflowSvc, err = workflowsService.New(ctx, workflowsService.WorkflowServiceParams{
 		Config:     cfg.Temporal,
 		Source:     source,
 		Repository: repository,
@@ -97,20 +97,16 @@ func run() int {
 	lm.Add("Workflows service", workflowSvc)
 
 	// gRPC adapter
-	grpcSrv := grpcserver.NewServer(cfg.GRPC.Address, logger, onFatal)
-	grpcworkflows.Register(
-		grpcSrv.Mux(),
-		grpcworkflows.NewHandler(workflowSvc, cfg.ReadOnly),
-		grpcSrv.HandlerOptions()...,
-	)
+	grpcSrv := grpcserver.New(cfg.GRPC.Address, logger, onFatal)
+	grpcworkflows.Register(grpcSrv, grpcworkflows.New(workflowSvc, cfg.ReadOnly))
 	lm.Add("gRPC", grpcSrv)
 
-	// MCP adapter.
-	mcpSrv := mcpserver.NewServer()
+	// MCP adapter
+	mcpSrv := mcpserver.New()
 	mcpworkflows.Register(mcpSrv, workflowSvc, cfg.ReadOnly)
 
 	// HTTP adapter
-	httpSrv := httpserver.NewServer(grpcSrv.Mux(), mcpserver.Handler(mcpSrv), cfg.HTTP.Address, logger, onFatal)
+	httpSrv := httpserver.New(grpcSrv.Handler(), mcpserver.Handler(mcpSrv), cfg.HTTP.Address, logger, onFatal)
 	lm.Add("HTTP", httpSrv)
 
 	// Start all services
@@ -124,7 +120,7 @@ func run() int {
 	return 0
 }
 
-func newHandler(cfg config.LogConfig) slog.Handler {
+func newLogHandler(cfg config.LogConfig) slog.Handler {
 	opts := &slog.HandlerOptions{Level: parseLevel(cfg.Level)}
 
 	switch strings.ToLower(cfg.Format) {

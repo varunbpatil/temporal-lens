@@ -91,7 +91,7 @@ func TestWorkflowDataBuilderExtractsHistory(t *testing.T) {
 	})
 
 	baseURL := url.URL{Scheme: "http", Host: "temporal.example"}
-	source, err := temporalworkflows.NewSource(context.Background(), temporalworkflows.WorkflowSourceParams{
+	source, err := temporalworkflows.New(context.Background(), temporalworkflows.WorkflowSourceParams{
 		Config: config.TemporalConfig{
 			Namespaces:               []string{"parent-namespace"},
 			Endpoint:                 "passthrough:///temporal",
@@ -169,7 +169,7 @@ func TestSourceStartsNativeBatchActions(t *testing.T) {
 	})
 
 	baseURL := url.URL{Scheme: "http", Host: "temporal.example"}
-	source, err := temporalworkflows.NewSource(t.Context(), temporalworkflows.WorkflowSourceParams{
+	source, err := temporalworkflows.New(t.Context(), temporalworkflows.WorkflowSourceParams{
 		Config: config.TemporalConfig{
 			Namespaces:               []string{"payments"},
 			Endpoint:                 "passthrough:///temporal",
