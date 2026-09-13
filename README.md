@@ -103,6 +103,24 @@ make docker/build
 make docker/run
 ```
 
+### MCP server
+
+Temporal Lens exposes a Streamable HTTP MCP endpoint at `/mcp`:
+
+Start the service using the Docker steps above, then add the endpoint to an MCP client. For clients that use an `mcpServers` JSON configuration:
+
+```json
+{
+  "mcpServers": {
+    "temporal-lens": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+The server provides search, signal, reset, cancel, and terminate actions. Set `READ_ONLY=true` in `.env` to disable those workflow mutations.
+
 ### Environment Variables
 
 | Variable                               | Description                                                           | Required    | Default      |
