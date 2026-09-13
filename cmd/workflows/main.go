@@ -15,6 +15,8 @@ import (
 	grpcserver "github.com/varunbpatil/temporal-lens/inbound/grpc"
 	grpcworkflows "github.com/varunbpatil/temporal-lens/inbound/grpc/workflows"
 	httpserver "github.com/varunbpatil/temporal-lens/inbound/http"
+	mcpserver "github.com/varunbpatil/temporal-lens/inbound/mcp"
+	mcpworkflows "github.com/varunbpatil/temporal-lens/inbound/mcp/workflows"
 	"github.com/varunbpatil/temporal-lens/mapper"
 	opensearchworkflows "github.com/varunbpatil/temporal-lens/outbound/opensearch/workflows"
 	temporalworkflows "github.com/varunbpatil/temporal-lens/outbound/temporal/workflows"
@@ -103,8 +105,12 @@ func run() int {
 	)
 	lm.Add("gRPC", grpcSrv)
 
+	// MCP adapter.
+	mcpSrv := mcpserver.NewServer()
+	mcpworkflows.Register(mcpSrv, workflowSvc, cfg.ReadOnly)
+
 	// HTTP adapter
-	httpSrv := httpserver.NewServer(grpcSrv.Mux(), cfg.HTTP.Address, logger, onFatal)
+	httpSrv := httpserver.NewServer(grpcSrv.Mux(), mcpserver.Handler(mcpSrv), cfg.HTTP.Address, logger, onFatal)
 	lm.Add("HTTP", httpSrv)
 
 	// Start all services

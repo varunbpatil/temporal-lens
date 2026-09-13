@@ -196,13 +196,15 @@ const (
 // WorkflowSchema describes fields that Temporal Lens indexes without a custom
 // payload mapper. Custom mapper fields can be added when a mapper is wired in.
 func WorkflowSchema() types.Schema {
-	schema := workflowMetadataSchema()
-	maps.Copy(schema, workflowDataSchema())
+	schema := workflowFieldsSchema()
+	maps.Copy(schema, activityFieldsSchema())
+	maps.Copy(schema, childWorkflowFieldsSchema())
+	maps.Copy(schema, searchAttributeFieldsSchema())
 	return schema
 }
 
 //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
-func workflowMetadataSchema() types.Schema {
+func workflowFieldsSchema() types.Schema {
 	return types.Schema{
 		"id": {
 			Type:  types.FieldTypeKeyword,
@@ -252,27 +254,16 @@ func workflowMetadataSchema() types.Schema {
 				{Label: "Terminated", Value: string(StatusTerminated)},
 			},
 		},
-		"metadata.searchAttributes.key": {
-			Type:  types.FieldTypeKeyword,
-			Label: "Name",
-			Group: searchAttributesFieldGroup,
-		},
-		"metadata.searchAttributes.value": {
-			Type:  types.FieldTypeText,
-			Label: "Value",
-			Group: searchAttributesFieldGroup,
-		},
-	}
-}
-
-//nolint:goconst // Schema labels intentionally mirror the user-facing field names.
-func workflowDataSchema() types.Schema {
-	return types.Schema{
 		"data.errors": {
 			Type:  types.FieldTypeText,
 			Label: "Errors",
 			Group: workflowFieldGroup,
 		},
+	}
+}
+
+func activityFieldsSchema() types.Schema {
+	return types.Schema{
 		"data.activities.activityId": {
 			Type:  types.FieldTypeText,
 			Label: "ID",
@@ -308,6 +299,11 @@ func workflowDataSchema() types.Schema {
 			Label: "Paused",
 			Group: activityFieldGroup,
 		},
+	}
+}
+
+func childWorkflowFieldsSchema() types.Schema {
+	return types.Schema{
 		"data.childWorkflows.workflowId": {
 			Type:  types.FieldTypeText,
 			Label: "ID",
@@ -342,6 +338,21 @@ func workflowDataSchema() types.Schema {
 			Type:  types.FieldTypeTimestamp,
 			Label: "Finished",
 			Group: childWorkflowFieldGroup,
+		},
+	}
+}
+
+func searchAttributeFieldsSchema() types.Schema {
+	return types.Schema{
+		"metadata.searchAttributes.key": {
+			Type:  types.FieldTypeKeyword,
+			Label: "Name",
+			Group: searchAttributesFieldGroup,
+		},
+		"metadata.searchAttributes.value": {
+			Type:  types.FieldTypeText,
+			Label: "Value",
+			Group: searchAttributesFieldGroup,
 		},
 	}
 }

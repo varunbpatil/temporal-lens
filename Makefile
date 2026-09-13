@@ -132,11 +132,13 @@ ui/fmt-check: ## Check UI formatting
 
 .PHONY: docker/build
 docker/build: ## Build Docker image
-	docker build \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg COMMIT=$(COMMIT) \
-		--build-arg BUILD_TIME=$(BUILD_TIME) \
-		-t temporal-lens .
+	docker build --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) --build-arg BUILD_TIME=$(BUILD_TIME) -t temporal-lens .
+
+.PHONY: docker/run
+docker/run: ## Run the Docker image with environment variables from .env
+	docker_env=(); \
+	while IFS= read -r name; do docker_env+=(--env "$$name"); done < <(sed -nE 's/^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)=.*/\1/p' .env); \
+	docker run --net host "$${docker_env[@]}" temporal-lens
 
 # ------------------------------------
 #  Local dependencies

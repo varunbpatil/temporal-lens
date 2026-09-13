@@ -6,11 +6,16 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"mime"
 	"net"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	web "github.com/varunbpatil/temporal-lens"
 )
@@ -27,100 +32,236 @@ type Server struct {
 	onFatal  func(error)
 }
 
-// NewServer creates a new HTTP server that serves the API and embedded UI.
-func NewServer(api *http.ServeMux, address string, logger *slog.Logger, onFatal func(error)) *Server {
+// NewServer creates a new HTTP server that serves the API, MCP and embedded UI.
+func NewServer(api, mcp http.Handler, address string, logger *slog.Logger, onFatal func(error)) *Server {
 	return &Server{
-		handler: newLoggingHandler(NewHandler(api), logger),
+		handler: NewHandler(api, mcp, logger),
 		address: address,
 		logger:  logger,
 		onFatal: onFatal,
 	}
 }
 
-// NewHandler serves API routes below /api and the embedded UI at the root.
-// Unknown GET and HEAD extensionless paths serve the UI entrypoint for client-side routing.
-func NewHandler(api *http.ServeMux) http.Handler {
-	ui := http.FileServer(http.FS(embeddedUI()))
-	apiHandler := http.StripPrefix(apiPrefix, api)
+// NewHandler serves Connect API routes below /api, MCP at /mcp, and the
+// embedded UI at the root. Browser navigation falls back to the UI entrypoint;
+// missing static assets return 404.
+func NewHandler(api, mcp http.Handler, logger *slog.Logger) http.Handler {
+	ui := newUIHandler(embeddedUI())
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(requestLogger(logger))
+	router.Use(middleware.Recoverer)
 
+	router.Handle("/mcp", mcp)
+	router.Route(apiPrefix, func(router chi.Router) {
+		router.Use(preferBrotli)
+		router.Handle("/", http.NotFoundHandler())
+		router.Handle("/*", http.StripPrefix(apiPrefix, api))
+	})
+	router.Get("/*", ui.ServeHTTP)
+	router.Head("/*", ui.ServeHTTP)
+	router.NotFound(http.NotFound)
+
+	return router
+}
+
+// preferBrotli moves Brotli to the front of Accept-Encoding for Connect API
+// requests. Connect selects the first mutually-supported encoding, while
+// browsers typically advertise gzip before br. Gzip remains available when a
+// client does not advertise Brotli.
+func preferBrotli(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if strings.HasPrefix(request.URL.Path, apiPrefix+"/") {
-			apiHandler.ServeHTTP(writer, request)
-			return
+		if acceptEncoding := brotliFirst(request.Header.Get("Accept-Encoding")); acceptEncoding != "" {
+			request.Header.Set("Accept-Encoding", acceptEncoding)
 		}
-		if request.URL.Path == apiPrefix {
-			http.NotFound(writer, request)
-			return
-		}
-		if request.Method != http.MethodGet && request.Method != http.MethodHead {
-			http.NotFound(writer, request)
-			return
-		}
-		if path.Ext(request.URL.Path) != "" {
-			ui.ServeHTTP(writer, request)
-			return
-		}
-
-		entrypoint := request.Clone(request.Context())
-		entrypoint.URL.Path = "/"
-		ui.ServeHTTP(writer, entrypoint)
+		next.ServeHTTP(writer, request)
 	})
 }
 
-// newLoggingHandler records API request outcomes. Static UI assets are omitted
-// to keep normal browser page loads from obscuring API failures.
-func newLoggingHandler(next http.Handler, logger *slog.Logger) http.Handler {
-	if logger == nil {
-		return next
+func brotliFirst(acceptEncoding string) string {
+	encodings := strings.Split(acceptEncoding, ",")
+	for index, encoding := range encodings {
+		name, _, _ := strings.Cut(strings.TrimSpace(encoding), ";")
+		if !strings.EqualFold(name, "br") || index == 0 {
+			continue
+		}
+		encodings[0], encodings[index] = encodings[index], encodings[0]
+		return strings.Join(encodings, ",")
 	}
+	return ""
+}
+
+// newUIHandler serves embedded static assets, negotiating Vite's build-time
+// Brotli variants. Extensionless paths serve the SPA entrypoint.
+func newUIHandler(assets fs.FS) http.Handler {
+	files := http.FileServer(http.FS(assets))
 
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		started := time.Now()
-		recorder := &responseRecorder{ResponseWriter: writer, status: http.StatusOK}
-		next.ServeHTTP(recorder, request)
-
-		if !strings.HasPrefix(request.URL.Path, apiPrefix) {
-			return
+		assetPath := strings.TrimPrefix(path.Clean(request.URL.Path), "/")
+		info, err := fs.Stat(assets, assetPath)
+		if err != nil || info.IsDir() {
+			if path.Ext(request.URL.Path) != "" {
+				http.NotFound(writer, request)
+				return
+			}
+			assetPath = "index.html"
 		}
 
-		attributes := []any{
-			"method", request.Method,
-			"path", request.URL.Path,
-			"status", recorder.status,
-			"duration", time.Since(started),
+		assetRequest := request.Clone(request.Context())
+		assetRequest.URL.Path = "/" + assetPath
+		// http.FileServer redirects /index.html to /. Serve the entrypoint at the
+		// filesystem root so SPA fallbacks do not loop through that redirect.
+		if assetPath == "index.html" {
+			assetRequest.URL.Path = "/"
 		}
-		if recorder.status >= http.StatusInternalServerError {
-			logger.ErrorContext(request.Context(), "HTTP request failed", attributes...)
-			return
-		}
-		logger.InfoContext(request.Context(), "HTTP request", attributes...)
+		serveAsset(files, assets, writer, assetRequest, assetPath)
 	})
 }
 
-type responseRecorder struct {
-	http.ResponseWriter
-
-	status      int
-	wroteHeader bool
-}
-
-func (w *responseRecorder) WriteHeader(status int) {
-	if w.wroteHeader {
+func serveAsset(files http.Handler, assets fs.FS, writer http.ResponseWriter, request *http.Request, assetPath string) {
+	variant, hasCompressedAsset := preferredCompression(request, assets, assetPath)
+	if !hasCompressedAsset {
+		files.ServeHTTP(writer, request)
 		return
 	}
-	w.status = status
-	w.wroteHeader = true
-	w.ResponseWriter.WriteHeader(status)
+
+	writer.Header().Add("Vary", "Accept-Encoding")
+	if variant == nil {
+		files.ServeHTTP(writer, request)
+		return
+	}
+
+	compressedRequest := request.Clone(request.Context())
+	compressedRequest.URL.Path = "/" + assetPath + variant.extension
+	writer.Header().Set("Content-Encoding", variant.encoding)
+	if contentType := mime.TypeByExtension(path.Ext(assetPath)); contentType != "" {
+		writer.Header().Set("Content-Type", contentType)
+	}
+	files.ServeHTTP(writer, compressedRequest)
 }
 
-func (w *responseRecorder) Write(data []byte) (int, error) {
-	return w.ResponseWriter.Write(data)
+type compressionVariant struct {
+	encoding  string
+	extension string
 }
 
-// Unwrap lets net/http response helpers access optional interfaces implemented
-// by the original writer.
-func (w *responseRecorder) Unwrap() http.ResponseWriter {
-	return w.ResponseWriter
+func compressionVariants() [2]compressionVariant {
+	return [2]compressionVariant{
+		{encoding: "br", extension: ".br"},
+		{encoding: "gzip", extension: ".gz"},
+	}
+}
+
+// preferredCompression selects the supported encoding with the highest client
+// preference. Brotli wins ties because it generally produces smaller assets.
+// The second return value reports whether any pre-compressed variant exists,
+// so callers can set Vary for the uncompressed fallback too.
+func preferredCompression(request *http.Request, assets fs.FS, assetPath string) (*compressionVariant, bool) {
+	var selected *compressionVariant
+	selectedQuality := 0.0
+	hasCompressedAsset := false
+	variants := compressionVariants()
+	for index := range variants {
+		variant := &variants[index]
+		if _, err := fs.Stat(assets, assetPath+variant.extension); err != nil {
+			continue
+		}
+		hasCompressedAsset = true
+		if quality := encodingQuality(request, variant.encoding); quality > selectedQuality {
+			selected = variant
+			selectedQuality = quality
+		}
+	}
+	return selected, hasCompressedAsset
+}
+
+func encodingQuality(request *http.Request, wanted string) float64 {
+	wildcardQuality := -1.0
+	for encoding := range strings.SplitSeq(request.Header.Get("Accept-Encoding"), ",") {
+		parts := strings.Split(encoding, ";")
+		name := strings.TrimSpace(parts[0])
+		if !strings.EqualFold(name, wanted) && name != "*" {
+			continue
+		}
+		quality := 1.0
+		for _, parameter := range parts[1:] {
+			key, value, ok := strings.Cut(strings.TrimSpace(parameter), "=")
+			if !ok || !strings.EqualFold(key, "q") {
+				continue
+			}
+			parsed, err := strconv.ParseFloat(value, 64)
+			if err != nil {
+				quality = 0
+				break
+			}
+			quality = parsed
+		}
+		if strings.EqualFold(name, wanted) {
+			return quality
+		}
+		wildcardQuality = quality
+	}
+	return max(wildcardQuality, 0)
+}
+
+// requestLogger uses Chi's request logging middleware with the application's
+// structured logger. Static UI assets are omitted to keep page loads quiet.
+func requestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
+	if logger == nil {
+		return func(next http.Handler) http.Handler { return next }
+	}
+	return middleware.RequestLogger(slogLogFormatter{logger: logger})
+}
+
+type slogLogFormatter struct {
+	logger *slog.Logger
+}
+
+func (formatter slogLogFormatter) NewLogEntry(request *http.Request) middleware.LogEntry {
+	return slogLogEntry{
+		logger:  formatter.logger,
+		request: request,
+		log:     strings.HasPrefix(request.URL.Path, apiPrefix) || request.URL.Path == "/mcp",
+	}
+}
+
+type slogLogEntry struct {
+	logger  *slog.Logger
+	request *http.Request
+	log     bool
+}
+
+func (entry slogLogEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration, _ any) {
+	if !entry.log {
+		return
+	}
+	if status == 0 {
+		status = http.StatusOK
+	}
+
+	attributes := []any{
+		"request_id", middleware.GetReqID(entry.request.Context()),
+		"method", entry.request.Method,
+		"path", entry.request.URL.Path,
+		"status", status,
+		"bytes", bytes,
+		"duration", elapsed,
+	}
+	if status >= http.StatusInternalServerError {
+		entry.logger.ErrorContext(entry.request.Context(), "HTTP request failed", attributes...)
+		return
+	}
+	entry.logger.InfoContext(entry.request.Context(), "HTTP request", attributes...)
+}
+
+func (entry slogLogEntry) Panic(value any, stack []byte) {
+	entry.logger.ErrorContext(entry.request.Context(), "HTTP panic recovered",
+		"request_id", middleware.GetReqID(entry.request.Context()),
+		"method", entry.request.Method,
+		"path", entry.request.URL.Path,
+		"panic", value,
+		"stack", string(stack),
+	)
 }
 
 func embeddedUI() fs.FS {

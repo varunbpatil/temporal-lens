@@ -1,12 +1,18 @@
 import react from "@vitejs/plugin-react";
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
+import { compression } from "vite-plugin-compression2";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [TanStackRouterVite(), react(), tailwindcss()],
+  plugins: [
+    tanstackRouter(),
+    react(),
+    tailwindcss(),
+    compression({ algorithms: ["brotliCompress", "gzip"], threshold: 1024 }),
+  ],
   server: {
     proxy: {
       "/api": {

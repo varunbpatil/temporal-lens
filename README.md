@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔭 Temporal Lens
+# <img src="ui/public/favicon.svg" alt="" width="32" height="32" /> Temporal Lens
 
 **Search engine for [Temporal.io](https://temporal.io/) workflows powered by [OpenSearch](https://github.com/opensearch-project/opensearch)**
 
@@ -13,7 +13,7 @@
 
 ## Features
 
-### 🔍 Intuitive structured search
+### 🚀 Intuitive structured search
 
 Construct complex queries with logical operators easily from the UI and search across namespaces. Queries can be constructed using:
 
@@ -36,12 +36,15 @@ Provides a unified view across all namespaces, even for Temporal Cloud. Queries 
 
 Select individual workflows, a page of results, or all matching results to signal, reset, cancel, or terminate workflows using Temporal batch operations. Unlike the Temporal UI, this works across namespaces.
 
+### 🤖 MCP server
+
+Allow AI agents to do the same thing a human user would do through the UI.
+
 ## Upcoming Features
 
-* 🔒 Authentication
-* 🔌 MCP server
-* ⌨️ CLI tool and AI agent skill
-* 🗃️ Admin dashboard to manage OpenSearch indexes and much more...
+* 🔑 Authentication
+* ⌨️ CLI tool and AI agent skill as an alternative to MCP server
+* 👤️ Admin dashboard to manage OpenSearch indexes and much more...
 
 ## Project Structure
 
@@ -96,8 +99,8 @@ This project uses:
 # Build the image
 make docker/build
 
-# Run with environment variables from .env file (copy .env.example and modify it)
-docker run --env-file .env temporal-lens
+# Run with environment variables from .env (copy .env.example and modify it)
+make docker/run
 ```
 
 ### Environment Variables

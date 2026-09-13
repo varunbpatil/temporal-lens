@@ -48,7 +48,10 @@ ui/
 
 1. `TransportProvider` supplies one Buf Connect transport with `/api` as its base URL.
 2. `QueryClientProvider` supplies the TanStack Query cache.
-3. `RouterProvider` renders the file-based TanStack Router route tree.
+3. `ThemeProvider` persists and applies the selected color theme.
+4. `TimeZoneProvider` persists the time zone used for timestamps and filters.
+5. `TooltipProvider` enables shared tooltip behavior.
+6. `RouterProvider` renders the file-based TanStack Router route tree.
 
 Generated Connect Query hooks use the transport from `TransportProvider`. API
 requests therefore go to paths such as
