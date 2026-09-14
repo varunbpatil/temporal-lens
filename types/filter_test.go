@@ -295,6 +295,26 @@ func TestParseFilterSpec_DefaultOperatorsAllowSupported(t *testing.T) {
 	assert.Equal(t, types.OpGTE, f.Cond.Operator)
 }
 
+func TestDefaultOperatorsIncludePresenceChecks(t *testing.T) {
+	t.Parallel()
+
+	for _, fieldType := range []types.FieldType{
+		types.FieldTypeKeyword,
+		types.FieldTypeText,
+		types.FieldTypeInt,
+		types.FieldTypeDouble,
+		types.FieldTypeBool,
+		types.FieldTypeTimestamp,
+	} {
+		operators := types.DefaultOperators(fieldType)
+		assert.Contains(t, operators, types.OpExists)
+		assert.Contains(t, operators, types.OpNotExists)
+	}
+
+	assert.Contains(t, types.NumericOps, types.OpIn)
+	assert.Contains(t, types.NumericOps, types.OpNotIn)
+}
+
 func TestParseFilterSpec_NestedLogical(t *testing.T) {
 	t.Parallel()
 	spec := &commonv1.FilterSpec{
