@@ -190,6 +190,7 @@ func (h handler) getSearchSchema(
 			Description: field.Description,
 			Options:     field.Options,
 			Sortable:    field.Sortable,
+			Hidden:      field.Hidden,
 		})
 	}
 	sort.Slice(fields, func(i, j int) bool { return fields[i].Path < fields[j].Path })

@@ -90,6 +90,7 @@ type WorkflowSourceParams struct {
 // New creates all namespace clients concurrently.
 func New(ctx context.Context, params WorkflowSourceParams) (*Source, error) {
 	cfg := params.Config
+	cfg.Namespaces = config.UniqueNamespaces(cfg.Namespaces)
 	if err := validateConfig(cfg); err != nil {
 		return nil, err
 	}

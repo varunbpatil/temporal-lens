@@ -20,6 +20,8 @@ message SearchField {
   string description = 6;
   repeated SearchFieldOption options = 7;
   bool sortable = 8;
+  // Hidden fields remain indexed but are not offered by interactive field pickers.
+  bool hidden = 9;
 }
 
 // SearchFieldOption is a known value (enum) offered as a choice in a filter editor.

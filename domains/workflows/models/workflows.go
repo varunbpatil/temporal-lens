@@ -194,22 +194,40 @@ const (
 )
 
 // WorkflowSchema describes fields that Temporal Lens indexes without a custom
-// payload mapper. Custom mapper fields can be added when a mapper is wired in.
-func WorkflowSchema() types.Schema {
+// payload mapper. Configured namespaces are exposed as selectable options.
+// Custom mapper fields can be added when a mapper is wired in.
+func WorkflowSchema(namespaces ...string) types.Schema {
 	schema := workflowFieldsSchema()
 	maps.Copy(schema, activityFieldsSchema())
 	maps.Copy(schema, childWorkflowFieldsSchema())
 	maps.Copy(schema, searchAttributeFieldsSchema())
+
+	namespaceOptions := namespaceFieldOptions(namespaces)
+	for _, path := range []string{"metadata.Namespace", "data.childWorkflows.Namespace"} {
+		field := schema[path]
+		field.Options = namespaceOptions
+		schema[path] = field
+	}
+
 	return schema
+}
+
+func namespaceFieldOptions(namespaces []string) []types.FieldOption {
+	options := make([]types.FieldOption, len(namespaces))
+	for index, namespace := range namespaces {
+		options[index] = types.FieldOption{Label: namespace, Value: namespace}
+	}
+	return options
 }
 
 //nolint:goconst // Schema labels intentionally mirror the user-facing field names.
 func workflowFieldsSchema() types.Schema {
 	return types.Schema{
 		"id": {
-			Type:  types.FieldTypeKeyword,
-			Label: "Document ID",
-			Group: workflowFieldGroup,
+			Type:   types.FieldTypeKeyword,
+			Label:  "Document ID",
+			Group:  workflowFieldGroup,
+			Hidden: true,
 		},
 		"metadata.workflowId": {
 			Type:  types.FieldTypeText,
@@ -217,7 +235,7 @@ func workflowFieldsSchema() types.Schema {
 			Group: workflowFieldGroup,
 		},
 		"metadata.Namespace": {
-			Type:  types.FieldTypeText,
+			Type:  types.FieldTypeKeyword,
 			Label: "Namespace",
 			Group: workflowFieldGroup,
 		},
@@ -310,7 +328,7 @@ func childWorkflowFieldsSchema() types.Schema {
 			Group: childWorkflowFieldGroup,
 		},
 		"data.childWorkflows.Namespace": {
-			Type:  types.FieldTypeText,
+			Type:  types.FieldTypeKeyword,
 			Label: "Namespace",
 			Group: childWorkflowFieldGroup,
 		},

@@ -86,6 +86,24 @@ func TestHandlerSearchParsesCommonSpecsAndMapsResponse(t *testing.T) {
 	assert.Equal(t, v1.WorkflowStatus_WORKFLOW_STATUS_RUNNING, response.Msg.GetWorkflows()[0].GetMetadata().GetStatus())
 }
 
+func TestHandlerGetSearchSchemaIncludesHiddenFields(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	service := mocks.NewMockWorkflowService(controller)
+	service.EXPECT().SearchSchemas(gomock.Any()).Return(types.SearchSchemas{
+		Fixed: types.Schema{
+			"id": {Type: types.FieldTypeKeyword, Hidden: true},
+		},
+	})
+
+	handler := workflowhandler.New(service, false)
+	response, err := handler.GetSearchSchema(t.Context(), connect.NewRequest(&v1.GetSearchSchemaRequest{}))
+	require.NoError(t, err)
+	require.Len(t, response.Msg.GetSchema().GetFields(), 1)
+	assert.Equal(t, "id", response.Msg.GetSchema().GetFields()[0].GetPath())
+	assert.True(t, response.Msg.GetSchema().GetFields()[0].GetHidden())
+}
+
 func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

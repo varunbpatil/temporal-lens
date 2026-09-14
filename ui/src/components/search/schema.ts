@@ -28,8 +28,9 @@ export function searchFieldsFromSchema(schema: APIsearchSchema | undefined): Sea
       group: field.group || "Fields",
       description: field.description || undefined,
       options: field.options,
+      hidden: field.hidden,
     }))
-    .filter((field) => field.operators.length > 0);
+    .filter((field) => field.operators.length > 0 && !field.hidden);
 }
 
 function humanizePath(path: string) {

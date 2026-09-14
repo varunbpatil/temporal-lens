@@ -101,7 +101,8 @@ func New(_ context.Context, params WorkflowServiceParams) (*Service, error) {
 	if params.Source == nil || params.Repository == nil || params.Logger == nil {
 		return nil, errors.New("workflow source, repository, and logger are required")
 	}
-	if len(params.Config.Namespaces) == 0 ||
+	namespaces := config.UniqueNamespaces(params.Config.Namespaces)
+	if len(namespaces) == 0 ||
 		params.Config.IndexPrefix == "" ||
 		params.Config.IndexVersion <= 0 ||
 		params.Config.RetentionPeriod <= 0 ||
@@ -135,7 +136,7 @@ func New(_ context.Context, params WorkflowServiceParams) (*Service, error) {
 		repository:      params.Repository,
 		mapper:          params.Mapper,
 		logger:          params.Logger,
-		namespaces:      params.Config.Namespaces,
+		namespaces:      namespaces,
 		indexBasePrefix: params.Config.IndexPrefix,
 		indexPrefix:     indexPrefix,
 		retention:       params.Config.RetentionPeriod,
@@ -208,7 +209,7 @@ func (s *Service) SearchSchemas(_ context.Context) types.SearchSchemas {
 	if s.mapper != nil {
 		variable = payloadSearchSchema(s.mapper.Schema())
 	}
-	return types.SearchSchemas{Fixed: models.WorkflowSchema(), Variable: variable}
+	return types.SearchSchemas{Fixed: models.WorkflowSchema(s.namespaces...), Variable: variable}
 }
 
 // payloadSearchSchema expands context-independent mapper fields for every

@@ -22,6 +22,7 @@ type schemaField struct {
 	Description string              `json:"description,omitempty"`
 	Options     []types.FieldOption `json:"options,omitempty"`
 	Sortable    bool                `json:"sortable"`
+	Hidden      bool                `json:"hidden"`
 }
 
 type searchSchemaOutput struct {

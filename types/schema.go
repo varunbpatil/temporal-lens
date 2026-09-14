@@ -48,6 +48,9 @@ type FieldSchema struct {
 	Description string
 	Options     []FieldOption
 	Sortable    bool
+	// Hidden keeps an indexed field out of interactive field pickers. Hidden
+	// fields remain available to server-side validation and query execution.
+	Hidden bool
 }
 
 // Schema defines the set of valid fields for a domain.

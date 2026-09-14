@@ -46,9 +46,33 @@ Allow AI agents to do the same thing a human user would do through the UI.
 * ⌨️ CLI tool and AI agent skill as an alternative to MCP server
 * 👤️ Admin dashboard to manage OpenSearch indexes and much more...
 
+## What queries are possible?
+
+| Find                                                                | UI Filter                                                                                                  |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Workflows whose recorded errors mention a downstream service        | `Workflow — Errors CONTAINS "inventory service"`                                                           |
+| Activities whose recorded errors mention a downstream service       | `Activity — Errors CONTAINS "inventory service"`                                                           |
+| Workflows with a repeatedly retried activity                        | `Activity — Attempts GTE 3`                                                                                |
+| A particular activity type that started but has not finished        | `Activity — Type CONTAINS "charge-card"` AND `Activity — Finished NOT_EXISTS`                              |
+| Running workflows where the pending activity has too many attempts  | `Activity — Attempts GTE 5` AND `Activity — Finished NOT_EXISTS`                                           |
+| Workflows containing a paused activity                              | `Activity — Paused EQ true`                                                                                |
+| Child workflows that are still open after multiple attempts         | `Child Workflow — Attempts GTE 3` AND `Child Workflow — Finished NOT_EXISTS`                               |
+| [Custom Deployment] Workflows whose input payload contains ...      | `Workflow Inputs — Tenant ID CONTAINS 5d668d32-0403-45a3-8b85-d68bc3725afb`                                |
+| [Custom Deployment] Activities whose output payload contains ...    | `Activity Outputs — User ID CONTAINS user_01m2gaz9p4fcca146c40d88tde`                                      |
+
+Conditions on fields within the same activity, child workflow, or search attribute are evaluated against the same nested object. For example,
+`Activity — Attempts GTE 5` AND `Activity — Finished NOT_EXISTS` returns workflows where both conditions are true for the same activity.
+
+Custom deployments can add more fields from workflow, activity, and child-workflow JSON input/output payloads by implementing
+a [Mapper](https://github.com/varunbpatil/temporal-lens/blob/main/domains/workflows/ports/workflows.go#L94-L107).
+The mapper function receives a flattened JSON path like `$.response.items.0.name` and is supposed to return the canonical field,
+for example `name`. A custom schema must be provided which defines the types and (optionally) supported operators of those canonical
+fields thus making them filterable on the UI as `Workflow Inputs — Name CONTAINS ...`.
+
 ## Project Structure
 
-This project follows hexagonal architecture (Ports & Adapters pattern).
+This project uses [go-react-template](https://github.com/varunbpatil/go-react-template) as the project template
+and follows the Hexagonal Architecture (Ports & Adapter pattern).
 
 ```
 .

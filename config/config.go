@@ -73,3 +73,20 @@ func Parse() (*Config, error) {
 	}
 	return &cfg, nil
 }
+
+// UniqueNamespaces returns each non-empty namespace once, in configuration order.
+func UniqueNamespaces(namespaces []string) []string {
+	unique := make([]string, 0, len(namespaces))
+	seen := make(map[string]struct{}, len(namespaces))
+	for _, namespace := range namespaces {
+		if namespace == "" {
+			continue
+		}
+		if _, duplicate := seen[namespace]; duplicate {
+			continue
+		}
+		seen[namespace] = struct{}{}
+		unique = append(unique, namespace)
+	}
+	return unique
+}

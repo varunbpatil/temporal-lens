@@ -7,12 +7,13 @@
 package commonv1
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -372,15 +373,17 @@ func (x *SearchSchema) GetFields() []*SearchField {
 
 // SearchField describes how one indexed field can be filtered and displayed.
 type SearchField struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Type          FieldType              `protobuf:"varint,2,opt,name=type,proto3,enum=temporal_lens.common.v1.FieldType" json:"type,omitempty"`
-	Operators     []FilterOperator       `protobuf:"varint,3,rep,packed,name=operators,proto3,enum=temporal_lens.common.v1.FilterOperator" json:"operators,omitempty"`
-	Label         string                 `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
-	Group         string                 `protobuf:"bytes,5,opt,name=group,proto3" json:"group,omitempty"`
-	Description   string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	Options       []*SearchFieldOption   `protobuf:"bytes,7,rep,name=options,proto3" json:"options,omitempty"`
-	Sortable      bool                   `protobuf:"varint,8,opt,name=sortable,proto3" json:"sortable,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Path        string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Type        FieldType              `protobuf:"varint,2,opt,name=type,proto3,enum=temporal_lens.common.v1.FieldType" json:"type,omitempty"`
+	Operators   []FilterOperator       `protobuf:"varint,3,rep,packed,name=operators,proto3,enum=temporal_lens.common.v1.FilterOperator" json:"operators,omitempty"`
+	Label       string                 `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
+	Group       string                 `protobuf:"bytes,5,opt,name=group,proto3" json:"group,omitempty"`
+	Description string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	Options     []*SearchFieldOption   `protobuf:"bytes,7,rep,name=options,proto3" json:"options,omitempty"`
+	Sortable    bool                   `protobuf:"varint,8,opt,name=sortable,proto3" json:"sortable,omitempty"`
+	// Hidden fields remain indexed but are not offered by interactive field pickers.
+	Hidden        bool `protobuf:"varint,9,opt,name=hidden,proto3" json:"hidden,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -467,6 +470,13 @@ func (x *SearchField) GetOptions() []*SearchFieldOption {
 func (x *SearchField) GetSortable() bool {
 	if x != nil {
 		return x.Sortable
+	}
+	return false
+}
+
+func (x *SearchField) GetHidden() bool {
+	if x != nil {
+		return x.Hidden
 	}
 	return false
 }
@@ -1246,7 +1256,7 @@ const file_temporal_lens_common_v1_common_proto_rawDesc = "" +
 	"\n" +
 	"$temporal_lens/common/v1/common.proto\x12\x17temporal_lens.common.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"L\n" +
 	"\fSearchSchema\x12<\n" +
-	"\x06fields\x18\x01 \x03(\v2$.temporal_lens.common.v1.SearchFieldR\x06fields\"\xd0\x02\n" +
+	"\x06fields\x18\x01 \x03(\v2$.temporal_lens.common.v1.SearchFieldR\x06fields\"\xe8\x02\n" +
 	"\vSearchField\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x126\n" +
 	"\x04type\x18\x02 \x01(\x0e2\".temporal_lens.common.v1.FieldTypeR\x04type\x12E\n" +
@@ -1255,7 +1265,8 @@ const file_temporal_lens_common_v1_common_proto_rawDesc = "" +
 	"\x05group\x18\x05 \x01(\tR\x05group\x12 \n" +
 	"\vdescription\x18\x06 \x01(\tR\vdescription\x12D\n" +
 	"\aoptions\x18\a \x03(\v2*.temporal_lens.common.v1.SearchFieldOptionR\aoptions\x12\x1a\n" +
-	"\bsortable\x18\b \x01(\bR\bsortable\"?\n" +
+	"\bsortable\x18\b \x01(\bR\bsortable\x12\x16\n" +
+	"\x06hidden\x18\t \x01(\bR\x06hidden\"?\n" +
 	"\x11SearchFieldOption\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\"\x95\x01\n" +

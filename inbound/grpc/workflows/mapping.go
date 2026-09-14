@@ -196,6 +196,7 @@ func schemaFieldsToProto(schema types.Schema) []*commonv1.SearchField {
 			Description: field.Description,
 			Options:     options,
 			Sortable:    field.Sortable,
+			Hidden:      field.Hidden,
 		})
 	}
 	return fields

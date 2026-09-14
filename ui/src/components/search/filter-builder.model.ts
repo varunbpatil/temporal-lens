@@ -77,6 +77,8 @@ export interface SearchField {
   group?: string;
   description?: string;
   options?: readonly FilterFieldOption[];
+  // Hidden fields are still understood by the API, but are not selectable in the UI.
+  hidden?: boolean;
 }
 
 export function searchFieldDisplayName(field: SearchField): string {
