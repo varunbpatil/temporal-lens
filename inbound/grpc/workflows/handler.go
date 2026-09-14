@@ -178,7 +178,7 @@ func (h *Handler) Terminate(
 	return connect.NewResponse(&v1.TerminateResponse{}), nil
 }
 
-// ListIndexes returns the workflow shards owned by the domain and their document counts.
+// ListIndexes returns the workflow shards owned by the domain.
 func (h *Handler) ListIndexes(
 	ctx context.Context,
 	_ *connect.Request[v1.ListIndexesRequest],
@@ -190,8 +190,7 @@ func (h *Handler) ListIndexes(
 	response := &v1.ListIndexesResponse{Indexes: make([]*v1.IndexInfo, 0, len(indexes))}
 	for _, index := range indexes {
 		response.Indexes = append(response.Indexes, &v1.IndexInfo{
-			Name:          index.Name,
-			DocumentCount: index.DocumentCount,
+			Name: index.Name,
 		})
 	}
 	return connect.NewResponse(response), nil

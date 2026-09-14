@@ -1625,7 +1625,6 @@ func (x *ListIndexesResponse) GetIndexes() []*IndexInfo {
 type IndexInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	DocumentCount int64                  `protobuf:"varint,2,opt,name=document_count,json=documentCount,proto3" json:"document_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1665,13 +1664,6 @@ func (x *IndexInfo) GetName() string {
 		return x.Name
 	}
 	return ""
-}
-
-func (x *IndexInfo) GetDocumentCount() int64 {
-	if x != nil {
-		return x.DocumentCount
-	}
-	return 0
 }
 
 type DeleteIndexRequest struct {
@@ -1887,10 +1879,9 @@ const file_temporal_lens_workflows_v1_workflows_proto_rawDesc = "" +
 	"\x11TerminateResponse\"\x14\n" +
 	"\x12ListIndexesRequest\"V\n" +
 	"\x13ListIndexesResponse\x12?\n" +
-	"\aindexes\x18\x01 \x03(\v2%.temporal_lens.workflows.v1.IndexInfoR\aindexes\"F\n" +
+	"\aindexes\x18\x01 \x03(\v2%.temporal_lens.workflows.v1.IndexInfoR\aindexes\"\x1f\n" +
 	"\tIndexInfo\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
-	"\x0edocument_count\x18\x02 \x01(\x03R\rdocumentCount\"*\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"*\n" +
 	"\x12DeleteIndexRequest\x12\x14\n" +
 	"\x05index\x18\x01 \x01(\tR\x05index\"\x15\n" +
 	"\x13DeleteIndexResponse*\xa8\x02\n" +

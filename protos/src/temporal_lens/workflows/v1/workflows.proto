@@ -179,7 +179,6 @@ message ListIndexesResponse {
 
 message IndexInfo {
   string name = 1;
-  int64 document_count = 2;
 }
 
 message DeleteIndexRequest {

@@ -195,10 +195,9 @@ type ExecutionInfo struct {
 	RunID string
 }
 
-// IndexInfo identifies an OpenSearch index and its current live document count.
+// IndexInfo identifies an OpenSearch index.
 type IndexInfo struct {
-	Name          string
-	DocumentCount int64
+	Name string
 }
 
 // Field represents a single mapped output from the [Mapper].

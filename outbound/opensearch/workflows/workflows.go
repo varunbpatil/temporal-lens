@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/opensearch-project/opensearch-go/v5"
@@ -110,7 +109,7 @@ func (r *Repository) DeleteIndex(ctx context.Context, index string) error {
 	return nil
 }
 
-// ListIndexes lists all workflow indexes with their current live document counts.
+// ListIndexes lists all workflow indexes.
 func (r *Repository) ListIndexes(ctx context.Context) ([]ports.IndexInfo, error) {
 	resp, err := r.client.Cat.Indices(ctx, &opensearchapi.CatIndicesReq{})
 	if err != nil {
@@ -119,14 +118,10 @@ func (r *Repository) ListIndexes(ctx context.Context) ([]ports.IndexInfo, error)
 
 	indexes := make([]ports.IndexInfo, 0, len(resp.Records))
 	for _, rec := range resp.Records {
-		if rec.Index == nil || rec.DocsCount == nil {
+		if rec.Index == nil {
 			continue
 		}
-		documentCount, parseErr := strconv.ParseInt(*rec.DocsCount, 10, 64)
-		if parseErr != nil {
-			return nil, fmt.Errorf("opensearch: parse document count for index %q: %w", *rec.Index, parseErr)
-		}
-		indexes = append(indexes, ports.IndexInfo{Name: *rec.Index, DocumentCount: documentCount})
+		indexes = append(indexes, ports.IndexInfo{Name: *rec.Index})
 	}
 
 	return indexes, nil

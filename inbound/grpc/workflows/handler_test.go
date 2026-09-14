@@ -129,7 +129,7 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 	}).Return(nil)
 	service.EXPECT().
 		ListIndexes(gomock.Any()).
-		Return([]ports.IndexInfo{{Name: "workflows-2026-01-02", DocumentCount: 4}}, nil)
+		Return([]ports.IndexInfo{{Name: "workflows-2026-01-02"}}, nil)
 	service.EXPECT().DeleteIndex(gomock.Any(), "workflows-2026-01-02").Return(nil)
 
 	handler := workflowhandler.New(service, false)
@@ -161,7 +161,6 @@ func TestHandlerForwardsWorkflowActionsAndIndexOperations(t *testing.T) {
 	indexes, err := handler.ListIndexes(t.Context(), connect.NewRequest(&v1.ListIndexesRequest{}))
 	require.NoError(t, err)
 	require.Len(t, indexes.Msg.GetIndexes(), 1)
-	assert.EqualValues(t, 4, indexes.Msg.GetIndexes()[0].GetDocumentCount())
 	_, err = handler.DeleteIndex(t.Context(), connect.NewRequest(&v1.DeleteIndexRequest{Index: "workflows-2026-01-02"}))
 	require.NoError(t, err)
 }

@@ -218,15 +218,12 @@ func TestListIndexes(t *testing.T) {
 
 	indexes, err := repo.ListIndexes(t.Context())
 	require.NoError(t, err)
-	var documentCount int64
 	var found bool
 	for _, listedIndex := range indexes {
 		if listedIndex.Name == index {
-			documentCount = listedIndex.DocumentCount
 			found = true
 			break
 		}
 	}
 	require.True(t, found)
-	assert.EqualValues(t, 1, documentCount)
 }

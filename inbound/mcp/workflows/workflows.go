@@ -48,7 +48,7 @@ Signal, reset, cancel, and terminate affect live Temporal workflows, not their O
 
 ## Indexes
 
-Use ` + "`workflows_list_indexes`" + ` to inspect workflow shards and their live document counts. Deleting indexes is deliberately not available through MCP.`
+Use ` + "`workflows_list_indexes`" + ` to inspect workflow shards. Deleting indexes is deliberately not available through MCP.`
 
 // Register adds every safe workflows-domain capability to server. Index
 // deletion is deliberately not exposed through MCP.
@@ -91,7 +91,7 @@ func Register(server *mcp.Server, svc ports.WorkflowService, readOnly bool) {
 	)
 	mcp.AddTool(
 		server,
-		readOnlyTool("workflows_list_indexes", "List Temporal Lens workflow indexes and their live document counts."),
+		readOnlyTool("workflows_list_indexes", "List Temporal Lens workflow indexes."),
 		h.listIndexes,
 	)
 	mcp.AddTool(
