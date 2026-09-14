@@ -9,7 +9,6 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
 	"github.com/varunbpatil/temporal-lens/types"
 )
@@ -166,24 +165,6 @@ type handler struct {
 	readOnly bool
 }
 
-type emptyInput struct{}
-
-type schemaField struct {
-	Path        string              `json:"path"`
-	Type        string              `json:"type"`
-	Operators   []string            `json:"operators"`
-	Label       string              `json:"label"`
-	Group       string              `json:"group"`
-	Description string              `json:"description,omitempty"`
-	Options     []types.FieldOption `json:"options,omitempty"`
-	Sortable    bool                `json:"sortable"`
-}
-
-type searchSchemaOutput struct {
-	ReadOnly bool          `json:"readOnly"`
-	Fields   []schemaField `json:"fields"`
-}
-
 func (h handler) getSearchSchema(
 	ctx context.Context,
 	_ *mcp.CallToolRequest,
@@ -215,38 +196,6 @@ func (h handler) getSearchSchema(
 	return nil, searchSchemaOutput{ReadOnly: h.readOnly, Fields: fields}, nil
 }
 
-type filterInput struct {
-	And      []filterInput `json:"and,omitempty"      jsonschema:"AND operands"`
-	Or       []filterInput `json:"or,omitempty"       jsonschema:"OR operands"`
-	Field    string        `json:"field,omitempty"    jsonschema:"Indexed field path for a leaf filter"`
-	Operator string        `json:"operator,omitempty" jsonschema:"Operator from workflows_get_search_schema, such as EQ or BETWEEN"`
-	Value    any           `json:"value,omitempty"    jsonschema:"Filter value; timestamps use RFC3339 strings, BETWEEN and IN use arrays"`
-}
-
-type sortInput struct {
-	Field string `json:"field" jsonschema:"Indexed sortable field path"`
-	Order string `json:"order" jsonschema:"ASC or DESC"`
-}
-
-type paginationInput struct {
-	PageSize   int32  `json:"pageSize"             jsonschema:"Page size from 1 through 100"`
-	PageNumber int32  `json:"pageNumber,omitempty" jsonschema:"One-based offset page number; omit when cursor is set"`
-	Cursor     string `json:"cursor,omitempty"     jsonschema:"Opaque cursor returned by a prior search"`
-}
-
-type searchInput struct {
-	Filter     *filterInput     `json:"filter,omitempty"     jsonschema:"Optional recursive filter"`
-	Sort       *sortInput       `json:"sort,omitempty"       jsonschema:"Optional sort"`
-	Pagination *paginationInput `json:"pagination,omitempty" jsonschema:"Optional offset or cursor pagination"`
-}
-
-type searchOutput struct {
-	Workflows  []*models.Workflow `json:"workflows"`
-	TotalHits  int64              `json:"totalHits"`
-	Took       string             `json:"took"`
-	NextCursor string             `json:"nextCursor,omitempty"`
-}
-
 func (h handler) search(
 	ctx context.Context,
 	_ *mcp.CallToolRequest,
@@ -270,16 +219,18 @@ func (h handler) search(
 		}
 		workflow.URL = url
 	}
+	workflows := make([]workflowOutput, 0, len(response.Workflows))
+	for _, workflow := range response.Workflows {
+		if workflow != nil {
+			workflows = append(workflows, workflowOutputFromModel(workflow))
+		}
+	}
 	return nil, searchOutput{
-		Workflows:  response.Workflows,
+		Workflows:  workflows,
 		TotalHits:  response.TotalHits,
 		Took:       response.Took.String(),
 		NextCursor: response.NextCursor,
 	}, nil
-}
-
-type indexOutput struct {
-	Indexes []ports.IndexInfo `json:"indexes"`
 }
 
 func (h handler) listIndexes(
@@ -292,28 +243,6 @@ func (h handler) listIndexes(
 		return nil, indexOutput{}, fmt.Errorf("list indexes: %w", err)
 	}
 	return nil, indexOutput{Indexes: indexes}, nil
-}
-
-type executionInput struct {
-	Namespace  string `json:"namespace"  jsonschema:"Temporal namespace"`
-	WorkflowID string `json:"workflowId" jsonschema:"Temporal workflow ID"`
-	RunID      string `json:"runId"      jsonschema:"Temporal run ID"`
-}
-
-type workflowSelectionInput struct {
-	Filter     *filterInput     `json:"filter,omitempty"     jsonschema:"Selection filter; provide exactly one of filter or executions"`
-	Executions []executionInput `json:"executions,omitempty" jsonschema:"Explicit executions; provide exactly one of filter or executions"`
-}
-
-type actionOutput struct {
-	Message string `json:"message"`
-}
-
-type signalInput struct {
-	Workflows workflowSelectionInput `json:"workflows"         jsonschema:"Workflows to signal"`
-	Signal    string                 `json:"signal"            jsonschema:"Signal name"`
-	Payload   any                    `json:"payload,omitempty" jsonschema:"JSON value sent as the signal payload"`
-	Reason    string                 `json:"reason"            jsonschema:"Reason recorded by Temporal"`
 }
 
 func (h handler) signal(
@@ -339,14 +268,6 @@ func (h handler) signal(
 		return nil, actionOutput{}, fmt.Errorf("signal workflows: %w", serviceErr)
 	}
 	return nil, actionOutput{Message: "signal sent"}, nil
-}
-
-type resetInput struct {
-	Workflows      workflowSelectionInput `json:"workflows"                jsonschema:"Workflows to reset"`
-	Target         string                 `json:"target"                   jsonschema:"first_workflow_task, last_workflow_task, or workflow_task_id"`
-	WorkflowTaskID int64                  `json:"workflowTaskId,omitempty" jsonschema:"Required when target is workflow_task_id"`
-	ExcludeTypes   []string               `json:"excludeTypes,omitempty"   jsonschema:"Optional event types not to reapply: signal, update, nexus"`
-	Reason         string                 `json:"reason"                   jsonschema:"Reason recorded by Temporal"`
 }
 
 func (h handler) reset(
@@ -378,11 +299,6 @@ func (h handler) reset(
 	return nil, actionOutput{Message: "reset requested"}, nil
 }
 
-type cancelInput struct {
-	Workflows workflowSelectionInput `json:"workflows"`
-	Reason    string                 `json:"reason"`
-}
-
 func (h handler) cancel(
 	ctx context.Context,
 	_ *mcp.CallToolRequest,
@@ -402,11 +318,6 @@ func (h handler) cancel(
 		return nil, actionOutput{}, fmt.Errorf("cancel workflows: %w", serviceErr)
 	}
 	return nil, actionOutput{Message: "cancellation requested"}, nil
-}
-
-type terminateInput struct {
-	Workflows workflowSelectionInput `json:"workflows"`
-	Reason    string                 `json:"reason"`
 }
 
 func (h handler) terminate(

@@ -3,11 +3,13 @@ package workflows
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/require"
 
+	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	"github.com/varunbpatil/temporal-lens/types"
 )
 
@@ -90,4 +92,33 @@ func TestFilterFromInputParsesTypedValues(t *testing.T) {
 
 	_, err = filterFromInput(schema, filterInput{Field: "workflow.attempt", Operator: "CONTAINS", Value: "2"})
 	require.Error(t, err)
+}
+
+func TestWorkflowOutputFromModelEncodesNilMapsAsObjects(t *testing.T) {
+	t.Parallel()
+	output := workflowOutputFromModel(&models.Workflow{Data: models.WorkflowData{
+		Activities:     []models.Activity{{}},
+		ChildWorkflows: []models.ChildWorkflow{{}},
+	}})
+
+	require.NotNil(t, output.Data.Inputs)
+	require.NotNil(t, output.Data.Outputs)
+	require.NotNil(t, output.Data.Activities[0].Inputs)
+	require.NotNil(t, output.Data.Activities[0].Outputs)
+	require.NotNil(t, output.Data.ChildWorkflows[0].Inputs)
+	require.NotNil(t, output.Data.ChildWorkflows[0].Outputs)
+
+	encoded, err := json.Marshal(output)
+	require.NoError(t, err)
+	var decoded map[string]any
+	require.NoError(t, json.Unmarshal(encoded, &decoded))
+	data := decoded["data"].(map[string]any)
+	require.IsType(t, map[string]any{}, data["inputs"])
+	require.IsType(t, map[string]any{}, data["outputs"])
+	activity := data["activities"].([]any)[0].(map[string]any)
+	require.IsType(t, map[string]any{}, activity["inputs"])
+	require.IsType(t, map[string]any{}, activity["outputs"])
+	child := data["childWorkflows"].([]any)[0].(map[string]any)
+	require.IsType(t, map[string]any{}, child["inputs"])
+	require.IsType(t, map[string]any{}, child["outputs"])
 }

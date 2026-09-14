@@ -6,9 +6,180 @@ import (
 	"slices"
 	"time"
 
+	"github.com/varunbpatil/temporal-lens/domains/workflows/models"
 	"github.com/varunbpatil/temporal-lens/domains/workflows/ports"
 	"github.com/varunbpatil/temporal-lens/types"
 )
+
+type emptyInput struct{}
+
+type schemaField struct {
+	Path        string              `json:"path"`
+	Type        string              `json:"type"`
+	Operators   []string            `json:"operators"`
+	Label       string              `json:"label"`
+	Group       string              `json:"group"`
+	Description string              `json:"description,omitempty"`
+	Options     []types.FieldOption `json:"options,omitempty"`
+	Sortable    bool                `json:"sortable"`
+}
+
+type searchSchemaOutput struct {
+	ReadOnly bool          `json:"readOnly"`
+	Fields   []schemaField `json:"fields"`
+}
+
+type filterInput struct {
+	And      []filterInput `json:"and,omitempty"      jsonschema:"AND operands"`
+	Or       []filterInput `json:"or,omitempty"       jsonschema:"OR operands"`
+	Field    string        `json:"field,omitempty"    jsonschema:"Indexed field path for a leaf filter"`
+	Operator string        `json:"operator,omitempty" jsonschema:"Operator from workflows_get_search_schema, such as EQ or BETWEEN"`
+	Value    any           `json:"value,omitempty"    jsonschema:"Filter value; timestamps use RFC3339 strings, BETWEEN and IN use arrays"`
+}
+
+type sortInput struct {
+	Field string `json:"field" jsonschema:"Indexed sortable field path"`
+	Order string `json:"order" jsonschema:"ASC or DESC"`
+}
+
+type paginationInput struct {
+	PageSize   int32  `json:"pageSize"             jsonschema:"Page size from 1 through 100"`
+	PageNumber int32  `json:"pageNumber,omitempty" jsonschema:"One-based offset page number; omit when cursor is set"`
+	Cursor     string `json:"cursor,omitempty"     jsonschema:"Opaque cursor returned by a prior search"`
+}
+
+type searchInput struct {
+	Filter     *filterInput     `json:"filter,omitempty"     jsonschema:"Optional recursive filter"`
+	Sort       *sortInput       `json:"sort,omitempty"       jsonschema:"Optional sort"`
+	Pagination *paginationInput `json:"pagination,omitempty" jsonschema:"Optional offset or cursor pagination"`
+}
+
+type searchOutput struct {
+	Workflows  []workflowOutput `json:"workflows"`
+	TotalHits  int64            `json:"totalHits"`
+	Took       string           `json:"took"`
+	NextCursor string           `json:"nextCursor,omitempty"`
+}
+
+type indexOutput struct {
+	Indexes []ports.IndexInfo `json:"indexes"`
+}
+
+type executionInput struct {
+	Namespace  string `json:"namespace"  jsonschema:"Temporal namespace"`
+	WorkflowID string `json:"workflowId" jsonschema:"Temporal workflow ID"`
+	RunID      string `json:"runId"      jsonschema:"Temporal run ID"`
+}
+
+type workflowSelectionInput struct {
+	Filter     *filterInput     `json:"filter,omitempty"     jsonschema:"Selection filter; provide exactly one of filter or executions"`
+	Executions []executionInput `json:"executions,omitempty" jsonschema:"Explicit executions; provide exactly one of filter or executions"`
+}
+
+type actionOutput struct {
+	Message string `json:"message"`
+}
+
+type signalInput struct {
+	Workflows workflowSelectionInput `json:"workflows"         jsonschema:"Workflows to signal"`
+	Signal    string                 `json:"signal"            jsonschema:"Signal name"`
+	Payload   any                    `json:"payload,omitempty" jsonschema:"JSON value sent as the signal payload"`
+	Reason    string                 `json:"reason"            jsonschema:"Reason recorded by Temporal"`
+}
+
+type resetInput struct {
+	Workflows      workflowSelectionInput `json:"workflows"                jsonschema:"Workflows to reset"`
+	Target         string                 `json:"target"                   jsonschema:"first_workflow_task, last_workflow_task, or workflow_task_id"`
+	WorkflowTaskID int64                  `json:"workflowTaskId,omitempty" jsonschema:"Required when target is workflow_task_id"`
+	ExcludeTypes   []string               `json:"excludeTypes,omitempty"   jsonschema:"Optional event types not to reapply: signal, update, nexus"`
+	Reason         string                 `json:"reason"                   jsonschema:"Reason recorded by Temporal"`
+}
+
+type cancelInput struct {
+	Workflows workflowSelectionInput `json:"workflows"`
+	Reason    string                 `json:"reason"`
+}
+
+type terminateInput struct {
+	Workflows workflowSelectionInput `json:"workflows"`
+	Reason    string                 `json:"reason"`
+}
+
+// workflowOutput is the MCP representation of a workflow. It deliberately
+// keeps nil maps out of the wire format: JSON encodes nil maps as null, while
+// the MCP schema represents these fields as objects.
+type workflowOutput struct {
+	ID       string                  `json:"id"`
+	Metadata models.WorkflowMetadata `json:"metadata"`
+	Data     workflowDataOutput      `json:"data"`
+}
+
+type workflowDataOutput struct {
+	Inputs         map[string][]any      `json:"inputs"`
+	Outputs        map[string][]any      `json:"outputs"`
+	Errors         []string              `json:"errors"`
+	Activities     []activityOutput      `json:"activities"`
+	ChildWorkflows []childWorkflowOutput `json:"childWorkflows"`
+}
+
+type activityOutput struct {
+	ActivityID   string           `json:"activityId,omitempty"`
+	ActivityType string           `json:"activityType"`
+	Inputs       map[string][]any `json:"inputs"`
+	Outputs      map[string][]any `json:"outputs"`
+	Errors       []string         `json:"errors"`
+	Attempts     int32            `json:"attempts"`
+	StartTime    time.Time        `json:"startTime"`
+	EndTime      *time.Time       `json:"endTime"`
+	Paused       bool             `json:"paused"`
+}
+
+type childWorkflowOutput struct {
+	WorkflowID   string           `json:"workflowId"`
+	Namespace    string           `json:"Namespace"`
+	WorkflowType string           `json:"workflowType"`
+	Inputs       map[string][]any `json:"inputs"`
+	Outputs      map[string][]any `json:"outputs"`
+	Errors       []string         `json:"errors"`
+	Attempts     int32            `json:"attempts"`
+	StartTime    time.Time        `json:"startTime"`
+	EndTime      *time.Time       `json:"endTime"`
+}
+
+func workflowOutputFromModel(workflow *models.Workflow) workflowOutput {
+	activities := make([]activityOutput, len(workflow.Data.Activities))
+	for i, activity := range workflow.Data.Activities {
+		activities[i] = activityOutput{
+			ActivityID: activity.ActivityID, ActivityType: activity.ActivityType,
+			Inputs: nonNilMap(activity.Inputs), Outputs: nonNilMap(activity.Outputs),
+			Errors: activity.Errors, Attempts: activity.Attempts, StartTime: activity.StartTime,
+			EndTime: activity.EndTime, Paused: activity.Paused,
+		}
+	}
+	children := make([]childWorkflowOutput, len(workflow.Data.ChildWorkflows))
+	for i, child := range workflow.Data.ChildWorkflows {
+		children[i] = childWorkflowOutput{
+			WorkflowID: child.WorkflowID, Namespace: child.Namespace, WorkflowType: child.WorkflowType,
+			Inputs: nonNilMap(child.Inputs), Outputs: nonNilMap(child.Outputs),
+			Errors: child.Errors, Attempts: child.Attempts, StartTime: child.StartTime, EndTime: child.EndTime,
+		}
+	}
+	return workflowOutput{
+		ID: workflow.ID, Metadata: workflow.Metadata,
+		Data: workflowDataOutput{
+			Inputs: nonNilMap(workflow.Data.Inputs), Outputs: nonNilMap(workflow.Data.Outputs),
+			Errors: workflow.Data.Errors, Activities: activities, ChildWorkflows: children,
+		},
+	}
+}
+
+// nonNilMap preserves the MCP schema's object contract for map fields.
+func nonNilMap(values map[string][]any) map[string][]any {
+	if values == nil {
+		return map[string][]any{}
+	}
+	return values
+}
 
 func workflowSpecFromInput(schema types.Schema, input workflowSelectionInput) (ports.WorkflowSpec, error) {
 	if (input.Filter == nil) == (len(input.Executions) == 0) {
