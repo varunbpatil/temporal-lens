@@ -11,6 +11,10 @@
 
 </div>
 
+## Demo
+
+https://github.com/user-attachments/assets/071a0570-fc7a-44cc-a1fa-10548766d0a5
+
 ## Features
 
 ### 🚀 Intuitive structured search
